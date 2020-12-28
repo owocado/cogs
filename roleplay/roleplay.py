@@ -49,9 +49,9 @@ class Roleplay(BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    @commands.cooldown(1, 30, commands.BucketType.member)
+    @commands.cooldown(1, 20, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True)
-    async def hug(self, ctx: commands.Context, user: discord.Member):
+    async def hugs(self, ctx: commands.Context, user: discord.Member):
         """hug a user!"""
 
         author = ctx.author
@@ -69,7 +69,7 @@ class Roleplay(BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    @commands.cooldown(1, 30, commands.BucketType.member)
+    @commands.cooldown(1, 20, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True)
     async def cuddle(self, ctx: commands.Context, user: discord.Member):
         """Cuddles a user!"""
@@ -89,7 +89,7 @@ class Roleplay(BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    @commands.cooldown(1, 30, commands.BucketType.member)
+    @commands.cooldown(1, 20, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True)
     async def kiss(self, ctx: commands.Context, user: discord.Member):
         """Kiss a user!"""
@@ -115,7 +115,7 @@ class Roleplay(BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    @commands.cooldown(1, 300, commands.BucketType.member)
+    @commands.cooldown(1, 120, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True)
     async def lick(self, ctx: commands.Context, user: discord.Member):
         """Licks a user!"""
@@ -142,7 +142,7 @@ class Roleplay(BaseCog):
 
     @commands.command(aliases=['spank'])
     @commands.guild_only()
-    @commands.cooldown(1, 30, commands.BucketType.member)
+    @commands.cooldown(1, 20, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True)
     async def slap(self, ctx: commands.Context, user: discord.Member):
         """Slaps a user!"""
@@ -163,7 +163,7 @@ class Roleplay(BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    @commands.cooldown(1, 30, commands.BucketType.member)
+    @commands.cooldown(1, 20, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True)
     async def pat(self, ctx: commands.Context, user: discord.Member):
         """Pats a user!"""
@@ -180,7 +180,7 @@ class Roleplay(BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    @commands.cooldown(1, 150, commands.BucketType.member)
+    @commands.cooldown(1, 120, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True)
     async def highfive(self, ctx: commands.Context, user: discord.Member):
         """High-fives a user!"""
@@ -198,7 +198,7 @@ class Roleplay(BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    @commands.cooldown(1, 30, commands.BucketType.member)
+    @commands.cooldown(1, 20, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True)
     async def feed(self, ctx: commands.Context, user: discord.Member):
         """Feeds a user!"""
@@ -216,7 +216,7 @@ class Roleplay(BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    @commands.cooldown(1, 30, commands.BucketType.member)
+    @commands.cooldown(1, 20, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True)
     async def tickle(self, ctx: commands.Context, user: discord.Member):
         """Tickles a user!"""
@@ -238,7 +238,7 @@ class Roleplay(BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    @commands.cooldown(1, 30, commands.BucketType.member)
+    @commands.cooldown(1, 20, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True)
     async def poke(self, ctx: commands.Context, user: discord.Member):
         """Pokes a user!"""
@@ -259,7 +259,7 @@ class Roleplay(BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    @commands.cooldown(1, 30, commands.BucketType.member)
+    @commands.cooldown(1, 20, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True)
     async def smug(self, ctx: commands.Context, user: Optional[discord.Member] = None):
         """Be smug towards someone!"""
@@ -276,7 +276,7 @@ class Roleplay(BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    @commands.cooldown(1, 300, commands.BucketType.member)
+    @commands.cooldown(1, 120, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True)
     async def bully(self, ctx: commands.Context, user: discord.Member):
         """Bully a user!"""
@@ -297,7 +297,7 @@ class Roleplay(BaseCog):
 
     @commands.guild_only()
     @commands.command(aliases=["bite"])
-    @commands.cooldown(1, 30, commands.BucketType.member)
+    @commands.cooldown(1, 20, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True)
     async def nom(self, ctx: commands.Context, user: discord.Member):
         """Bite a user!"""
@@ -317,7 +317,7 @@ class Roleplay(BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    @commands.cooldown(1, 30, commands.BucketType.member)
+    @commands.cooldown(1, 20, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True)
     async def baka(self, ctx: commands.Context, user: discord.Member):
         """Call a user BAKA with a GIF reaction!"""
@@ -338,7 +338,7 @@ class Roleplay(BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    @commands.cooldown(1, 600, commands.BucketType.member)
+    @commands.cooldown(1, 120, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True)
     async def kill(self, ctx: commands.Context, user: discord.Member):
         """Kill a user with a GIF reaction!"""
