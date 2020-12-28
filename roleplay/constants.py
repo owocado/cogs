@@ -529,6 +529,7 @@ POKE = [
     "https://cdn.weeb.sh/images/rkeaUeJKD-.gif",
     "https://cdn.weeb.sh/images/H1fMRpYtb.gif",
     "https://cdn.weeb.sh/images/HkxwlkKPb.gif",
+    "https://cdn.weeb.sh/images/HJZpLxkKDb.gif",
     "https://cdn.nekos.life/v3/sfw/gif/poke/poke_001.gif",
     "https://cdn.nekos.life/v3/sfw/gif/poke/poke_002.gif",
     "https://cdn.nekos.life/v3/sfw/gif/poke/poke_003.gif",
