@@ -338,7 +338,7 @@ class Roleplay(BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    @commands.cooldown(1, 120, commands.BucketType.member)
+    @commands.cooldown(1, 30, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True)
     async def kill(self, ctx: commands.Context, user: discord.Member):
         """Kill a user with a GIF reaction!"""
