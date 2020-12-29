@@ -224,7 +224,7 @@ class Roleplay(BaseCog):
         author = ctx.author
 
         if user == self.bot.user:
-            msg = f"Tickling a bot now, aren't we? {author.mention} :clown:"
+            msg = F"LMAO. Tickling a bot now, are we? {author.mention} :rofl: :clown:"
             return await ctx.send(msg)
         if user is not author:
             embed = discord.Embed(colour=user.colour)
