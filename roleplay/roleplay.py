@@ -10,6 +10,8 @@ from .constants import (
     BAKA,
     BITE,
     BULLY,
+    CRY,
+    CRY_STRINGS,
     CUDDLE,
     FEED,
     HIGHFIVE,
@@ -115,7 +117,7 @@ class Roleplay(BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    @commands.cooldown(1, 120, commands.BucketType.member)
+    @commands.cooldown(1, 60, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True)
     async def lick(self, ctx: commands.Context, user: discord.Member):
         """Licks a user!"""
@@ -356,6 +358,18 @@ class Roleplay(BaseCog):
         else:
             msg = f"{author.mention} Seppukku is not allowed on my watch. :skeleton:"
             await ctx.send(msg)
+
+    @commands.command()
+    @commands.cooldown(1, 20, commands.BucketType.member)
+    @commands.bot_has_permissions(embed_links=True)
+    async def cry(self, ctx: commands.Context):
+        """Let others know you feel like crying or just wanna cry."""
+
+        author = ctx.author
+        embed = discord.Embed(colour=author.colour)
+        embed.description = f"{author.mention} {str(choice(CRY_STRINGS))}"
+        embed.set_image(url=str(choice(CRY)))
+        await ctx.send(embed=embed)
 
     # Credits to Predä. for this snippet
     async def _nsfw_check(self, ctx: commands.Context):
