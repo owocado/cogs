@@ -5,8 +5,10 @@ import discord
 from redbot.core import checks, commands
 from redbot.core.bot import Red
 from redbot.core.utils import AsyncIter
+from redbot.core.utils.chat_formatting import pagify
+from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
-Class BadgeTools(commands.Cog):
+class BadgeTools(commands.Cog):
     """Various commands to show the stats about users' profile badges."""
 
     __author__ = ["siu3334", "<@306810730055729152>", "Fixator10"]
@@ -20,6 +22,21 @@ Class BadgeTools(commands.Cog):
     def __init__(self, bot: Red):
         self.bot = bot
         self.emojis = self.bot.loop.create_task(self.init())
+        self.valid = [
+            "staff",
+            "partner",
+            "hypesquad",
+            "bug_hunter",
+            "hypesquad_bravery",
+            "hypesquad_brilliance",
+            "hypesquad_balance",
+            "early_supporter",
+            "team_user",
+            "system",
+            "bug_hunter_level_2",
+            "verified_bot",
+            "verified_bot_developer",
+        ]
 
     def cog_unload(self):
         if self.emojis:
@@ -44,6 +61,7 @@ Class BadgeTools(commands.Cog):
         }
 
     @commands.command()
+    @commands.is_owner()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
     async def badgecount(self, ctx: commands.Context):
