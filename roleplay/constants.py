@@ -854,5 +854,5 @@ CRY_STRINGS = [
     "suddenly starts crying... :cry:",
     "feels like they wanna cry their heart out! :sob:",
     "is crying ... :c :crying_cat_face:",
-    " criiiiiiiiiiiiies nuuuuuuuuuuuu someone give them a warm hug pls! :sob:",   
+    "criiiiiiiiiiiiies nuuuuuuuuuuuu someone give them a warm hug pls! :sob:",
 ]
