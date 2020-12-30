@@ -84,3 +84,39 @@ class BadgeTools(commands.Cog):
         e.set_footer(text=f"For Guild: {guild.name}", icon_url=str(guild.icon_url))
         e.add_field(name="Badge Count:", value=msg)
         await ctx.send(embed=e)
+
+    @commands.command()
+    @commands.is_owner()
+    @commands.guild_only()
+    @commands.bot_has_permissions(embed_links=True)
+    async def inbadge(self, ctx: commands.Context, badge: str):
+        """Returns the list of users with X profile badge in the server."""
+
+        guild = ctx.guild
+
+        badgeslist = ", ".join(m for m in self.valid)
+        warn = f"That is invalid Discord user profile badge name! It needs to be either of:\n\n{badgeslist}"
+        if badge.lower() not in self.valid:
+            return await ctx.send(warn)
+
+        list_of = []
+        # Thanks Fixator <3
+        async for usr in AsyncIter(guild.members):
+            async for flag in AsyncIter(usr.public_flags.all()):
+                if badge in flag.name:
+                    list_of.append(f"{usr.name}#{usr.discriminator}")
+        output = ", ".join(m for m in list_of)
+        total = len([m for m in list_of])
+
+        embed_list = []
+        for page in pagify(output):
+            em = discord.Embed(colour=await ctx.embed_color())
+            em.description = output
+            em.set_footer(text=f"Found {total} users with said badge")
+            embed_list.append(em)
+        if not embed_list:
+            return await ctx.send("No results.")
+        elif len(embed_list) == 1:
+            return await ctx.send(embed=embed_list[0])
+        else:
+            await menu(ctx, embed_list, DEFAULT_CONTROLS, timeout=60.0)
