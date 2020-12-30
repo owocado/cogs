@@ -109,7 +109,7 @@ class BadgeTools(commands.Cog):
 
         list_of = []
         # Thanks Fixator <3
-        async for usr in AsyncIter(guild.members):
+        async for usr in AsyncIter(sorted(guild.members, key=lambda x: x.joined_at)):
             async for flag in AsyncIter(usr.public_flags.all()):
                 if badge in flag.name:
                     list_of.append(
