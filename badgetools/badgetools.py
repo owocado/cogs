@@ -46,6 +46,14 @@ class BadgeTools(commands.Cog):
     # Thanks flare <3
     async def init(self):
         await self.bot.wait_until_ready()
+        self.status_emojis = {
+            "mobile": discord.utils.get(self.bot.emojis, id=749067110931759185),
+            "online": discord.utils.get(self.bot.emojis, id=749221433552404581),
+            "away": discord.utils.get(self.bot.emojis, id=749221433095356417),
+            "dnd": discord.utils.get(self.bot.emojis, id=749221432772395140),
+            "offline": discord.utils.get(self.bot.emojis, id=749221433049088082),
+            "streaming": discord.utils.get(self.bot.emojis, id=749221434039205909),
+        }
         self.badge_emojis = {
             "staff": discord.utils.get(self.bot.emojis, id=790550232387289088),
             "early_supporter": discord.utils.get(self.bot.emojis, id=706198530837970998),
@@ -104,8 +112,27 @@ class BadgeTools(commands.Cog):
         async for usr in AsyncIter(guild.members):
             async for flag in AsyncIter(usr.public_flags.all()):
                 if badge in flag.name:
-                    list_of.append(f"{usr.name}#{usr.discriminator}")
-        output = "\n".join(m for m in list_of)
+                    list_of.append(
+                        "{status}  {name}#{tag}\n".format(
+                            status=f"{self.status_emojis['mobile']}"
+                            if usr.is_on_mobile()
+                            else f"{self.status_emojis['streaming']}"
+                            if any(
+                                a.type is discord.ActivityType.streaming
+                                for a in usr.activities
+                            )
+                            else f"{self.status_emojis['online']}"
+                            if usr.status.name == "online"
+                            else f"{self.status_emojis['offline']}"
+                            if usr.status.name == "offline"
+                            else f"{self.status_emojis['dnd']}"
+                            if usr.status.name == "dnd"
+                            else f"{self.status_emojis['away']}",
+                            name=usr.name,
+                            tag=usr.discriminator,
+                        )
+                    )
+        output = "".join(m for m in list_of)
         total = len([m for m in list_of])
 
         embed_list = []
