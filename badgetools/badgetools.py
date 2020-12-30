@@ -111,7 +111,7 @@ class BadgeTools(commands.Cog):
         # Thanks Fixator <3
         async for usr in AsyncIter(sorted(guild.members, key=lambda x: x.joined_at)):
             async for flag in AsyncIter(usr.public_flags.all()):
-                if badge in flag.name:
+                if flag.name == badge:
                     list_of.append(
                         "{status}  {name}#{tag}\n".format(
                             status=f"{self.status_emojis['mobile']}"
