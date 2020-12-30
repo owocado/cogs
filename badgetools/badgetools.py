@@ -105,14 +105,14 @@ class BadgeTools(commands.Cog):
             async for flag in AsyncIter(usr.public_flags.all()):
                 if badge in flag.name:
                     list_of.append(f"{usr.name}#{usr.discriminator}")
-        output = ", ".join(m for m in list_of)
+        output = "\n".join(m for m in list_of)
         total = len([m for m in list_of])
 
         embed_list = []
-        for page in pagify(output):
+        for page in pagify(output, ["\n"], page_length=300):
             em = discord.Embed(colour=await ctx.embed_color())
-            em.description = output
-            em.set_footer(text=f"Found {total} users with said badge")
+            em.description = page
+            em.set_footer(text=f"Found {total} users with {badge.replace('_', ' ').title()} badge")
             embed_list.append(em)
         if not embed_list:
             return await ctx.send("No results.")
