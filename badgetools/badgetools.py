@@ -136,7 +136,7 @@ class BadgeTools(commands.Cog):
         total = len([m for m in list_of])
 
         embed_list = []
-        for page in pagify(output, ["\n"], page_length=300):
+        for page in pagify(output, ["\n"], page_length=1000):
             em = discord.Embed(colour=await ctx.embed_color())
             em.description = page
             em.set_footer(text=f"Found {total} users with {badge.replace('_', ' ').title()} badge")
