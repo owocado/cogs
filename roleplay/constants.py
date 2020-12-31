@@ -918,3 +918,10 @@ PUNCH = [
     "https://cdn.weeb.sh/images/BJg7wTbbM.gif",
     "https://i.imgur.com/WLihkm3.gif",
 ]
+PUNCH_MSG = [
+    "hurls a heavy punch at",
+    "randomly punches",
+    "(out of knowhere) punches",
+    "fist-fives",
+    "swings a mad punch",
+]
