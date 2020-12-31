@@ -21,6 +21,8 @@ from .constants import (
     LICK,
     PAT,
     POKE,
+    PUNCH,
+    PUNCH_MSG,
     SLAP,
     SMUG,
     TICKLE
@@ -357,6 +359,34 @@ class Roleplay(BaseCog):
             return await ctx.send(content=msg, embed=embed)
         else:
             msg = f"{author.mention} Seppukku is not allowed on my watch. :skeleton:"
+            await ctx.send(msg)
+
+    @commands.command()
+    @commands.guild_only()
+    @commands.cooldown(1, 30, commands.BucketType.member)
+    @commands.bot_has_permissions(embed_links=True)
+    async def punch(self, ctx: commands.Context, user: discord.Member):
+        """Punch a user with a GIF reaction!"""
+
+        author = ctx.author
+
+        if user == self.bot.user:
+            msg = (
+                author.mention
+                + " tried to punch a bot but failed miserably"
+                " and they actually punched themselves instead."
+                " How disappointing LMFAO! :joy:"
+            )
+            em = discord.Embed(colour=await ctx.embed_colour())
+            em.set_image(url="https://media1.tenor.com/images/c20ffecdd8cca7f0ce9c4a670d5f7ff0/tenor.gif")
+            return await ctx.send(content=msg, embed=em)
+        if user is not author:
+            embed = discord.Embed(colour=user.colour)
+            msg = f"> *{author.mention} {str(choice(PUNCH_MSG))} {user.mention}*"
+            embed.set_image(url=str(choice(PUNCH)))
+            return await ctx.send(content=msg, embed=embed)
+        else:
+            msg = f"I uh ..... **{author.display_name}**, self harm doesn't sound so fun. Stop it, get some help."
             await ctx.send(msg)
 
     @commands.command()
