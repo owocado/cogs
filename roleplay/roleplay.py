@@ -1,4 +1,3 @@
-import logging
 from random import choice
 from typing import Optional
 
@@ -28,28 +27,24 @@ from .constants import (
     TICKLE
 )
 
-log = logging.getLogger("Roleplay")  # Thanks to Sinbad for the example code for logging
-log.setLevel(logging.DEBUG)
 
-console = logging.StreamHandler()
-
-if logging.getLogger("red").isEnabledFor(logging.DEBUG):
-    console.setLevel(logging.DEBUG)
-else:
-    console.setLevel(logging.INFO)
-log.addHandler(console)
-
-BaseCog = getattr(commands, "Cog", object)
-
-
-class Roleplay(BaseCog):
+class Roleplay(commands.Cog):
     """Interact with other users through public display of affection!"""
 
     def __init__(self, bot: Red):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=842364413)
-        default_global = {}
-        self.config.register_global(**default_global)
+
+    # credits to jack1142
+    async def red_get_data_for_user(self, *, user_id: int) -> Dict[str, Any]:
+        # this cog does not story any data about users
+        return {}
+
+    # credits to jack1142
+    async def red_delete_data_for_user(
+        self, *, requester: RequestType, user_id: int
+    ) -> None:
+        # this cog does not story any data about users
+        pass
 
     @commands.command()
     @commands.guild_only()
