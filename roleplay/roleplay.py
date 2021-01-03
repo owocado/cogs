@@ -1,5 +1,5 @@
 from random import choice
-from typing import Optional
+from typing import Any, Dict, Literal, Optional
 
 import discord
 from redbot.core import Config, commands
@@ -26,6 +26,8 @@ from .constants import (
     SMUG,
     TICKLE
 )
+
+RequestType = Literal["discord_deleted_user", "owner", "user", "user_strict"]
 
 
 class Roleplay(commands.Cog):
