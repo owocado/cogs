@@ -1,9 +1,36 @@
 {
-  "author" : ["Jintaku"],
-  "bot_version": [3, 4, 0],
-  "install_msg" : "Interact with people using the best GIFs!",
-  "short" : "Interact with users",
-  "description" : "Interact with users using anime GIFs",
-  "tags" : ["interaction", "roleplay", "GIF"],
-  "hidden" : false
+	"name": "Roleplay",
+	"short": "Interact with users",
+	"description": "Interact with users using anime GIFs",
+	"install_msg": "Interact with people using the best GIFs!",
+	"end_user_data_statement": "This cog does not persistently store data or metadata about users.",
+	"author": [
+		"siu3334",
+		"Jintaku"
+	],
+	"required_cogs":
+	{},
+	"requirements": [],
+	"bot_version": "3.4.0",
+	"tags": [
+		"interaction",
+		"roleplay",
+		"hug",
+		"kiss",
+		"pat",
+		"punch",
+		"bully",
+		"poke",
+		"cuddle",
+		"baka",
+		"cry",
+		"feed",
+		"highfive",
+		"nom",
+		"smug",
+        "tickle"
+	],
+	"hidden": false,
+	"disabled": false,
+	"type": "COG"
 }
