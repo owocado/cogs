@@ -12,7 +12,7 @@ class BadgeTools(commands.Cog):
     """Various commands to show the stats about users' profile badges."""
 
     __author__ = ["siu3334", "<@306810730055729152>", "Fixator10"]
-    __version__ = "0.0.1"
+    __version__ = "0.0.4"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -37,6 +37,18 @@ class BadgeTools(commands.Cog):
             "verified_bot",
             "verified_bot_developer",
         ]
+
+    # credits to jack1142
+    async def red_get_data_for_user(self, *, user_id: int) -> Dict[str, Any]:
+        # this cog does not story any data
+        return {}
+
+    # credits to jack1142
+    async def red_delete_data_for_user(
+        self, *, requester: RequestType, user_id: int
+    ) -> None:
+        # this cog does not story any data
+        pass
 
     def cog_unload(self):
         if self.emojis:
