@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 from redbot.core.bot import Red
 
 from .badgetools import BadgeTools
