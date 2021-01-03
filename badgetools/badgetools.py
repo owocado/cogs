@@ -1,4 +1,5 @@
 from collections import Counter
+from typing import Any, Dict, Literal
 
 # Required by Red
 import discord
@@ -7,6 +8,9 @@ from redbot.core.bot import Red
 from redbot.core.utils import AsyncIter
 from redbot.core.utils.chat_formatting import pagify
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
+
+RequestType = Literal["discord_deleted_user", "owner", "user", "user_strict"]
+
 
 class BadgeTools(commands.Cog):
     """Various commands to show the stats about users' profile badges."""
