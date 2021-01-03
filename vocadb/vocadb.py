@@ -56,7 +56,10 @@ class VocaDB(commands.Cog):
             async with session.get(BASE_API_URL, params=params) as response:
                 result = await response.json(loads=json.loads)
 
-        data = result["items"][0]
+        try:
+            data = result["items"][0]
+        except IndexError:
+            return await ctx.send("No results.")
         lyrics = data["lyrics"][0]["value"]
         mins = data["lengthSeconds"] // 60
         secs = data["lengthSeconds"] % 60
