@@ -85,7 +85,6 @@ class BadgeTools(commands.Cog):
         }
 
     @commands.command()
-    @commands.is_owner()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
     async def badgecount(self, ctx: commands.Context):
@@ -119,7 +118,10 @@ class BadgeTools(commands.Cog):
         guild = ctx.guild
 
         badgeslist = ", ".join(m for m in self.valid)
-        warn = f"That is invalid Discord user profile badge name! It needs to be either of:\n\n{badgeslist}"
+        warn = (
+            f"That is invalid Discord user profile badge name!"
+            f" It needs to be either of:\n\n{badgeslist}"
+        )
         if badge.lower() not in self.valid:
             return await ctx.send(warn)
 
@@ -156,6 +158,56 @@ class BadgeTools(commands.Cog):
             em = discord.Embed(colour=await ctx.embed_color())
             em.description = page
             em.set_footer(text=f"Found {total} users with {badge.replace('_', ' ').title()} badge")
+            embed_list.append(em)
+        if not embed_list:
+            return await ctx.send("No results.")
+        elif len(embed_list) == 1:
+            return await ctx.send(embed=embed_list[0])
+        else:
+            await menu(ctx, embed_list, DEFAULT_CONTROLS, timeout=60.0)
+
+    @commands.command()
+    @commands.is_owner()
+    @commands.guild_only()
+    @commands.bot_has_permissions(embed_links=True)
+    async def boosters(self, ctx: commands.Context):
+        """Returns the list of active boosters of the server."""
+
+        guild = ctx.guild
+
+        b_list = "{status}  {name}#{tag}"
+        all_boosters = [
+            b_list.format(
+                status=f"{self.status_emojis['mobile']}"
+                if usr.is_on_mobile()
+                else f"{self.status_emojis['streaming']}"
+                if any(
+                    a.type is discord.ActivityType.streaming
+                    for a in usr.activities
+                )
+                else f"{self.status_emojis['online']}"
+                if usr.status.name == "online"
+                else f"{self.status_emojis['offline']}"
+                if usr.status.name == "offline"
+                else f"{self.status_emojis['dnd']}"
+                if usr.status.name == "dnd"
+                else f"{self.status_emojis['away']}",
+                name=usr.name,
+                tag=usr.discriminator,
+            )
+            for usr in sorted(guild.premium_subscribers, key=lambda x: x.premium_since)
+        ]
+        output = "\n".join(all_boosters)
+        footer = (
+            f"This server currently has {guild.premium_subscription_count} boosts "
+            f"thanks to these {len(guild.premium_subscribers)} awesome people! ❤️"
+        )
+
+        embed_list = []
+        for page in pagify(output, ["\n"], page_length=1000):
+            em = discord.Embed(colour=await ctx.embed_color())
+            em.description = page
+            em.set_footer(text=footer)
             embed_list.append(em)
         if not embed_list:
             return await ctx.send("No results.")
