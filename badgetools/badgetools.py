@@ -109,7 +109,6 @@ class BadgeTools(commands.Cog):
         await ctx.send(embed=e)
 
     @commands.command()
-    @commands.is_owner()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
     async def inbadge(self, ctx: commands.Context, badge: str):
@@ -167,7 +166,6 @@ class BadgeTools(commands.Cog):
             await menu(ctx, embed_list, DEFAULT_CONTROLS, timeout=60.0)
 
     @commands.command()
-    @commands.is_owner()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
     async def boosters(self, ctx: commands.Context):
