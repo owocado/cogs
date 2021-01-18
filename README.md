@@ -5,4 +5,5 @@ This serves as a cog repo for my own mods/created cogs. All credits belongs to t
 
 ## Credits
 
-roleplay - [Jintaku](https://github.com/lionirdeadman) a.k.a Lionirdeadman#7572
+* `roleplay. -` [Jintaku](https://github.com/lionirdeadman) a.k.a Lionirdeadman#7572
+* `timer.... -` mod of RemindMe cog by PhasecoreX (for my personal use) 
