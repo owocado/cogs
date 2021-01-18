@@ -147,7 +147,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
             await self._send_non_existant_msg(ctx, timer_id)
             return
         try:
-            time_delta = parse_timedelta(time, minimum=timedelta(minutes=1))
+            time_delta = parse_timedelta(time, maximum=timedelta(hours=24), minimum=timedelta(minutes=1))
             if not time_delta:
                 await ctx.send_help()
                 return
@@ -193,7 +193,10 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
         else:
             try:
                 time_delta = parse_timedelta(
-                    time, minimum=timedelta(minutes=2), allowed_units=["hours", "minutes"]
+                    time,
+                    maximum=timedelta(hours=24),
+                    minimum=timedelta(minutes=2),
+                    allowed_units=["hours", "minutes"]
                 )
                 if not time_delta:
                     await ctx.send_help()
@@ -399,6 +402,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
                 try:
                     parsed = parse_timedelta(
                         testing_text,
+                        maximum=timedelta(hours=24),
                         minimum=timedelta(minutes=2),
                         allowed_units=["hours", "minutes"],
                     )
@@ -408,7 +412,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
                         f"For the repeating timers, {orig_message}. "
                     )
             else:
-                parsed = parse_timedelta(testing_text, minimum=timedelta(minutes=1))
+                parsed = parse_timedelta(testing_text, maximum=timedelta(hours=24), minimum=timedelta(minutes=1))
             if parsed != result:
                 result = parsed
             else:
