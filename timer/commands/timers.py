@@ -108,7 +108,6 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
             name=f"Timers for {author.display_name}",
             icon_url=str(author.avatar_url),
         )
-        embed.set_thumbnail(url=author.avatar_url)
         current_time_seconds = int(current_time.time())
         for timer in to_send:
             delta = timer["FUTURE"] - current_time_seconds
