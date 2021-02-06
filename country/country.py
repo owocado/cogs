@@ -53,18 +53,20 @@ class Country(commands.Cog):
             embed.title = data["name"]
             embed.set_footer(text="Powered by REST Countries API!")
             embed.add_field(name="Population", value=humanize_number(data["population"]))
-            embed.add_field(name="Calling Code", value=data["callingCodes"][0])
-            embed.add_field(name="Capital", value=data["capital"])
+            embed.add_field(name="Calling Code", value=f"\u200b{data['callingCodes'][0]}")
+            embed.add_field(name="Capital", value=f"\u200b{data['capital']}")
             embed.add_field(name="Currency", value=data["currencies"][0]["name"])
             embed.add_field(
                 name="Region / Subregion",
                 value=f"{data.get('region', 'None')} / {data.get('subregion', 'None')}",
             )
             embed.add_field(name="Top Level Domain", value=data["topLevelDomain"][0])
-            embed.add_field(name="GINI Index", value=data.get("gini", "None"))
+            if data["gini"] is not None:
+                embed.add_field(name="GINI Index", value=data.get("gini", "None"))
             embed.add_field(name="Demonym", value=data.get("demonym", "None"))
             embed.add_field(name="Native Name", value=data.get("nativeName", "None"))
-            embed.add_field(name="Approx. Area", value=f"{humanize_number(data['area'])} km²", inline=False)
+            if data["area"] is not None:
+                embed.add_field(name="Approx. Area", value=f"{humanize_number(data['area'])} km²", inline=False)
             tzones = ", ".join(x for x in data["timezones"])
             embed.add_field(name="Timezones", value=f"{tzones}", inline=False)
             if data["borders"]:
