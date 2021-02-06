@@ -73,7 +73,8 @@ class Country(commands.Cog):
             if data["altSpellings"]:
                 altnames = ", ".join(x for x in data["altSpellings"])
                 embed.add_field(name="Other Names", value=f"{altnames}", inline=False)
-            embed.add_field(name="Part of Trade Bloc", value=data["regionalBlocs"][0]["name"], inline=False)
+            if data["regionalBlocs"]:
+                embed.add_field(name="Part of Trade Bloc", value=data["regionalBlocs"][0]["name"], inline=False)
             embed.set_thumbnail(url=f"https://www.countryflags.io/{data['alpha2Code']}/flat/64.png")
             embed_list.append(embed)
 
