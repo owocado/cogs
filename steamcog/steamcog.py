@@ -12,10 +12,10 @@ RequestType = Literal["discord_deleted_user", "owner", "user", "user_strict"]
 
 
 class SteamCog(commands.Cog):
-    """Various commands to show the stats about users' profile badges."""
+    """Show various info about a Steam game."""
 
     __author__ = ["siu3334", "<@306810730055729152>"]
-    __version__ = "0.0.3"
+    __version__ = "0.0.4"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -52,7 +52,7 @@ class SteamCog(commands.Cog):
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
     async def steam(self, ctx: commands.Context, query: str):
-        """Shows various info about a country."""
+        """Show various info about a Steam game."""
 
         appid = await self.fetch_appid(query)
 
