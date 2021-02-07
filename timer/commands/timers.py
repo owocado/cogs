@@ -100,10 +100,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
             await self._send_message(ctx, "You don't have any upcoming timers.")
             return
 
-        embed = discord.Embed(
-            # title=f"Timers for {author.display_name}",
-            color=await ctx.embed_color(),
-        )
+        embed = discord.Embed(color=await ctx.embed_color())
         embed.set_author(
             name=f"Timers for {author.display_name}",
             icon_url=str(author.avatar_url),
@@ -111,18 +108,18 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
         current_time_seconds = int(current_time.time())
         for timer in to_send:
             delta = timer["FUTURE"] - current_time_seconds
-            timer_title = "ID# {} — {}".format(
+            timer_title = "ID# {} | {}".format(
                 timer["USER_TIMER_ID"],
-                timer["TIMER"]
+                timer["TIMER"],
             )
-            timer_text = (
-                "In {}".format(humanize_timedelta(seconds=delta))
+            timer_text = "In {}".format(
+                humanize_timedelta(seconds=delta)
                 if delta > 0
-                else "Now!",
+                else "Now!"
             )
             if "REPEAT" in timer and timer["REPEAT"]:
-                timer_title = (
-                    f"{timer_title.rstrip('!')}, "
+                timer_text = (
+                    f"{timer_text.rstrip('!')}, "
                     f"repeating every {humanize_timedelta(seconds=timer['REPEAT'])}"
                 )
             embed.add_field(
