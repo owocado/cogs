@@ -45,8 +45,11 @@ class SteamCog(commands.Cog):
             async with session.get(url) as resp:
                 data = await resp.json()
 
-        appid = data["items"][0]["id"]
-        return appid
+        if data["total"] != 0:
+            appid = data["items"][0]["id"]
+            return appid
+        else:
+            return None
 
     @commands.command()
     @commands.guild_only()
@@ -55,6 +58,9 @@ class SteamCog(commands.Cog):
         """Show various info about a Steam game."""
 
         appid = await self.fetch_appid(query)
+        
+        if appid is None:
+            return await ctx.send("Your query returned no results or there was an error in the process.")
 
         async with aiohttp.ClientSession() as session:
             async with session.get(f"https://store.steampowered.com/api/appdetails?appids={appid}") as resp:
@@ -63,17 +69,21 @@ class SteamCog(commands.Cog):
         embed_list = []
         embed = discord.Embed(
             title=data[f"{appid}"]["data"]["name"],
+            description=data[f"{appid}"]["data"].get("short_description", "No description."),
             colour=await ctx.embed_color(),
         )
         embed.url = f"https://store.steampowered.com/app/{appid}"
         embed.set_image(url=str(data[f"{appid}"]["data"]["header_image"]).replace('\\', ''))
-        if data[f"{appid}"]["data"]["price_overview"]:
+        if data[f"{appid}"]["data"].get("price_overview") is not None:
             embed.add_field(name="Game Price", value=data[f"{appid}"]["data"]["price_overview"]["final_formatted"])
         embed.add_field(name="Release Date", value=data[f"{appid}"]["data"]["release_date"]["date"])
-        embed.add_field(name="Metascore", value=data[f"{appid}"]["data"]["metacritic"]["score"])
-        embed.add_field(name="Recommendations", value=humanize_number(data[f"{appid}"]["data"]["recommendations"]["total"]))
-        embed.add_field(name="Achievements", value=data[f"{appid}"]["data"]["achievements"]["total"])
-        if data[f"{appid}"]["data"]["dlc"]:
+        if data[f"{appid}"]["data"].get("metacritic") is not None:
+            embed.add_field(name="Metascore", value=data[f"{appid}"]["data"]["metacritic"]["score"])
+        if data[f"{appid}"]["data"].get("recommendations") is not None:
+            embed.add_field(name="Recommendations", value=humanize_number(data[f"{appid}"]["data"]["recommendations"]["total"]))
+        if data[f"{appid}"]["data"].get("achievements") is not None:
+            embed.add_field(name="Achievements", value=data[f"{appid}"]["data"]["achievements"]["total"])
+        if data[f"{appid}"]["data"].get("dlc") is not None:
             embed.add_field(name="DLC Count", value=len(data[f"{appid}"]["data"]["dlc"]))
         embed.add_field(name="Developers", value=data[f"{appid}"]["data"]["developers"][0])
         embed_list.append(embed)
