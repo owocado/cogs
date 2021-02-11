@@ -17,7 +17,7 @@ RequestType = Literal["discord_deleted_user", "owner", "user", "user_strict"]
 class DoesNotExist(commands.Cog):
     """Various commands to show the stats about users' profile badges."""
 
-    __author__ = ["siu3334", "<@306810730055729152>"]
+    __author__ = "siu3334", "<@306810730055729152>"
     __version__ = "0.0.7"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
