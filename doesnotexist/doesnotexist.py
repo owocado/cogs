@@ -51,7 +51,7 @@ class DoesNotExist(commands.Cog):
     async def aiartwork(self, ctx: commands.Context):
         """Responds with randomly AI generated artwork."""
         async with ctx.typing():
-            async with session.get("https://thisartworkdoesnotexist.com/") as resp:
+            async with self.session.get("https://thisartworkdoesnotexist.com/") as resp:
                 if resp.status == 200:
                     data = BytesIO(await resp.read())
                     data.name = "ai-artwork.jpg"
@@ -68,7 +68,7 @@ class DoesNotExist(commands.Cog):
     async def aicat(self, ctx: commands.Context):
         """Responds with randomly AI generated cat."""
         async with ctx.typing():
-            async with session.get("https://thiscatdoesnotexist.com/") as resp:
+            async with self.session.get("https://thiscatdoesnotexist.com/") as resp:
                 if resp.status == 200:
                     data = BytesIO(await resp.read())
                     data.name = "ai-kitty.jpg"
@@ -87,7 +87,7 @@ class DoesNotExist(commands.Cog):
         async with ctx.typing():
             rint = random.randint(0, 99999)
             link = f"http://thisfursonadoesnotexist.com/v2/jpgs/seed{rint}.jpg"
-            async with session.get(link) as resp:
+            async with self.session.get(link) as resp:
                 if resp.status == 200:
                     data = BytesIO(await resp.read())
                     data.name = "ai-fursona.jpg"
@@ -104,7 +104,7 @@ class DoesNotExist(commands.Cog):
     async def aihorse(self, ctx: commands.Context):
         """Responds with randomly AI generated horse."""
         async with ctx.typing():
-            async with session.get("https://thishorsedoesnotexist.com/") as resp:
+            async with self.session.get("https://thishorsedoesnotexist.com/") as resp:
                 if resp.status == 200:
                     data = BytesIO(await resp.read())
                     data.name = "ai-horse.jpg"
@@ -121,7 +121,7 @@ class DoesNotExist(commands.Cog):
     async def aiperson(self, ctx: commands.Context):
         """Responds with randomly AI generated human face."""
         async with ctx.typing():
-            async with session.get("https://thispersondoesnotexist.com/image") as resp:
+            async with self.session.get("https://thispersondoesnotexist.com/image") as resp:
                 if resp.status == 200:
                     data = BytesIO(await resp.read())
                     data.name = "ai-person.jpg"
@@ -141,7 +141,7 @@ class DoesNotExist(commands.Cog):
             x = random.randint(0, 20000)
             x = str(x).zfill(7)
             link = f"http://thisvesseldoesnotexist.s3-website-us-west-2.amazonaws.com/public/v2/fakes/{x}.jpg"
-            async with session.get(link) as resp:
+            async with self.session.get(link) as resp:
                 if resp.status == 200:
                     data = BytesIO(await resp.read())
                     data.name = "ai-vase.jpg"
@@ -160,7 +160,7 @@ class DoesNotExist(commands.Cog):
         async with ctx.typing():
             x = random.randint(0, 99999)
             link = f"https://www.thiswaifudoesnotexist.net/example-{x}.jpg"
-            async with session.get(link) as resp:
+            async with self.session.get(link) as resp:
                 if resp.status == 200:
                     data = BytesIO(await resp.read())
                     data.name = "ai-waifu.jpg"
