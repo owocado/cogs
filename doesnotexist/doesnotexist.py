@@ -8,8 +8,6 @@ from typing import Any, Dict, Literal
 import discord
 from redbot.core import checks, commands
 from redbot.core.bot import Red
-from redbot.core.utils.chat_formatting import humanize_number, pagify
-from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 RequestType = Literal["discord_deleted_user", "owner", "user", "user_strict"]
 
@@ -17,7 +15,7 @@ RequestType = Literal["discord_deleted_user", "owner", "user", "user_strict"]
 class DoesNotExist(commands.Cog):
     """Various commands to show the stats about users' profile badges."""
 
-    __author__ = "siu3334", "<@306810730055729152>"
+    __author__ = "siu3334 (<@306810730055729152>)"
     __version__ = "0.0.7"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
