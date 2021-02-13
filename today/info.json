@@ -1,0 +1,17 @@
+{
+    "name": "TodayInHistory",
+    "short": "Returns a random fact of what happened in history on today.",
+    "description": "Returns a random fact of what happened in history on today.",
+    "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
+    "install_msg": "This cog displays a random fact of what happened in history on today.",
+    "author": [
+        "siu3334"
+    ],
+    "required_cogs": {},
+    "requirements": [],
+    "tags": ["today", "history"],
+    "min_bot_version": "3.4.0",
+    "hidden": false,
+    "disabled": false,
+    "type": "COG"
+}
