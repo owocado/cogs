@@ -1,4 +1,5 @@
 import aiohttp
+from datetime import datetime
 from random import choice
 from typing import Any, Dict, Literal
 
@@ -57,6 +58,28 @@ class Today(commands.Cog):
                         em.title = f"On this day ({today}) ..."
                         em.url = str(link)
                         em.description = f"\u200b\nIn {year} : {text}\n\u200b"
+                        return await ctx.send(embed=em)
+                    else:
+                        await ctx.send(f"API returned status code: {resp.status}")
+
+    @commands.command(aliases=["doodle"])
+    @commands.bot_has_permissions(embed_links=True)
+    @commands.cooldown(1, 60, commands.BucketType.member)
+    async def googledoodle(self, ctx: commands.Context):
+        """Responds with today's Google doodle."""
+        month = datetime.utcnow().month
+        year = datetime.utcnow().year
+        async with ctx.typing():
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"https://www.google.com/doodles/json/{year}/{month}") as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        title = data[0].get("title", "None")
+                        doodle = data[0].get("high_res_url")
+
+                        em = discord.Embed(colour=await ctx.embed_color())
+                        em.title = str(title)
+                        em.set_image(url=f"https:{doodle}")
                         return await ctx.send(embed=em)
                     else:
                         await ctx.send(f"API returned status code: {resp.status}")
