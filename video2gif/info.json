@@ -3,7 +3,7 @@
     "short": "Convert video to GIF.",
     "description": "Converts provided MP4 video attachment to GIF.",
     "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
-    "install_msg": "This cog converts provided MP4 video attachment to GIF. This cog requires FFMPEG, moviepy (https://github.com/Zulko/moviepy), and imagemagick (Please read this for how to install imagemagick from source <https://github.com/TrustyJAID/Trusty-cogs/tree/master/notsobot>) to work. This cog downloads attachment video which is then saved locally and generates GIF. Processed videos are deleted after uploading. This cog may consume heavy resources rendering videos.",
+    "install_msg": "This cog converts provided MP4 video attachment to GIF. This cog requires FFMPEG, moviepy (https://github.com/Zulko/moviepy). This cog downloads attachment video which is then saved locally and generates GIF. Processed videos are deleted after uploading. This cog may consume heavy resources rendering videos.",
     "author": [
         "siu3334"
     ],

@@ -46,7 +46,7 @@ class VideoToGIF(commands.Cog):
                     "message", check=MessagePredicate.same_context(ctx), timeout=30
                 )
             except asyncio.TimeoutError:
-                await ctx.send("You took too long to upload a list.")
+                await ctx.send("You took too long to upload a file.")
                 return
             if not message.attachments:
                 await ctx.send("You have cancelled the upload process.")
@@ -79,12 +79,13 @@ class VideoToGIF(commands.Cog):
                 # log.error("Error generating GIF from video.", exc_info=True)
                 await ctx.send("It took too long to convert the video to GIF. :(")
                 return
-            fp = cog_data_path(self) / f"{ctx.message.id}final.gif"
+            fp = cog_data_path(self) / f"{ctx.message.id}_final.gif"
             mp4 = cog_data_path(self) / f"video0.mp4"
             file = discord.File(str(fp), filename="final.gif")
             try:
                 await ctx.send(files=[file])
-            except Exception:
+            except (discord.errors.HTTPException, FileNotFoundError):
+                await ctx.send("Failed to upload GIF. Request entity too large.")
                 log.error("Error sending converted GIF to destination channel.", exc_info=True)
                 pass
             try:
@@ -96,6 +97,6 @@ class VideoToGIF(commands.Cog):
     def make_gif(self, u_id: int) -> bool:
         """video to GIF conversion"""
         clip = VideoFileClip(str(cog_data_path(self)) + "/video0.mp4")
-        clip.write_gif(str(cog_data_path(self)) + f"/{u_id}final.gif", fps=60)
+        clip.write_gif(str(cog_data_path(self)) + f"/{u_id}_final.gif", program='ffmpeg', opt='optimizeplus', fuzz=10)
         clip.close()
         return True
