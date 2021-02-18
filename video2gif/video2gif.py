@@ -96,8 +96,8 @@ class VideoToGIF(commands.Cog):
 
     def make_gif(self, u_id: int) -> bool:
         """video to GIF conversion"""
-        clip = VideoFileClip(str(cog_data_path(self)) + "/video0.mp4")
-        clip = clip.resize(0.3)
-        clip.write_gif(str(cog_data_path(self)) + f"/{u_id}_final.gif", program='ffmpeg', opt='optimizeplus', fuzz=10)
+        clip = VideoFileClip(str(cog_data_path(self)) + "/video0.mp4", audio=False)
+        clip = clip.resize(0.5)
+        clip.write_videofile(str(cog_data_path(self)) + f"/{u_id}_final.gif", fps=10, codec='gif', audio=False, preset='slower', threads=2, logger=None)
         clip.close()
         return True
