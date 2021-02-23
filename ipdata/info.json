@@ -8,9 +8,7 @@
         "siu3334"
     ],
     "required_cogs": {},
-    "requirements": [
-        "ipdata"
-    ],
+    "requirements": [],
     "tags": ["ip", "whois", "ipdata", "traceroute"],
     "min_bot_version": "3.4.0",
     "hidden": false,
