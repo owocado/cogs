@@ -1,13 +1,10 @@
-import logging
-
 from ipdata import ipdata
 from typing import Any, Dict, Literal
 
 import aiohttp
 import discord
-from redbot.core import checks, commands
-
-log = logging.getLogger("red.owo-cogs.ipdata")
+from redbot.core import commands
+from redbot.core.bot import Red
 
 RequestType = Literal["discord_deleted_user", "owner", "user", "user_strict"]
 
