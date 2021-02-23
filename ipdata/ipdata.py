@@ -46,7 +46,7 @@ class IPData(commands.Cog):
     @commands.is_owner()
     @commands.check(tokencheck)
     @commands.command(aliases=["ipdata"])
-    @checks.bot_has_permissions(embed_links=True)
+    @commands.bot_has_permissions(embed_links=True)
     async def ip(self, ctx: commands.Context, ip: str):
         """Returns various info about provided IP."""
         api = await ctx.bot.get_shared_api_tokens("ipdata")
