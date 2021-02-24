@@ -3,38 +3,54 @@ import functools
 import logging
 import os
 
+from typing import Any, Dict, Literal
+
 import aiohttp
 import discord
 import youtube_dl
 from moviepy.editor import VideoFileClip
-from redbot.core import checks, commands
+from redbot.core import commands
+from redbot.core.bot import Red
 from redbot.core.data_manager import cog_data_path
 from redbot.core.utils.predicates import MessagePredicate
 
 log = logging.getLogger("red.owo-cogs.video2gif")
 
+RequestType = Literal["discord_deleted_user", "owner", "user", "user_strict"]
+
 
 class VideoToGIF(commands.Cog):
-    """Converts given video to GIF"""
+    """Converts given MP4 video attachment to GIF file format."""
 
-    __author__ = "siu3334"
-    __version__ = "0.1.0"
+    __author__ = ["siu3334", "TrustyJAID"]
+    __version__ = "0.1.1"
 
     def __init__(self, bot):
         self.bot = bot
+
+    # credits to jack1142
+    async def red_get_data_for_user(self, *, user_id: int) -> Dict[str, Any]:
+        # this cog does not story any data
+        return {}
+
+    async def red_delete_data_for_user(
+        self, *, requester: RequestType, user_id: int
+    ) -> None:
+        # this cog does not story any data
+        pass
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """
         Thanks Sinbad!
         """
         pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\n\nCog Version: {self.__version__}"
+        return f"{pre_processed}\n\nAuthors: {', '.join(self.__author__)}\nCog Version: {self.__version__}"
 
     @commands.command()
     @commands.is_owner()
     @commands.cooldown(1, 120, commands.BucketType.guild)
     @commands.max_concurrency(1, commands.BucketType.guild)
-    @checks.bot_has_permissions(attach_files=True)
+    @commands.bot_has_permissions(attach_files=True)
     async def video2gif(self, ctx: commands.Context):
         """Converts given video attachment to GIF."""
 
