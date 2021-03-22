@@ -67,13 +67,13 @@ class Country(commands.Cog):
             embed.add_field(name="Native Name", value=data.get("nativeName", "None"))
             if data["area"] is not None:
                 embed.add_field(name="Approx. Area", value=f"{humanize_number(data['area'])} km²", inline=False)
-            tzones = ", ".join(x for x in data["timezones"])
+            tzones = ", ".join(data["timezones"])
             embed.add_field(name="Timezones", value=f"{tzones}", inline=False)
             if data["borders"]:
-                borders = ", ".join(x for x in data["borders"])
+                borders = ", ".join(data["borders"])
                 embed.add_field(name="Shares borders with", value=f"{borders}", inline=False)
             if data["altSpellings"]:
-                altnames = ", ".join(x for x in data["altSpellings"])
+                altnames = ", ".join(data["altSpellings"])
                 embed.add_field(name="Other Names", value=f"{altnames}", inline=False)
             if data["regionalBlocs"]:
                 embed.add_field(name="Part of Trade Bloc", value=data["regionalBlocs"][0]["name"], inline=False)

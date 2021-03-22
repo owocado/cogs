@@ -98,10 +98,11 @@ class BadgeTools(commands.Cog):
             async for flag in AsyncIter(usr.public_flags.all()):
                 count[flag.name] += 1
 
-        msg = ""
         pad = len(str(len(ctx.guild.members)))
-        for k, v in sorted(count.items()):
-            msg += f"{self.badge_emojis[k]} `{str(v).zfill(pad)}` : {k.replace('_', ' ').title()}\n"
+        msg = "".join(
+            f"{self.badge_emojis[k]} `{str(v).zfill(pad)}` : {k.replace('_', ' ').title()}\n"
+            for k, v in sorted(count.items())
+        )
 
         e = discord.Embed(colour=await ctx.embed_color())
         e.set_footer(text=f"For Guild: {guild.name}", icon_url=str(guild.icon_url))
@@ -116,7 +117,7 @@ class BadgeTools(commands.Cog):
 
         guild = ctx.guild
 
-        badgeslist = ", ".join(m for m in self.valid)
+        badgeslist = ", ".join(self.valid)
         warn = (
             f"That is invalid Discord user profile badge name!"
             f" It needs to be either of:\n\n{badgeslist}"
@@ -149,7 +150,7 @@ class BadgeTools(commands.Cog):
                             tag=usr.discriminator,
                         )
                     )
-        output = "".join(m for m in list_of)
+        output = "".join(list_of)
         total = len([m for m in list_of])
 
         embed_list = []

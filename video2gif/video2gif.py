@@ -68,12 +68,10 @@ class VideoToGIF(commands.Cog):
                 await ctx.send("You have cancelled the upload process.")
                 return
             parsedfile = message.attachments[0].url
-            if not parsedfile.endswith("mp4"):
-                return await ctx.send("Only attachment with .MP4 extension is supported.")
         else:
             parsedfile = ctx.message.attachments[0].url
-            if not parsedfile.endswith("mp4"):
-                return await ctx.send("Only attachment with .MP4 extension is supported.")
+        if not parsedfile.endswith("mp4"):
+            return await ctx.send("Only attachment with .MP4 extension is supported.")
         # Below entire code snippet till end taken from
         # https://github.com/TrustyJAID/Trusty-cogs/blob/master/crabrave/crabrave.py#L98
         # Thank you Trusty senpai <3
@@ -103,7 +101,6 @@ class VideoToGIF(commands.Cog):
             except (discord.errors.HTTPException, FileNotFoundError):
                 await ctx.send("Failed to upload GIF. Request entity too large.")
                 log.error("Error sending converted GIF to destination channel.", exc_info=True)
-                pass
             try:
                 os.remove(fp)
                 os.remove(mp4)

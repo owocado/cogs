@@ -46,8 +46,7 @@ class SteamCog(commands.Cog):
                 data = await resp.json()
 
         if data["total"] != 0:
-            appid = data["items"][0]["id"]
-            return appid
+            return data["items"][0]["id"]
         else:
             return None
 
