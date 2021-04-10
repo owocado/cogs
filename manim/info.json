@@ -1,0 +1,17 @@
+{
+  "author": [
+    "<@306810730055729152>",
+    "the Manim Community Developers"
+  ],
+  "install_msg": "This cog lets you render animations through Manim python animation engine with code snippets.",
+  "name": "Manim",
+  "disabled": false,
+  "short": "Render animations with Manim.",
+  "description": "Render animations with Manim animation engine.",
+  "tags": [
+    "manim",
+    "manimate"
+  ],
+  "min_bot_version": "3.4.0",
+  "hidden": true
+}
