@@ -29,4 +29,4 @@ Then to add repo and install my cogs, do:
 
 
 ## Contact
-I have my own [small discord server](https://discord.gg/NGHjxBT) if you need help, but you can also contact me in Red main server and cog support server or in DM.
+I have my own [small discord server](https://discord.gg/YjFQSFqjJ3) if you need help, but you can also contact me in Red main server and cog support server or in DM.
