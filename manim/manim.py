@@ -34,10 +34,10 @@ class Manim(commands.Cog):
 
         Supported tags:
         ```
-            -t, --transparent, -i, --save_as_gif, -s, --save_last_frame
+        -t, --transparent, -i, --save_as_gif, -s, --save_last_frame
         ```
         Example:
-        ```
+        ```py
         !manimate -s
         def construct(self):
             self.play(ReplacementTransform(Square(), Circle()))
