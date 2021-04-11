@@ -102,7 +102,7 @@ class Manim(commands.Cog):
                 try:  # now it's getting serious: get docker involved
                     reply_args = None
                     container_stderr = dockerclient.containers.run(
-                        image="manimcommunity/manim:latest",
+                        image="manimcommunity/manim:stable",
                         volumes={tmpdirname: {"bind": "/manim/", "mode": "rw"}},
                         command=f"timeout 120 manim /manim/script.py -qm --disable_caching --progress_bar False -o scriptoutput {cli_flags}",
                         user=os.getuid(),
