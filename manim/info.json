@@ -3,7 +3,7 @@
     "<@306810730055729152>",
     "the Manim Community Developers"
   ],
-  "install_msg": "This cog lets you render animations through Manim python animation engine with code snippets.",
+  "install_msg": "This cog lets you render animations through Manim python animation engine with code snippets.\nYou can find out how to setup Manim here: https://github.com/jenkins420/cowogs/blob/main/manim/README.md",
   "name": "Manim",
   "disabled": false,
   "short": "Render animations with Manim.",
@@ -13,7 +13,7 @@
     "manimate"
   ],
   "requirements": ["docker"],
-  "min_bot_version": "3.4.0",
+  "min_bot_version": "3.4.8",
   "hidden": true,
   "type": "COG"
 }
