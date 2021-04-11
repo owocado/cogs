@@ -12,7 +12,7 @@
     "manim",
     "manimate"
   ],
-  "requirements": ["docker", "manim"],
+  "requirements": ["docker"],
   "min_bot_version": "3.4.0",
   "hidden": true,
   "type": "COG"
