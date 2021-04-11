@@ -25,6 +25,7 @@ class Manim(commands.Cog):
         self.bot = bot
 
     @commands.guild_only()
+    @commands.is_owner()
     @commands.command(aliases=["manim"])
     @commands.bot_has_permissions(attach_files=True)
     async def manimate(self, ctx: commands.Context, *, arg: str):
