@@ -86,12 +86,8 @@ class RedditInfo(commands.Cog):
             data = data.get("data")
             if data.get("over18") and not ctx.message.channel.is_nsfw():
                 return await ctx.send("That subreddit is marked NSFW. Search aborted in SFW channel.")
-            if data.get("primary_color") != "":
-                color = data.get("primary_color")
-            else:
-                color = await ctx.embed_colour()
             if not details:
-                em = discord.Embed(colour=color)
+                em = discord.Embed(colour=discord.Colour.random())
                 em.title = data.get("url")
                 em.url = f"https://reddit.com{data.get('url')}"
                 em.description = data.get("public_description")
@@ -104,7 +100,7 @@ class RedditInfo(commands.Cog):
                 em.add_field(name="Subscribers", value=humanize_number(str(data.get("subscribers"))))
                 em.add_field(name="Active Users", value=humanize_number(str(data.get("active_user_count"))))
             else:
-                em = discord.Embed(colour=color)
+                em = discord.Embed(colour=discord.Colour.random())
                 em.title = data.get("url")
                 em.url = f"https://reddit.com{data.get('url')}"
                 em.description = data.get("public_description")
