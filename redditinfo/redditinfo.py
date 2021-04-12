@@ -57,10 +57,8 @@ class RedditInfo(commands.Cog):
                 em.add_field(name="Awarder Karma", value=humanize_number(str(data.get("awarder_karma"))))
                 em.add_field(name="Comment Karma", value=humanize_number(str(data.get("comment_karma"))))
                 em.add_field(name="Link Karma", value=humanize_number(str(data.get("link_karma"))))
-                em.add_field(name="User has Reddit Premium?", value="Yes" if data.get("has_subscribed") else "No")
+                em.add_field(name="has Reddit Premium?", value="Yes" if data.get("is_gold") else "No")
                 em.add_field(name="Verified Email?", value="Yes" if data.get("has_verified_email") else "No")
-                em.add_field(name="Accept Chats?", value="Yes" if data.get("accept_chats") else "No")
-                em.add_field(name="Accept PMs?", value="Yes" if data.get("accept_pms") else "No")
                 em.add_field(name="Is a subreddit mod?", value="Yes" if data.get("is_mod") else "No")
                 if data.get("is_employee"):
                     em.set_footer(text="This user is a Reddit employee.")
