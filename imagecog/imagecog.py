@@ -18,7 +18,7 @@ async def tokencheck(ctx):
 
 
 class ImageCog(commands.Cog):
-	"""Various fun image generation commands."""
+    """Various fun image generation commands."""
 
     __author__ = "<@306810730055729152>"
     __version__ = "0.0.1"
@@ -28,8 +28,8 @@ class ImageCog(commands.Cog):
         pre_processed = super().format_help_for_context(ctx)
         return f"{pre_processed}\n\nAuthor: {self.__author__}\nCog Version: {self.__version__}"
 
-	def __init__(self, bot):
-		self.bot = bot
+    def __init__(self, bot):
+        self.bot = bot
         self.session = aiohttp.ClientSession()
 
     def cog_unload(self):
