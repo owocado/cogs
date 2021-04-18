@@ -1,0 +1,20 @@
+{
+  "author": ["<@306810730055729152>"],
+  "install_msg": "This cog contains some random fun image generation commands. I hope you will enjoy them.\n\n **NOTE: This step is completely optional.**\n This cog contains `eject` and `petpet` commands, which utilises premium endpoints of <https://some-random-api.ml> and hence (as of now) they require an API key.\n You can get one by joining their support server at https://discord.gg/tTUMWFd and first sending `-vote` command in their <#486512896055050240> channel which will prompt you to upvote their server on top.gg.\n Once you have upvoted so, you can claim your API key by sending `-claim` command in that same channel. A bot should DM you your API key.\n Each time you upvote their server on top.gg (at minimum 12 hours interval), you receive a claim of **5 days** of their API premium, which you can claim with `-claim` in their server.\n\n Once you have received the API key, you can do:\n```[p]set api srapi api_key <your_api_key>\n```\n These 2 commands will remain hidden from help menu/unavailable until you set the API key, but remaining commands of this cog does not require any API key.",
+  "name": "ImageCog",
+  "disabled": false,
+  "short": "Some random fun image generation commands.",
+  "description": "Some random fun image generation commands.",
+  "tags": [
+    "dicebear",
+    "adorable",
+    "shields",
+    "amongus",
+    "petpet",
+    "imagecog"
+  ],
+  "end_user_data_statement": "This cog does not persistently store any data or metadata about users.",
+  "min_bot_version": "3.4.8",
+  "hidden": false,
+  "type": "COG"
+}
