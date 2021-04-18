@@ -27,7 +27,7 @@ class DoesNotExist(commands.Cog):
         self.bot = bot
         self.session = aiohttp.ClientSession()
 
-    def cog_unload():
+    def cog_unload(self):
         self.bot.loop.create_task(self.session.close())
 
     # credits to jack1142
