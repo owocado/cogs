@@ -32,6 +32,7 @@ class SteamCog(commands.Cog):
         if self.emojis:
             self.emojis.cancel()
 
+    # Credits to flare for providing this logic ❤️
     async def init(self):
         await self.bot.wait_until_ready()
         self.platform_emojis = {
@@ -41,7 +42,7 @@ class SteamCog(commands.Cog):
         }
 
     # Logic taken from https://github.com/TrustyJAID/Trusty-cogs/blob/master/notsobot/notsobot.py#L212
-    # All credits to Trusty <3, I do not claim any credit for this.
+    # All credits to Trusty ❤️, I do not claim any credit for this.
     async def fetch_steam_game_id(self, ctx: commands.Context, query: str):
         url = "https://store.steampowered.com/api/storesearch"
         params = {"cc": "us", "l": "en", "term": query}
@@ -176,11 +177,11 @@ class SteamCog(commands.Cog):
             )
             platforms = ""
             if appdata.get("platforms").get("windows"):
-                platforms += windows_emoji
+                platforms += f"{windows_emoji}"
             if appdata.get("platforms").get("linux"):
-                platforms += linux_emoji
+                platforms += f" {linux_emoji}"
             if appdata.get("platforms").get("mac"):
-                platforms += macos_emoji
+                platforms += f" {macos_emoji}"
             embed.add_field(name="Supported Platforms (OS)", value=platforms)
         if appdata.get("genres"):
             genres = ", ".join([m.get("description") for m in appdata.get("genres")])
