@@ -1,5 +1,8 @@
 import aiohttp
+import io
 import json
+import re
+import yarl
 
 from datetime import datetime
 
@@ -7,14 +10,86 @@ import discord
 from redbot.core import commands
 from redbot.core.utils.chat_formatting import humanize_number
 
+
+# All credits, rights and copyrights for below class code belongs to Rapptz (Danny#0007)
+# Original source: https://github.com/Rapptz/RoboDanny/blob/rewrite/cogs/buttons.py#L68
+# I do not claim any credits for this.
+# The original LICENSE is available at https://github.com/Rapptz/RoboDanny/blob/rewrite/LICENSE.txt
+class RedditMediaURL:
+    VALID_PATH = re.compile(r'/r/[A-Za-z0-9_]+/comments/[A-Za-z0-9]+(?:/.+)?')
+
+    def __init__(self, url):
+        self.url = url
+        self.filename = url.parts[1] + '.mp4'
+
+    @classmethod
+    async def convert(cls, ctx, argument):
+        try:
+            url = yarl.URL(argument)
+        except Exception as e:
+            raise commands.BadArgument('Not a valid URL.')
+
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.72 Safari/537.36'
+        }
+        await ctx.trigger_typing()
+        if url.host == 'v.redd.it':
+            # have to do a request to fetch the 'main' URL.
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=headers) as resp:
+                    url = resp.url
+
+        is_valid_path = url.host.endswith('.reddit.com') and cls.VALID_PATH.match(url.path)
+        if not is_valid_path:
+            raise commands.BadArgument('Not a reddit URL.')
+
+        # Now we go the long way
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url / '.json', headers=headers) as resp:
+                if resp.status != 200:
+                    raise commands.BadArgument(f'Reddit API failed with {resp.status}.')
+
+                data = await resp.json()
+                try:
+                    submission = data[0]['data']['children'][0]['data']
+                except (KeyError, TypeError, IndexError):
+                    raise commands.BadArgument('Could not fetch submission.')
+
+                try:
+                    media = submission['media']['reddit_video']
+                except (KeyError, TypeError):
+                    try:
+                        # maybe it's a cross post
+                        crosspost = submission['crosspost_parent_list'][0]
+                        media = crosspost['media']['reddit_video']
+                    except (KeyError, TypeError, IndexError):
+                        raise commands.BadArgument('Could not fetch media information.')
+
+                try:
+                    fallback_url = yarl.URL(media['fallback_url'])
+                except KeyError:
+                    raise commands.BadArgument('Could not fetch fall back URL.')
+
+                return cls(fallback_url)
+
+
 class RedditInfo(commands.Cog):
-    """Fetch basic info about Reddit user accounts and subreddits."""
+    """Fetch various info about Reddit user accounts and subreddits, or fetch a video from a reddit post."""
+
+    __author__ = ["Rapptz (Danny#0007)", "឵឵❤#0055 (<@306810730055729152>)"]
+    __version__ = "0.2.1"
+
+    def format_help_for_context(self, ctx: commands.Context) -> str:
+        """Thanks Sinbad!"""
+        pre_processed = super().format_help_for_context(ctx)
+        return f"{pre_processed}\n\nAuthors: {', '.join(self.__author__)}\nCog Version: {self.__version__}"
 
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
+    @commands.cooldown(1, 5, commands.BucketType.member)
     async def reddituser(self, ctx: commands.Context, user: str, details: bool = False):
         """Fetch basic info about a Reddit user account.
 
@@ -67,7 +142,8 @@ class RedditInfo(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
-    async def subreddit(self, ctx: commands.Context, subr: str, details: bool = False):
+    @commands.cooldown(1, 5, commands.BucketType.member)
+    async def subrinfo(self, ctx: commands.Context, subr: str, details: bool = False):
         """Fetch basic info about an existing subreddit.
 
         `details`: Shows more information when set to `True`.
@@ -131,3 +207,30 @@ class RedditInfo(commands.Cog):
                     em.add_field(name="Advertising whitelist status", value=data.get("whitelist_status"))
 
         await ctx.send(embed=em)
+
+    @commands.command()
+    @commands.bot_has_permissions(attach_files=True)
+    @commands.cooldown(1, 15, commands.BucketType.member)
+    async def vreddit(self, ctx: commands.Context, reddit_url: RedditMediaURL):
+        """Downloads a v.redd.it submission.
+
+        Regular reddit URLs or v.redd.it URLs are supported.
+        """
+
+        # This command and it's logic is imported from RoboDanny
+        # https://github.com/Rapptz/RoboDanny/blob/rewrite/cogs/buttons.py#L401
+        # to port for Red Discord bot cog compatibility.
+        # All credits to Rapptz for providing this logic and source code.
+        # I do not claim any credits or ownership for this command and it's respective logic.
+
+        filesize = ctx.guild.filesize_limit if ctx.guild else 8388608
+        async with aiohttp.ClientSession() as session:
+            async with session.get(reddit_url.url) as resp:
+                if resp.status != 200:
+                    return await ctx.send('Could not download video.')
+
+                if int(resp.headers['Content-Length']) >= filesize:
+                    return await ctx.send('Video is too big to be uploaded.')
+
+                data = await resp.read()
+                await ctx.send(file=discord.File(io.BytesIO(data), filename=reddit_url.filename))
