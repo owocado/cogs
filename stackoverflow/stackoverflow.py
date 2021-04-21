@@ -145,7 +145,7 @@ class StackOverflow(commands.Cog):
                     "You have exhausted your daily API calls quota. Please try again tomorrow."
                 )
             if len(items.get("items")) == 0:
-                return await ctx.send("No results")
+                return await ctx.send("Couldn't find any results.")
             embed_list = []
             for data in items.get("items"):
                 em = discord.Embed(color=await ctx.embed_colour())
@@ -244,7 +244,7 @@ class StackOverflow(commands.Cog):
                     "You have exhausted your daily API calls quota. Please try again tomorrow."
                 )
             if len(items.get("items")) == 0:
-                return await ctx.send("No results")
+                return await ctx.send("Couldn't find any results.")
             embed_list = []
             for data in items.get("items"):
                 em = discord.Embed(color=await ctx.embed_colour())
@@ -339,7 +339,7 @@ class StackOverflow(commands.Cog):
                     "You have exhausted your daily API calls quota. Please try again tomorrow."
                 )
             if len(items.get("items")) == 0:
-                return await ctx.send("No results")
+                return await ctx.send("Couldn't find any results.")
             embed_list = []
             for data in items.get("items"):
                 em = discord.Embed(color=await ctx.embed_colour())
@@ -434,7 +434,7 @@ class StackOverflow(commands.Cog):
                     "You have exhausted your daily API calls quota. Please try again tomorrow."
                 )
             if len(items.get("items")) == 0:
-                return await ctx.send("No results")
+                return await ctx.send("Couldn't find any results.")
             embed_list = []
             for data in items.get("items"):
                 em = discord.Embed(color=await ctx.embed_colour())
