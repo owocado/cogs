@@ -172,7 +172,7 @@ class StackOverflow(commands.Cog):
                 if data.get("last_edit_date") is not None:
                     edited_on = datetime.utcfromtimestamp(data.get("last_edit_date"))
                     edited_since = (ctx.message.created_at - edited_on).days
-                    revisions = f"[{since_created} days ago](https://stackoverflow.com/posts/{data.get('question_id')}/revisions)"
+                    revisions = f"[{edited_since} days ago](https://stackoverflow.com/posts/{data.get('question_id')}/revisions)"
                     em.add_field(
                         name="Question last edited on",
                         value=f"{edited_on.strftime('%d %b, %Y')} ({revisions})",
@@ -184,7 +184,7 @@ class StackOverflow(commands.Cog):
                 since_activity = (ctx.message.created_at - recent_activity_on).days
                 em.add_field(
                     name="Last activity on",
-                    value=f"{created_on.strftime('%d %b, %Y')} ({since_activity} days ago)",
+                    value=f"{recent_activity_on.strftime('%d %b, %Y')} ({since_activity} days ago)",
                     inline=False,
                 )
                 if data.get("score") > 0:
@@ -271,7 +271,7 @@ class StackOverflow(commands.Cog):
                 if data.get("last_edit_date") is not None:
                     edited_on = datetime.utcfromtimestamp(data.get("last_edit_date"))
                     edited_since = (ctx.message.created_at - edited_on).days
-                    revisions = f"[{since_created} days ago](https://{subdomain}.stackexchange.com/posts/{data.get('question_id')}/revisions)"
+                    revisions = f"[{edited_since} days ago](https://{subdomain}.stackexchange.com/posts/{data.get('question_id')}/revisions)"
                     em.add_field(
                         name="Question last edited on",
                         value=f"{edited_on.strftime('%d %b, %Y')} ({revisions})",
@@ -283,7 +283,7 @@ class StackOverflow(commands.Cog):
                 since_activity = (ctx.message.created_at - recent_activity_on).days
                 em.add_field(
                     name="Last activity on",
-                    value=f"{created_on.strftime('%d %b, %Y')} ({since_activity} days ago)",
+                    value=f"{recent_activity_on.strftime('%d %b, %Y')} ({since_activity} days ago)",
                     inline=False,
                 )
                 if data.get("score") > 0:
@@ -366,7 +366,7 @@ class StackOverflow(commands.Cog):
                 if data.get("last_edit_date") is not None:
                     edited_on = datetime.utcfromtimestamp(data.get("last_edit_date"))
                     edited_since = (ctx.message.created_at - edited_on).days
-                    revisions = f"[{since_created} days ago](https://askubuntu.com/posts/{data.get('question_id')}/revisions)"
+                    revisions = f"[{edited_since} days ago](https://askubuntu.com/posts/{data.get('question_id')}/revisions)"
                     em.add_field(
                         name="Question last edited on",
                         value=f"{edited_on.strftime('%d %b, %Y')} ({revisions})",
@@ -378,7 +378,7 @@ class StackOverflow(commands.Cog):
                 since_activity = (ctx.message.created_at - recent_activity_on).days
                 em.add_field(
                     name="Last activity on",
-                    value=f"{created_on.strftime('%d %b, %Y')} ({since_activity} days ago)",
+                    value=f"{recent_activity_on.strftime('%d %b, %Y')} ({since_activity} days ago)",
                     inline=False,
                 )
                 if data.get("score") > 0:
@@ -461,7 +461,7 @@ class StackOverflow(commands.Cog):
                 if data.get("last_edit_date") is not None:
                     edited_on = datetime.utcfromtimestamp(data.get("last_edit_date"))
                     edited_since = (ctx.message.created_at - edited_on).days
-                    revisions = f"[{since_created} days ago](https://superuser.com/posts/{data.get('question_id')}/revisions)"
+                    revisions = f"[{edited_since} days ago](https://superuser.com/posts/{data.get('question_id')}/revisions)"
                     em.add_field(
                         name="Question last edited on",
                         value=f"{edited_on.strftime('%d %b, %Y')} ({revisions})",
@@ -473,7 +473,7 @@ class StackOverflow(commands.Cog):
                 since_activity = (ctx.message.created_at - recent_activity_on).days
                 em.add_field(
                     name="Last activity on",
-                    value=f"{created_on.strftime('%d %b, %Y')} ({since_activity} days ago)",
+                    value=f"{recent_activity_on.strftime('%d %b, %Y')} ({since_activity} days ago)",
                     inline=False,
                 )
                 if data.get("score") > 0:
