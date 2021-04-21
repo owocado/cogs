@@ -153,11 +153,12 @@ class StackOverflow(commands.Cog):
                 em.url = data.get("link")
                 if data.get("accepted_answer_id") is not None:
                     em.description = f"**Accepted answer**: https://stackoverflow.com/a/{data.get('accepted_answer_id')}"
+                em.set_thumbnail(url="https://cdn.sstatic.net/Sites/stackoverflow/Img/apple-touch-icon@2.png")
                 question_owner = (
                     "["
                     + unescape(data.get("owner").get("display_name", "Unknown"))
                     + "]("
-                    + data.get("owner").get("link")
+                    + data.get("owner").get("link", "https://google.com")
                     + ")"
                 )
                 em.add_field(name="Asked by", value=question_owner)
@@ -252,11 +253,12 @@ class StackOverflow(commands.Cog):
                 em.url = data.get("link")
                 if data.get("accepted_answer_id") is not None:
                     em.description = f"**Accepted answer**: https://{subdomain}.stackexchange.com/a/{data.get('accepted_answer_id')}"
+                em.set_thumbnail(url=f"https://cdn.sstatic.net/Sites/{subdomain}/Img/apple-touch-icon@2.png")
                 question_owner = (
                     "["
                     + unescape(data.get("owner").get("display_name", "Unknown"))
                     + "]("
-                    + data.get("owner").get("link")
+                    + data.get("owner").get("link", "https://google.com")
                     + ")"
                 )
                 em.add_field(name="Asked by", value=question_owner)
@@ -347,11 +349,12 @@ class StackOverflow(commands.Cog):
                 em.url = data.get("link")
                 if data.get("accepted_answer_id") is not None:
                     em.description = f"**Accepted answer**: https://askubuntu.com/a/{data.get('accepted_answer_id')}"
+                em.set_thumbnail(url="https://cdn.sstatic.net/Sites/askubuntu/Img/apple-touch-icon@2.png")
                 question_owner = (
                     "["
                     + unescape(data.get("owner").get("display_name", "Unknown"))
                     + "]("
-                    + data.get("owner").get("link")
+                    + data.get("owner").get("link", "https://google.com")
                     + ")"
                 )
                 em.add_field(name="Asked by", value=question_owner)
@@ -442,11 +445,12 @@ class StackOverflow(commands.Cog):
                 em.url = data.get("link")
                 if data.get("accepted_answer_id") is not None:
                     em.description = f"**Accepted answer**: https://superuser.com/a/{data.get('accepted_answer_id')}"
+                em.set_thumbnail(url="https://cdn.sstatic.net/Sites/superuser/Img/apple-touch-icon@2.png")
                 question_owner = (
                     "["
                     + unescape(data.get("owner").get("display_name", "Unknown"))
                     + "]("
-                    + data.get("owner").get("link")
+                    + data.get("owner").get("link", "https://google.com")
                     + ")"
                 )
                 em.add_field(name="Asked by", value=question_owner)
