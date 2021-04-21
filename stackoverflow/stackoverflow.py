@@ -165,14 +165,14 @@ class StackOverflow(commands.Cog):
                         value=f"https://stackoverflow.com/a/{data.get('accepted_answer_id')}",
                     )
                 em.add_field(name="Tags", value=", ".join(data.get("tags")))
-                created_on = datetime.utcfromtimestamp(dat.get("creation_date"))
+                created_on = datetime.utcfromtimestamp(data.get("creation_date"))
                 since_created = (ctx.message.created_at - created_on).days
                 em.add_field(
                     name="Question asked on",
                     value=f"{created_on.strftime('%d %b, %Y')} ({since_created} days ago)",
                 )
                 if data.get("last_edit_date") is not None:
-                    edited_on = datetime.utcfromtimestamp(dat.get("last_edit_date"))
+                    edited_on = datetime.utcfromtimestamp(data.get("last_edit_date"))
                     edited_since = (ctx.message.created_at - edited_on).days
                     revisions = f"[{since_created} days ago](https://stackoverflow.com/posts/{data.get('question_id')}/revisions)"
                     em.add_field(
@@ -180,7 +180,7 @@ class StackOverflow(commands.Cog):
                         value=f"{edited_on.strftime('%d %b, %Y')} (revisions)",
                     )
                 recent_activity_on = datetime.utcfromtimestamp(
-                    dat.get("last_activity_date")
+                    data.get("last_activity_date")
                 )
                 since_activity = (ctx.message.created_at - recent_activity_on).days
                 em.add_field(
@@ -264,14 +264,14 @@ class StackOverflow(commands.Cog):
                         value=f"https://{subdomain}.stackexchange.com/a/{data.get('accepted_answer_id')}",
                     )
                 em.add_field(name="Tags", value=", ".join(data.get("tags")))
-                created_on = datetime.utcfromtimestamp(dat.get("creation_date"))
+                created_on = datetime.utcfromtimestamp(data.get("creation_date"))
                 since_created = (ctx.message.created_at - created_on).days
                 em.add_field(
                     name="Question asked on",
                     value=f"{created_on.strftime('%d %b, %Y')} ({since_created} days ago)",
                 )
                 if data.get("last_edit_date") is not None:
-                    edited_on = datetime.utcfromtimestamp(dat.get("last_edit_date"))
+                    edited_on = datetime.utcfromtimestamp(data.get("last_edit_date"))
                     edited_since = (ctx.message.created_at - edited_on).days
                     revisions = f"[{since_created} days ago](https://{subdomain}.stackexchange.com/posts/{data.get('question_id')}/revisions)"
                     em.add_field(
@@ -279,7 +279,7 @@ class StackOverflow(commands.Cog):
                         value=f"{edited_on.strftime('%d %b, %Y')} (revisions)",
                     )
                 recent_activity_on = datetime.utcfromtimestamp(
-                    dat.get("last_activity_date")
+                    data.get("last_activity_date")
                 )
                 since_activity = (ctx.message.created_at - recent_activity_on).days
                 em.add_field(
@@ -359,14 +359,14 @@ class StackOverflow(commands.Cog):
                         value=f"https://askubuntu.com/a/{data.get('accepted_answer_id')}",
                     )
                 em.add_field(name="Tags", value=", ".join(data.get("tags")))
-                created_on = datetime.utcfromtimestamp(dat.get("creation_date"))
+                created_on = datetime.utcfromtimestamp(data.get("creation_date"))
                 since_created = (ctx.message.created_at - created_on).days
                 em.add_field(
                     name="Question asked on",
                     value=f"{created_on.strftime('%d %b, %Y')} ({since_created} days ago)",
                 )
                 if data.get("last_edit_date") is not None:
-                    edited_on = datetime.utcfromtimestamp(dat.get("last_edit_date"))
+                    edited_on = datetime.utcfromtimestamp(data.get("last_edit_date"))
                     edited_since = (ctx.message.created_at - edited_on).days
                     revisions = f"[{since_created} days ago](https://askubuntu.com/posts/{data.get('question_id')}/revisions)"
                     em.add_field(
@@ -374,7 +374,7 @@ class StackOverflow(commands.Cog):
                         value=f"{edited_on.strftime('%d %b, %Y')} (revisions)",
                     )
                 recent_activity_on = datetime.utcfromtimestamp(
-                    dat.get("last_activity_date")
+                    data.get("last_activity_date")
                 )
                 since_activity = (ctx.message.created_at - recent_activity_on).days
                 em.add_field(
@@ -454,14 +454,14 @@ class StackOverflow(commands.Cog):
                         value=f"https://superuser.com/a/{data.get('accepted_answer_id')}",
                     )
                 em.add_field(name="Tags", value=", ".join(data.get("tags")))
-                created_on = datetime.utcfromtimestamp(dat.get("creation_date"))
+                created_on = datetime.utcfromtimestamp(data.get("creation_date"))
                 since_created = (ctx.message.created_at - created_on).days
                 em.add_field(
                     name="Question asked on",
                     value=f"{created_on.strftime('%d %b, %Y')} ({since_created} days ago)",
                 )
                 if data.get("last_edit_date") is not None:
-                    edited_on = datetime.utcfromtimestamp(dat.get("last_edit_date"))
+                    edited_on = datetime.utcfromtimestamp(data.get("last_edit_date"))
                     edited_since = (ctx.message.created_at - edited_on).days
                     revisions = f"[{since_created} days ago](https://superuser.com/posts/{data.get('question_id')}/revisions)"
                     em.add_field(
@@ -469,7 +469,7 @@ class StackOverflow(commands.Cog):
                         value=f"{edited_on.strftime('%d %b, %Y')} (revisions)",
                     )
                 recent_activity_on = datetime.utcfromtimestamp(
-                    dat.get("last_activity_date")
+                    data.get("last_activity_date")
                 )
                 since_activity = (ctx.message.created_at - recent_activity_on).days
                 em.add_field(
