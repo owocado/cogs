@@ -193,7 +193,7 @@ class StackOverflow(commands.Cog):
                     views = f"Views: {humanize_number(data.get('view_count'))}"
                 if data.get("answer_count") > 0:
                     answers = f"Answers: {humanize_number(data.get('answer_count'))}"
-                embed.set_footer(
+                em.set_footer(
                     text=f"{score} | {views}\n{answers} | Content license: {data.get('content_license', 'None')}"
                 )
                 embed_list.append(em)
@@ -292,7 +292,7 @@ class StackOverflow(commands.Cog):
                     views = f"Views: {humanize_number(data.get('view_count'))}"
                 if data.get("answer_count") > 0:
                     answers = f"Answers: {humanize_number(data.get('answer_count'))}"
-                embed.set_footer(
+                em.set_footer(
                     text=f"{score} | {views}\n{answers} | Content license: {data.get('content_license', 'None')}"
                 )
                 embed_list.append(em)
@@ -387,7 +387,7 @@ class StackOverflow(commands.Cog):
                     views = f"Views: {humanize_number(data.get('view_count'))}"
                 if data.get("answer_count") > 0:
                     answers = f"Answers: {humanize_number(data.get('answer_count'))}"
-                embed.set_footer(
+                em.set_footer(
                     text=f"{score} | {views}\n{answers} | Content license: {data.get('content_license', 'None')}"
                 )
                 embed_list.append(em)
@@ -482,7 +482,7 @@ class StackOverflow(commands.Cog):
                     views = f"Views: {humanize_number(data.get('view_count'))}"
                 if data.get("answer_count") > 0:
                     answers = f"Answers: {humanize_number(data.get('answer_count'))}"
-                embed.set_footer(
+                em.set_footer(
                     text=f"{score} | {views}\n{answers} | Content license: {data.get('content_license', 'None')}"
                 )
                 embed_list.append(em)
