@@ -1,15 +1,16 @@
 {
-  "author": ["<@306810730055729152>"],
-  "install_msg": "This cog lets you fetch basic info about Reddit user accounts and existing subreddits.",
-  "name": "RedditInfo",
-  "disabled": false,
-  "short": "Fetch basic info about Reddit user accounts and subreddits.",
-  "description": "Fetch basic info about Reddit user accounts and subreddits.",
-  "tags": [
-    "reddit",
-    "subreddit"
-  ],
-  "min_bot_version": "3.4.8",
-  "hidden": false,
-  "type": "COG"
+    "author": ["<@306810730055729152>"],
+    "install_msg": "This cog lets you fetch basic info about Reddit user accounts and existing subreddits.",
+    "name": "RedditInfo",
+    "disabled": false,
+    "short": "Fetch basic info about Reddit user accounts and subreddits.",
+    "description": "Fetch basic info about Reddit user accounts and subreddits.",
+    "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
+    "tags": [
+        "reddit",
+        "subreddit"
+    ],
+    "min_bot_version": "3.4.8",
+    "hidden": false,
+    "type": "COG"
 }

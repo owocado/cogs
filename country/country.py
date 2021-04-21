@@ -9,10 +9,10 @@ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 
 class Country(commands.Cog):
-    """Various commands to show the stats about users' profile badges."""
+    """Shows various information and stats about a country through an API."""
 
     __author__ = "<@306810730055729152>"
-    __version__ = "0.0.4"
+    __version__ = "0.0.5"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""

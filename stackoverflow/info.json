@@ -1,0 +1,21 @@
+{
+    "author": [
+        "<@306810730055729152>"
+    ],
+    "install_msg": "Thank you for installing stackoverflow cog. This cog searches your query on StackOverflow and other supported Stack Exchange Networks domains like askubuntu/superuser etc through it's official API endpoint and give links to related questions plus some basic stats returned by the API in a nice embed form.\n\nPlease note that this cog works perfectly fine without setting an API key. Setting an API key is completely optional and not required if you are not planning to make more than 300 queries per day, because you will only get daily quota of 300 API calls without an API key where as a valid API key provides you the daily quota of 10k API calls.\nTo register for a free Stack Exchange API key, please visit: <https://stackapps.com/apps/oauth/register> and register an application by filling out all required fields appropriately.\nNavigate to \"Your Apps\" section at <https://stackapps.com/apps/oauth> to view your registered application.\n(You may be required to log in if not logged in already)\nClick on your application name, which will take you to the page providing various info about your StackExchange application.\nFrom there, copy the `Key` and set the same key in your redbot instance with:\n```[p]set api stackexchange api_key <key>\n```\nI hope you will enjoy this cog regardless. 😊",
+    "name": "StackOverflow",
+    "disabled": false,
+    "short": "Search for your nerdy tech questions on stackoverflow and stackexchange network.",
+    "description": "Search for your nerdy tech questions on stackoverflow and stackexchange network.",
+    "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
+    "tags": [
+        "stackoverflow",
+        "stackexchange",
+        "askubuntu",
+        "superuser",
+        "serverfault"
+    ],
+    "min_bot_version": "3.4.8",
+    "hidden": false,
+    "type": "COG"
+}
