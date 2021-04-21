@@ -304,11 +304,7 @@ class StackOverflow(commands.Cog):
     @commands.cooldown(1, 5, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True, add_reactions=True)
     async def askubuntu(self, ctx: commands.Context, *, query: str):
-        """Search for your query on any of stackexchange domain sites.
-
-        Valid stackexchange network subdomains are:
-        `academia`, `ai`, `android`, `anime`, `api`, `apple`, `arduino`, `astronomy`, `biology`, `bitcoin`, `blender`, `boardgames`, `chemistry`, `chess`, `chinese`, `codegolf`, `codereview`, `cooking`, `crypto`, `cs`, `cstheory`, `data`, `datascience`, `dba`, `diy`, `drupal`, `dsp`, `earthscience`, `economics`, `electronics`, `emacs`, `english`, `ethereum`, `expressionengine`, `fitness`, `french`, `gamedev`, `garderning`, `german`, `gis`, `graphicdesign`, `hardwarerecs`, `history`, `japanese`, `law`, `linguistics`, `math`, `mathematica`, `meta`, `money`, `movies`, `music`, `networkengineering`, `outdoor`, `photos`, `physics`, `poker`, `psychology`, `raspberrypi`, `rpg`, `russian`, `salesforce`, `scicomp`, `scifi`, `security`, `sharepoint`, `softwareengineering`, `softwarerecs`, `sound`, `spanish`, `sports`, `sqa`, `tex`, `unix`, `ux`, `video`, `webapps`, `webmasters`, `wordpress`, `worldbuilding`
-        """
+        """Search for your query related to linux/ubuntu from askubuntu.com."""
         api_key = (await ctx.bot.get_shared_api_tokens("stackexchange")).get("api_key")
         api_key = api_key if api_key else ""
 
@@ -397,11 +393,7 @@ class StackOverflow(commands.Cog):
     @commands.cooldown(1, 5, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True, add_reactions=True)
     async def superuser(self, ctx: commands.Context, *, query: str):
-        """Search for your query on any of stackexchange domain sites.
-
-        Valid stackexchange network subdomains are:
-        `academia`, `ai`, `android`, `anime`, `api`, `apple`, `arduino`, `astronomy`, `biology`, `bitcoin`, `blender`, `boardgames`, `chemistry`, `chess`, `chinese`, `codegolf`, `codereview`, `cooking`, `crypto`, `cs`, `cstheory`, `data`, `datascience`, `dba`, `diy`, `drupal`, `dsp`, `earthscience`, `economics`, `electronics`, `emacs`, `english`, `ethereum`, `expressionengine`, `fitness`, `french`, `gamedev`, `garderning`, `german`, `gis`, `graphicdesign`, `hardwarerecs`, `history`, `japanese`, `law`, `linguistics`, `math`, `mathematica`, `meta`, `money`, `movies`, `music`, `networkengineering`, `outdoor`, `photos`, `physics`, `poker`, `psychology`, `raspberrypi`, `rpg`, `russian`, `salesforce`, `scicomp`, `scifi`, `security`, `sharepoint`, `softwareengineering`, `softwarerecs`, `sound`, `spanish`, `sports`, `sqa`, `tex`, `unix`, `ux`, `video`, `webapps`, `webmasters`, `wordpress`, `worldbuilding`
-        """
+        """Search for your technical query from superuser.com."""
         api_key = (await ctx.bot.get_shared_api_tokens("stackexchange")).get("api_key")
         api_key = api_key if api_key else ""
 
