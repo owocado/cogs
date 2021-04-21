@@ -177,7 +177,7 @@ class StackOverflow(commands.Cog):
                     revisions = f"[{since_created} days ago](https://stackoverflow.com/posts/{data.get('question_id')}/revisions)"
                     em.add_field(
                         name="Question last edited on",
-                        value=f"{edited_on.strftime('%d %b, %Y')} (revisions)",
+                        value=f"{edited_on.strftime('%d %b, %Y')} ({revisions})",
                     )
                 recent_activity_on = datetime.utcfromtimestamp(
                     data.get("last_activity_date")
@@ -276,7 +276,7 @@ class StackOverflow(commands.Cog):
                     revisions = f"[{since_created} days ago](https://{subdomain}.stackexchange.com/posts/{data.get('question_id')}/revisions)"
                     em.add_field(
                         name="Question last edited on",
-                        value=f"{edited_on.strftime('%d %b, %Y')} (revisions)",
+                        value=f"{edited_on.strftime('%d %b, %Y')} ({revisions})",
                     )
                 recent_activity_on = datetime.utcfromtimestamp(
                     data.get("last_activity_date")
@@ -371,7 +371,7 @@ class StackOverflow(commands.Cog):
                     revisions = f"[{since_created} days ago](https://askubuntu.com/posts/{data.get('question_id')}/revisions)"
                     em.add_field(
                         name="Question last edited on",
-                        value=f"{edited_on.strftime('%d %b, %Y')} (revisions)",
+                        value=f"{edited_on.strftime('%d %b, %Y')} ({revisions})",
                     )
                 recent_activity_on = datetime.utcfromtimestamp(
                     data.get("last_activity_date")
@@ -466,7 +466,7 @@ class StackOverflow(commands.Cog):
                     revisions = f"[{since_created} days ago](https://superuser.com/posts/{data.get('question_id')}/revisions)"
                     em.add_field(
                         name="Question last edited on",
-                        value=f"{edited_on.strftime('%d %b, %Y')} (revisions)",
+                        value=f"{edited_on.strftime('%d %b, %Y')} ({revisions})",
                     )
                 recent_activity_on = datetime.utcfromtimestamp(
                     data.get("last_activity_date")
