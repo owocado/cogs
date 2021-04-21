@@ -151,6 +151,8 @@ class StackOverflow(commands.Cog):
                 em = discord.Embed(color=await ctx.embed_colour())
                 em.title = unescape(data.get("title", "None"))
                 em.url = data.get("link")
+                if data.get("accepted_answer_id") is not None:
+                    em.description = f"**Accepted answer**: https://stackoverflow.com/a/{data.get('accepted_answer_id')}"
                 question_owner = (
                     "["
                     + unescape(data.get("owner").get("display_name", "Unknown"))
@@ -159,17 +161,13 @@ class StackOverflow(commands.Cog):
                     + ")"
                 )
                 em.add_field(name="Asked by", value=question_owner)
-                if data.get("accepted_answer_id") is not None:
-                    em.add_field(
-                        name="Accepted answer",
-                        value=f"https://stackoverflow.com/a/{data.get('accepted_answer_id')}",
-                    )
                 em.add_field(name="Tags", value=", ".join(data.get("tags")))
                 created_on = datetime.utcfromtimestamp(data.get("creation_date"))
                 since_created = (ctx.message.created_at - created_on).days
                 em.add_field(
                     name="Question asked on",
                     value=f"{created_on.strftime('%d %b, %Y')} ({since_created} days ago)",
+                    inline=False,
                 )
                 if data.get("last_edit_date") is not None:
                     edited_on = datetime.utcfromtimestamp(data.get("last_edit_date"))
@@ -178,6 +176,7 @@ class StackOverflow(commands.Cog):
                     em.add_field(
                         name="Question last edited on",
                         value=f"{edited_on.strftime('%d %b, %Y')} ({revisions})",
+                        inline=False,
                     )
                 recent_activity_on = datetime.utcfromtimestamp(
                     data.get("last_activity_date")
@@ -186,6 +185,7 @@ class StackOverflow(commands.Cog):
                 em.add_field(
                     name="Last activity on",
                     value=f"{created_on.strftime('%d %b, %Y')} ({since_activity} days ago)",
+                    inline=False,
                 )
                 if data.get("score") > 0:
                     score = f"Question score: {humanize_number(data.get('score'))}"
@@ -194,7 +194,7 @@ class StackOverflow(commands.Cog):
                 if data.get("answer_count") > 0:
                     answers = f"Answers: {humanize_number(data.get('answer_count'))}"
                 em.set_footer(
-                    text=f"{score} | {views}\n{answers} | Content license: {data.get('content_license', 'None')}"
+                    text=f"{score} | {views} | {answers} | Content license: {data.get('content_license', 'None')}"
                 )
                 embed_list.append(em)
 
@@ -250,6 +250,8 @@ class StackOverflow(commands.Cog):
                 em = discord.Embed(color=await ctx.embed_colour())
                 em.title = unescape(data.get("title", "None"))
                 em.url = data.get("link")
+                if data.get("accepted_answer_id") is not None:
+                    em.description = f"**Accepted answer**: https://{subdomain}.stackexchange.com/a/{data.get('accepted_answer_id')}"
                 question_owner = (
                     "["
                     + unescape(data.get("owner").get("display_name", "Unknown"))
@@ -258,17 +260,13 @@ class StackOverflow(commands.Cog):
                     + ")"
                 )
                 em.add_field(name="Asked by", value=question_owner)
-                if data.get("accepted_answer_id") is not None:
-                    em.add_field(
-                        name="Accepted answer",
-                        value=f"https://{subdomain}.stackexchange.com/a/{data.get('accepted_answer_id')}",
-                    )
                 em.add_field(name="Tags", value=", ".join(data.get("tags")))
                 created_on = datetime.utcfromtimestamp(data.get("creation_date"))
                 since_created = (ctx.message.created_at - created_on).days
                 em.add_field(
                     name="Question asked on",
                     value=f"{created_on.strftime('%d %b, %Y')} ({since_created} days ago)",
+                    inline=False,
                 )
                 if data.get("last_edit_date") is not None:
                     edited_on = datetime.utcfromtimestamp(data.get("last_edit_date"))
@@ -277,6 +275,7 @@ class StackOverflow(commands.Cog):
                     em.add_field(
                         name="Question last edited on",
                         value=f"{edited_on.strftime('%d %b, %Y')} ({revisions})",
+                        inline=False,
                     )
                 recent_activity_on = datetime.utcfromtimestamp(
                     data.get("last_activity_date")
@@ -285,6 +284,7 @@ class StackOverflow(commands.Cog):
                 em.add_field(
                     name="Last activity on",
                     value=f"{created_on.strftime('%d %b, %Y')} ({since_activity} days ago)",
+                    inline=False,
                 )
                 if data.get("score") > 0:
                     score = f"Question score: {humanize_number(data.get('score'))}"
@@ -293,7 +293,7 @@ class StackOverflow(commands.Cog):
                 if data.get("answer_count") > 0:
                     answers = f"Answers: {humanize_number(data.get('answer_count'))}"
                 em.set_footer(
-                    text=f"{score} | {views}\n{answers} | Content license: {data.get('content_license', 'None')}"
+                    text=f"{score} | {views} | {answers} | Content license: {data.get('content_license', 'None')}"
                 )
                 embed_list.append(em)
 
@@ -345,6 +345,8 @@ class StackOverflow(commands.Cog):
                 em = discord.Embed(color=await ctx.embed_colour())
                 em.title = unescape(data.get("title", "None"))
                 em.url = data.get("link")
+                if data.get("accepted_answer_id") is not None:
+                    em.description = f"**Accepted answer**: https://askubuntu.com/a/{data.get('accepted_answer_id')}"
                 question_owner = (
                     "["
                     + unescape(data.get("owner").get("display_name", "Unknown"))
@@ -353,17 +355,13 @@ class StackOverflow(commands.Cog):
                     + ")"
                 )
                 em.add_field(name="Asked by", value=question_owner)
-                if data.get("accepted_answer_id") is not None:
-                    em.add_field(
-                        name="Accepted answer",
-                        value=f"https://askubuntu.com/a/{data.get('accepted_answer_id')}",
-                    )
                 em.add_field(name="Tags", value=", ".join(data.get("tags")))
                 created_on = datetime.utcfromtimestamp(data.get("creation_date"))
                 since_created = (ctx.message.created_at - created_on).days
                 em.add_field(
                     name="Question asked on",
                     value=f"{created_on.strftime('%d %b, %Y')} ({since_created} days ago)",
+                    inline=False,
                 )
                 if data.get("last_edit_date") is not None:
                     edited_on = datetime.utcfromtimestamp(data.get("last_edit_date"))
@@ -372,6 +370,7 @@ class StackOverflow(commands.Cog):
                     em.add_field(
                         name="Question last edited on",
                         value=f"{edited_on.strftime('%d %b, %Y')} ({revisions})",
+                        inline=False,
                     )
                 recent_activity_on = datetime.utcfromtimestamp(
                     data.get("last_activity_date")
@@ -380,6 +379,7 @@ class StackOverflow(commands.Cog):
                 em.add_field(
                     name="Last activity on",
                     value=f"{created_on.strftime('%d %b, %Y')} ({since_activity} days ago)",
+                    inline=False,
                 )
                 if data.get("score") > 0:
                     score = f"Question score: {humanize_number(data.get('score'))}"
@@ -388,7 +388,7 @@ class StackOverflow(commands.Cog):
                 if data.get("answer_count") > 0:
                     answers = f"Answers: {humanize_number(data.get('answer_count'))}"
                 em.set_footer(
-                    text=f"{score} | {views}\n{answers} | Content license: {data.get('content_license', 'None')}"
+                    text=f"{score} | {views} | {answers} | Content license: {data.get('content_license', 'None')}"
                 )
                 embed_list.append(em)
 
@@ -440,6 +440,8 @@ class StackOverflow(commands.Cog):
                 em = discord.Embed(color=await ctx.embed_colour())
                 em.title = unescape(data.get("title", "None"))
                 em.url = data.get("link")
+                if data.get("accepted_answer_id") is not None:
+                    em.description = f"**Accepted answer**: https://superuser.com/a/{data.get('accepted_answer_id')}"
                 question_owner = (
                     "["
                     + unescape(data.get("owner").get("display_name", "Unknown"))
@@ -448,17 +450,13 @@ class StackOverflow(commands.Cog):
                     + ")"
                 )
                 em.add_field(name="Asked by", value=question_owner)
-                if data.get("accepted_answer_id") is not None:
-                    em.add_field(
-                        name="Accepted answer",
-                        value=f"https://superuser.com/a/{data.get('accepted_answer_id')}",
-                    )
                 em.add_field(name="Tags", value=", ".join(data.get("tags")))
                 created_on = datetime.utcfromtimestamp(data.get("creation_date"))
                 since_created = (ctx.message.created_at - created_on).days
                 em.add_field(
                     name="Question asked on",
                     value=f"{created_on.strftime('%d %b, %Y')} ({since_created} days ago)",
+                    inline=False,
                 )
                 if data.get("last_edit_date") is not None:
                     edited_on = datetime.utcfromtimestamp(data.get("last_edit_date"))
@@ -467,6 +465,7 @@ class StackOverflow(commands.Cog):
                     em.add_field(
                         name="Question last edited on",
                         value=f"{edited_on.strftime('%d %b, %Y')} ({revisions})",
+                        inline=False,
                     )
                 recent_activity_on = datetime.utcfromtimestamp(
                     data.get("last_activity_date")
@@ -475,6 +474,7 @@ class StackOverflow(commands.Cog):
                 em.add_field(
                     name="Last activity on",
                     value=f"{created_on.strftime('%d %b, %Y')} ({since_activity} days ago)",
+                    inline=False,
                 )
                 if data.get("score") > 0:
                     score = f"Question score: {humanize_number(data.get('score'))}"
@@ -483,7 +483,7 @@ class StackOverflow(commands.Cog):
                 if data.get("answer_count") > 0:
                     answers = f"Answers: {humanize_number(data.get('answer_count'))}"
                 em.set_footer(
-                    text=f"{score} | {views}\n{answers} | Content license: {data.get('content_license', 'None')}"
+                    text=f"{score} | {views} | {answers} | Content license: {data.get('content_license', 'None')}"
                 )
                 embed_list.append(em)
 
