@@ -188,14 +188,11 @@ class StackOverflow(commands.Cog):
                     value=f"{recent_activity_on.strftime('%d %b, %Y')} ({since_activity} days ago)",
                     inline=False,
                 )
-                if data.get("score") > 0:
-                    score = f"Question score: {humanize_number(data.get('score'))}"
-                if data.get("view_count") > 0:
-                    views = f"Views: {humanize_number(data.get('view_count'))}"
-                if data.get("answer_count") > 0:
-                    answers = f"Answers: {humanize_number(data.get('answer_count'))}"
+                score = f"Question score: {humanize_number(data.get('score'))} |" if data.get("score") > 0 else ""
+                views = f"Views: {humanize_number(data.get('view_count'))} |" if data.get("view_count") > 0 else ""
+                answers = f"Answers: {humanize_number(data.get('answer_count'))} |" if data.get("answer_count") > 0 else ""
                 em.set_footer(
-                    text=f"{score} | {views} | {answers} | Content license: {data.get('content_license', 'None')}"
+                    text=f"{score} {views} {answers} Content license: {data.get('content_license', 'None')}"
                 )
                 embed_list.append(em)
 
@@ -288,14 +285,11 @@ class StackOverflow(commands.Cog):
                     value=f"{recent_activity_on.strftime('%d %b, %Y')} ({since_activity} days ago)",
                     inline=False,
                 )
-                if data.get("score") > 0:
-                    score = f"Question score: {humanize_number(data.get('score'))}"
-                if data.get("view_count") > 0:
-                    views = f"Views: {humanize_number(data.get('view_count'))}"
-                if data.get("answer_count") > 0:
-                    answers = f"Answers: {humanize_number(data.get('answer_count'))}"
+                score = f"Question score: {humanize_number(data.get('score'))} |" if data.get("score") > 0 else ""
+                views = f"Views: {humanize_number(data.get('view_count'))} |" if data.get("view_count") > 0 else ""
+                answers = f"Answers: {humanize_number(data.get('answer_count'))} |" if data.get("answer_count") > 0 else ""
                 em.set_footer(
-                    text=f"{score} | {views} | {answers} | Content license: {data.get('content_license', 'None')}"
+                    text=f"{score} {views} {answers} Content license: {data.get('content_license', 'None')}"
                 )
                 embed_list.append(em)
 
@@ -384,14 +378,11 @@ class StackOverflow(commands.Cog):
                     value=f"{recent_activity_on.strftime('%d %b, %Y')} ({since_activity} days ago)",
                     inline=False,
                 )
-                if data.get("score") > 0:
-                    score = f"Question score: {humanize_number(data.get('score'))}"
-                if data.get("view_count") > 0:
-                    views = f"Views: {humanize_number(data.get('view_count'))}"
-                if data.get("answer_count") > 0:
-                    answers = f"Answers: {humanize_number(data.get('answer_count'))}"
+                score = f"Question score: {humanize_number(data.get('score'))} |" if data.get("score") > 0 else ""
+                views = f"Views: {humanize_number(data.get('view_count'))} |" if data.get("view_count") > 0 else ""
+                answers = f"Answers: {humanize_number(data.get('answer_count'))} |" if data.get("answer_count") > 0 else ""
                 em.set_footer(
-                    text=f"{score} | {views} | {answers} | Content license: {data.get('content_license', 'None')}"
+                    text=f"{score} {views} {answers} Content license: {data.get('content_license', 'None')}"
                 )
                 embed_list.append(em)
 
@@ -480,14 +471,11 @@ class StackOverflow(commands.Cog):
                     value=f"{recent_activity_on.strftime('%d %b, %Y')} ({since_activity} days ago)",
                     inline=False,
                 )
-                if data.get("score") > 0:
-                    score = f"Question score: {humanize_number(data.get('score'))}"
-                if data.get("view_count") > 0:
-                    views = f"Views: {humanize_number(data.get('view_count'))}"
-                if data.get("answer_count") > 0:
-                    answers = f"Answers: {humanize_number(data.get('answer_count'))}"
+                score = f"Question score: {humanize_number(data.get('score'))} |" if data.get("score") > 0 else ""
+                views = f"Views: {humanize_number(data.get('view_count'))} |" if data.get("view_count") > 0 else ""
+                answers = f"Answers: {humanize_number(data.get('answer_count'))} |" if data.get("answer_count") > 0 else ""
                 em.set_footer(
-                    text=f"{score} | {views} | {answers} | Content license: {data.get('content_license', 'None')}"
+                    text=f"{score} {views} {answers} Content license: {data.get('content_license', 'None')}"
                 )
                 embed_list.append(em)
 
