@@ -17,9 +17,6 @@
         "detect-text-in-image",
         "detect-text-in-images"
     ],
-    "requirements": [
-        "google-cloud-vision"
-    ],
     "min_bot_version": "3.4.8",
     "hidden": false,
     "type": "COG"
