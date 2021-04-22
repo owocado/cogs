@@ -45,6 +45,8 @@ class Vision(commands.Cog):
         if image is None:
             image = await ImageFinder().search_for_images(ctx)
             image = image[0]
+        if not image:
+            return await ctx.send("No images found.")
         async with ctx.typing():
             api_key = (await ctx.bot.get_shared_api_tokens("google_vision")).get("api_key")
             params = {"key": api_key}
