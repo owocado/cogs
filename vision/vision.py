@@ -42,15 +42,16 @@ class Vision(commands.Cog):
     @commands.command()
     @commands.check(tokencheck)
     @commands.cooldown(1, 5, commands.BucketType.member)
-    async def ocr(self, ctx: commands.Context, url: Union[discord.Asset, discord.Attachment, str] = None):
+    async def ocr(self, ctx: commands.Context):
         """Run an image through Google Cloud Vision OCR API and return any detected text."""
 
         async with ctx.typing():
-            if url is None and ctx.message.attachments:
-                url = ctx.message.attachments[0].url
-            match = IMAGE_LINKS.match(url)
+            content = ctx.message.content
+            if ctx.message.attachments:
+                content = ctx.message.attachments[0].url
+            match = IMAGE_LINKS.match(content)
             if match:
-                url = match.group(1)
+                content = match.group(1)
             else:
                 return await ctx.send("That doesn't look like a valid direct image URL.")
 
@@ -60,7 +61,7 @@ class Vision(commands.Cog):
             payload = {
                 "requests": [
                     {
-                        "image": {"source": {"imageUri": url}},
+                        "image": {"source": {"imageUri": content}},
                         "features": [{"type": "TEXT_DETECTION"}],
                     }
                 ]
