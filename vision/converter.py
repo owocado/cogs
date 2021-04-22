@@ -7,16 +7,13 @@ import re
 from typing import Pattern, List, Union
 
 import discord
-from discord.ext.commands.converter import Converter, IDConverter, _get_from_guilds
+from discord.ext.commands.converter import Converter
 from discord.ext.commands.errors import BadArgument
 from redbot.core import commands
 
 IMAGE_LINKS: Pattern = re.compile(
     r"(https?:\/\/[^\"\'\s]*\.(?:png|jpg|jpeg|png|svg)(\?size=[0-9]*)?)", flags=re.I
 )
-EMOJI_REGEX: Pattern = re.compile(r"(<(a)?:[a-zA-Z0-9\_]+:([0-9]+)>)")
-MENTION_REGEX: Pattern = re.compile(r"<@!?([0-9]+)>")
-ID_REGEX: Pattern = re.compile(r"[0-9]{17,}")
 
 
 class ImageFinder(Converter):
@@ -24,6 +21,7 @@ class ImageFinder(Converter):
     This is a class to convert NotSoBot's image searching
     capabilities into a more general converter class
     """
+
     async def convert(
         self, ctx: commands.Context, argument: str
     ) -> List[Union[discord.Asset, str]]:
@@ -39,6 +37,7 @@ class ImageFinder(Converter):
         if not urls:
             raise BadArgument("No images provided.")
         return urls
+
     async def search_for_images(
         self, ctx: commands.Context
     ) -> List[Union[discord.Asset, discord.Attachment, str]]:
