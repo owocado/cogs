@@ -81,7 +81,7 @@ class Vision(commands.Cog):
 
         if data.get("responses")[0] == {}:
             return await ctx.send("No text detected.")
-        if data.get("responses")[0].get("error").get("message"):
+        if data.get("responses")[0].get("error") and data.get("responses")[0].get("error").get("message"):
             return await ctx.send(
                 f"API returned error: {data.get('responses')[0].get('error').get('message')}"
             )
