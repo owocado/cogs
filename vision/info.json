@@ -1,5 +1,6 @@
 {
     "author": [
+        "TrustyJAID",
         "<@306810730055729152>"
     ],
     "install_msg": "Thanks for installing OCR cog. This cog utilizes Google Cloud Vision API, which will require you to have a active Google Cloud project (with billing enabled).\nIf you have an active Cloud project, go to this link to enable the Cloud Vision API:\n <https://console.cloud.google.com/flows/enableapi?apiid=vision.googleapis.com>\n\n Once you have enabled this API, go to Credentials section: <https://console.cloud.google.com/apis/credentials> to create an API key, if you haven't created one already.\n\n• If you have previously created an unrestricted API key or created an API key just now, then copy that API key.\n• If you have a restricted API key, you will need to include Cloud Vision API into Selected APIs for this API key (Note: It may take up to 5 minutes for settings to take effect.). Then copy the API key.\n\n You can now set your API key with:\n```[p]set api google_vision api_key <copied_api_key>\n``` \n That's all you need to do. Now load the cog and test an image through OCR. 😊",
@@ -7,7 +8,7 @@
     "disabled": false,
     "short": "Detect text in images using Google Cloud Vision API.",
     "description": "Detect text in images using Google Cloud Vision API.",
-    "end_user_data_statement": "This cog does not persistently store data or metadata about users, but the Google Cloud Vision API might store data of images sent to be processed for text detection.",
+    "end_user_data_statement": "This cog does not persistently store any end user data or metadata about users, but the Google Cloud Vision API might store data of images sent to be processed for text detection.",
     "tags": [
         "ocr",
         "google-cloud-vision",

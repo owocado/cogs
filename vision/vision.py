@@ -9,10 +9,7 @@ import discord
 from redbot.core import commands
 from redbot.core.utils.chat_formatting import pagify
 
-# Credits to TrustyJAID (https://github.com/TrustyJAID/Trusty-cogs/blob/master/notsobot/converter.py#L10)
-IMAGE_LINKS: Pattern = re.compile(
-    r"(https?:\/\/[^\"\'\s]*\.(?:png|jpg|jpeg|webp|svg)(\?size=[0-9]*)?)", flags=re.I
-)
+from .converter import ImageFinder
 
 # Attribution: taken from https://github.com/flaree/Flare-Cogs/blob/master/dankmemer/dankmemer.py#L16
 # Many thanks to flare ❤️
@@ -24,7 +21,7 @@ async def tokencheck(ctx):
 class Vision(commands.Cog):
     """Detect text in images using (OCR) Google Cloud Vision API."""
 
-    __author__ = ["<@306810730055729152>"]
+    __author__ = ["TrustyJAID", "<@306810730055729152>"]
     __version__ = "0.0.1"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
@@ -42,26 +39,20 @@ class Vision(commands.Cog):
     @commands.command()
     @commands.check(tokencheck)
     @commands.cooldown(1, 5, commands.BucketType.member)
-    async def ocr(self, ctx: commands.Context):
+    async def ocr(self, ctx: commands.Context, image: ImageFinder = None):
         """Run an image through Google Cloud Vision OCR API and return any detected text."""
 
+        if image is None:
+            image = await ImageFinder().search_for_images(ctx)
+            image = image[0]
         async with ctx.typing():
-            content = ctx.message.content
-            if ctx.message.attachments:
-                content = ctx.message.attachments[0].url
-            match = IMAGE_LINKS.match(content)
-            if match:
-                content = match.group(1)
-            else:
-                return await ctx.send("That doesn't look like a valid direct image URL.")
-
             api_key = (await ctx.bot.get_shared_api_tokens("google_vision")).get("api_key")
             params = {"key": api_key}
             headers = {"Content-Type": "application/json;charset=utf-8"}
             payload = {
                 "requests": [
                     {
-                        "image": {"source": {"imageUri": content}},
+                        "image": {"source": {"imageUri": image}},
                         "features": [{"type": "TEXT_DETECTION"}],
                     }
                 ]
