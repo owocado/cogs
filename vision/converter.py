@@ -3,7 +3,6 @@
 # I have included original LICENSE notice bundled with this cog to adhere to the license terms.
 # I am forever indebted to and wholeheartedly thank TrustyJAID for providing this converter.
 import re
-import unidecode
 
 from typing import Pattern, List, Union
 
