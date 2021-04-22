@@ -45,46 +45,47 @@ class Vision(commands.Cog):
     async def ocr(self, ctx: commands.Context, url: str):
         """Run an image through Google Cloud Vision OCR API and return any detected text."""
 
-        if ctx.message.attachments:
-            url = ctx.message.attachments[0].url
-        match = IMAGE_LINKS.match(url)
-        if match:
-            url = match.group(1)
-        else:
-            return await ctx.send("That doesn't look like a valid direct image URL.")
+        async with ctx.typing():
+            if ctx.message.attachments:
+                url = ctx.message.attachments[0].url
+            match = IMAGE_LINKS.match(url)
+            if match:
+                url = match.group(1)
+            else:
+                return await ctx.send("That doesn't look like a valid direct image URL.")
 
-        api_key = (await ctx.bot.get_shared_api_tokens("google_vision")).get("api_key")
-        params = {"key": api_key}
-        headers = {"Content-Type": "application/json;charset=utf-8"}
-        payload = {
-            "requests": [
-                {
-                    "image": {"source": {"imageUri": url}},
-                    "features": [{"type": "TEXT_DETECTION"}],
-                }
-            ]
-        }
+            api_key = (await ctx.bot.get_shared_api_tokens("google_vision")).get("api_key")
+            params = {"key": api_key}
+            headers = {"Content-Type": "application/json;charset=utf-8"}
+            payload = {
+                "requests": [
+                    {
+                        "image": {"source": {"imageUri": url}},
+                        "features": [{"type": "TEXT_DETECTION"}],
+                    }
+                ]
+            }
 
-        try:
-            async with self.session.post(
-                "https://vision.googleapis.com/v1/images:annotate",
-                params=params,
-                json=payload,
-                headers=headers,
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                else:
-                    return await ctx.send(f"https://http.cat/{response.status}")
-        except asyncio.TimeoutError:
-            return await ctx.send("Operation timed out.")
+            try:
+                async with self.session.post(
+                    "https://vision.googleapis.com/v1/images:annotate",
+                    params=params,
+                    json=payload,
+                    headers=headers,
+                ) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                    else:
+                        return await ctx.send(f"https://http.cat/{response.status}")
+            except asyncio.TimeoutError:
+                return await ctx.send("Operation timed out.")
 
-        if data.get("responses")[0] == {}:
-            return await ctx.send("No text detected.")
-        if data.get("responses")[0].get("error") and data.get("responses")[0].get("error").get("message"):
-            return await ctx.send(
-                f"API returned error: {data.get('responses')[0].get('error').get('message')}"
-            )
-        detected_text = data.get("responses")[0].get("textAnnotations")[0].get("description", "No text detected.")
+            if data.get("responses")[0] == {}:
+                return await ctx.send("No text detected.")
+            if data.get("responses")[0].get("error") and data.get("responses")[0].get("error").get("message"):
+                return await ctx.send(
+                    f"API returned error: {data.get('responses')[0].get('error').get('message')}"
+                )
+            detected_text = data.get("responses")[0].get("textAnnotations")[0].get("description", "No text detected.")
 
         await ctx.send_interactive(pagify(detected_text))
