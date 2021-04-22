@@ -3,7 +3,7 @@ import asyncio
 import json
 import re
 
-from typing import Pattern
+from typing import Pattern, Union
 
 import discord
 from redbot.core import commands
@@ -42,7 +42,7 @@ class Vision(commands.Cog):
     @commands.command()
     @commands.check(tokencheck)
     @commands.cooldown(1, 5, commands.BucketType.member)
-    async def ocr(self, ctx: commands.Context, url: str):
+    async def ocr(self, ctx: commands.Context, url: Union[discord.Asset, discord.Attachment, str]):
         """Run an image through Google Cloud Vision OCR API and return any detected text."""
 
         async with ctx.typing():
