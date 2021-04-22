@@ -46,7 +46,7 @@ class Vision(commands.Cog):
         """Run an image through Google Cloud Vision OCR API and return any detected text."""
 
         async with ctx.typing():
-            if ctx.message.attachments:
+            if not url and ctx.message.attachments:
                 url = ctx.message.attachments[0].url
             match = IMAGE_LINKS.match(url)
             if match:
