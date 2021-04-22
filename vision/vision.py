@@ -54,7 +54,7 @@ class Vision(commands.Cog):
             payload = {
                 "requests": [
                     {
-                        "image": {"source": {"imageUri": image}},
+                        "image": {"source": {"imageUri": str(image)}},
                         "features": [{"type": "TEXT_DETECTION"}],
                     }
                 ]
