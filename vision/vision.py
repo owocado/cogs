@@ -88,4 +88,4 @@ class Vision(commands.Cog):
                 )
             detected_text = data.get("responses")[0].get("textAnnotations")[0].get("description", "No text detected.")
 
-        await ctx.send_interactive(pagify(detected_text))
+        await ctx.send_interactive(pagify(detected_text), box_lang="")
