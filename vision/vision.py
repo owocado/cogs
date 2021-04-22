@@ -42,11 +42,11 @@ class Vision(commands.Cog):
     @commands.command()
     @commands.check(tokencheck)
     @commands.cooldown(1, 5, commands.BucketType.member)
-    async def ocr(self, ctx: commands.Context, url: Union[discord.Asset, discord.Attachment, str]):
+    async def ocr(self, ctx: commands.Context, url: Union[discord.Asset, discord.Attachment, str] = None):
         """Run an image through Google Cloud Vision OCR API and return any detected text."""
 
         async with ctx.typing():
-            if not url and ctx.message.attachments:
+            if url is None and ctx.message.attachments:
                 url = ctx.message.attachments[0].url
             match = IMAGE_LINKS.match(url)
             if match:
