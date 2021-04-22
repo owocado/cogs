@@ -39,7 +39,7 @@ class Vision(commands.Cog):
     @commands.command()
     @commands.check(tokencheck)
     @commands.cooldown(1, 5, commands.BucketType.member)
-    async def ocr(self, ctx: commands.Context, *, image: ImageFinder = None):
+    async def ocr(self, ctx: commands.Context, *, image: str = None):
         """Run an image through Google Cloud Vision OCR API and return any detected text."""
 
         if image is None:
