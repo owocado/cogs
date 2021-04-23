@@ -8,6 +8,7 @@ from redbot.core import commands
 
 SR_API_URL = "https://some-random-api.ml/premium/amongus"
 PETPET_API = "https://some-random-api.ml/premium/petpet"
+ALEX_API_URL = "https://api.alexflipnote.dev"
 
 
 # Taken from https://github.com/flaree/Flare-Cogs/blob/master/dankmemer/dankmemer.py#L16
@@ -126,3 +127,53 @@ class ImageCog(commands.Cog):
         status = status.replace("-", "--").replace("_", "__")
 
         await ctx.send(f"https://img.shields.io/badge/{subject}-{status}-{color}.png")
+
+    @commands.command()
+    @commands.bot_has_permissions(embed_links=True)
+    @commands.cooldown(1, 5, commands.BucketType.member)
+    async def robohash(self, ctx: commands.Context, text: str, roboset: str = "set1"):
+        """Fetch a unique, robot/alien/monster/kittens avatar for any given text.
+
+        Optionally, there are 4 sets you can pass with `roboset` arg. Defaults to set1.
+        `set2` -  generates a whole slew of Random monster looking avatars.
+        `set3` -  generates avatar resembling robots. New, suave, disembodied heads.
+        `set4` -  hydroponically grow avatar of beautiful kittens.
+        """
+        if roboset not in ["set1", "set2", "set3", "set4"]:
+            return await ctx.send("Only supported values for `roboset` parameter are `set1`, `set2`, `set3`, `set4`.")
+
+        await ctx.send(f"https://robohash.org/{text}.png?set={roboset}")
+
+    @commands.command()
+    @commands.bot_has_permissions(attach_files=True)
+    @commands.cooldown(1, 5, commands.BucketType.member)
+    async def pornhub(self, ctx: commands.Context, text1: str, text2: str):
+        """Generate a PornHub style logo from 2 given words through alexflipnote API.
+
+        ⚠ **NOTE: This command requires an API key.**
+
+        You can request for one in AlexFlipnote discord server:
+        https://discord.gg/DpxkY3x (in their #support channel)
+        Once you have received your key, set it in your red instance with:
+        `[p]set api alexflipnote api_key <api_key>`
+        """
+        api_key = (await ctx.bot.get_shared_api_tokens("alexflipnote")).get("api_key")
+        if api_key is None:
+            return await ctx.send_help()
+
+        headers = {"Authorization": api_key}
+        async with ctx.typing():
+            try:
+                async with self.session.get(
+                    ALEX_API_URL + f"/pornhub?text={text1}&text2={text2}",
+                    headers=headers
+                ) as response:
+                    if response.status != 200:
+                        return await ctx.send(f"https://http.cat/{response.status}")
+                    fp = io.BytesIO(await response.read())
+                    fp.seek(0)
+            except asyncio.TimeoutError:
+                await ctx.send("Operation timed out.")
+                return
+
+            await ctx.send(file=discord.File(fp, "pornhub.png"))
