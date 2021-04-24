@@ -54,7 +54,7 @@ class MovieDB(commands.Cog):
             # All credits belong to Sitryk, I do not take any credit for this code snippet.
             items = ""
             for count, value in enumerate(data.get("results")):
-                items += "**{}.** {} (`{}`)\n".format(
+                items += "**{}.** {} ({})\n".format(
                     count + 1,
                     value.get("title", "Missing title"),
                     value.get("release_date", "Not released yet"),
@@ -184,7 +184,7 @@ class MovieDB(commands.Cog):
             # All credits belong to Sitryk, I do not take any credit for this code snippet.
             items = ""
             for count, value in enumerate(data.get("results")):
-                items += "**{}.** {} (`{}`)\n".format(
+                items += "**{}.** {} ({})\n".format(
                     count + 1,
                     value.get("original_name", "Missing title"),
                     value.get("first_air_date", "Not released yet"),
