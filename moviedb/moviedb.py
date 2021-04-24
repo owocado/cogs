@@ -117,12 +117,8 @@ class MovieDB(commands.Cog):
             colour=await ctx.embed_color(),
         )
         embed.url = f"https://www.imdb.com/title/{data.get('imdb_id', '')}"
-        embed.set_image(
-            url=f"https://image.tmdb.org/t/p/w500{data.get('backdrop_path', '/')}"
-        )
-        embed.set_thumbnail(
-            url=f"https://image.tmdb.org/t/p/w500{data.get('poster_path', '/')}"
-        )
+        # embed.set_image(url=f"https://image.tmdb.org/t/p/w500{data.get('backdrop_path', '/')}")
+        embed.set_thumbnail(url=f"https://image.tmdb.org/t/p/w500{data.get('poster_path', '/')}")
         if data.get("release_date") != "":
             embed.add_field(
                 name="Release Date (USA)",
@@ -251,12 +247,8 @@ class MovieDB(commands.Cog):
             colour=await ctx.embed_color(),
         )
         embed.url = f"https://www.imdb.com/title/{data.get('imdb_id', '')}"
-        embed.set_image(
-            url=f"https://image.tmdb.org/t/p/w500{data.get('backdrop_path', '/')}"
-        )
-        embed.set_thumbnail(
-            url=f"https://image.tmdb.org/t/p/w500{data.get('poster_path', '/')}"
-        )
+        # embed.set_image(url=f"https://image.tmdb.org/t/p/w500{data.get('backdrop_path', '/')}")
+        embed.set_thumbnail(url=f"https://image.tmdb.org/t/p/w500{data.get('poster_path', '/')}")
         if data.get("first_air_date") != "":
             embed.add_field(
                 name="First Air Date",
@@ -269,12 +261,12 @@ class MovieDB(commands.Cog):
             )
         if data.get("number_of_seasons", 0) > 0:
             embed.add_field(
-                name="Seasons / Episodes",
+                name="Seasons",
                 value=f"{data.get('number_of_seasons')} ({data.get('number_of_episodes')} episodes)",
             )
         creators = ", ".join([m.get("name") for m in data.get("created_by")])
         embed.add_field(name="Creators", value=creators)
-        genres = ", ".join([m.get("name") for m in data.get("genres")])
+        genres = "\n".join([m.get("name") for m in data.get("genres")])
         embed.add_field(name="Genres", value=genres)
         if data.get("vote_average") > 0.0 and data.get("vote_count") > 0:
             rating = f"{round(data.get('vote_average') * 10)}% ({humanize_number(data.get('vote_count'))} votes)"
@@ -315,14 +307,14 @@ class MovieDB(commands.Cog):
             )
         embed.add_field(
             name="Seasons summary",
-            value=f"{seasons_meta}\n\n{avg_episode_runtime}",
+            value=f"{seasons_meta}\n{avg_episode_runtime}",
             inline=False,
         )
         next_episode_info = (
             f"**S{data.get('next_episode_to_air', {}).get('season_number', 0)}E"
             f"{data.get('next_episode_to_air', {}).get('episode_number', 0)}: "
             f"{data.get('next_episode_to_air', {}).get('name', 'N/A')}**\n"
-            f"(air date: {data.get('next_episode_to_air').get('air_date', 'N/A')})"
+            f"`air date: {data.get('next_episode_to_air').get('air_date', 'N/A')}`"
         )
         embed.add_field(
             name="Info on next episode", value=next_episode_info, inline=False
