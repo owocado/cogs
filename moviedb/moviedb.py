@@ -310,15 +310,16 @@ class MovieDB(commands.Cog):
             value=f"{seasons_meta}\n{avg_episode_runtime}",
             inline=False,
         )
-        next_episode_info = (
-            f"**S{data.get('next_episode_to_air', {}).get('season_number', 0)}E"
-            f"{data.get('next_episode_to_air', {}).get('episode_number', 0)}: "
-            f"{data.get('next_episode_to_air', {}).get('name', 'N/A')}**\n"
-            f"`air date: {data.get('next_episode_to_air').get('air_date', 'N/A')}`"
-        )
-        embed.add_field(
-            name="Info on next episode", value=next_episode_info, inline=False
-        )
+        if data.get('next_episode_to_air') is not None:
+            next_episode_info = (
+                f"**S{data.get('next_episode_to_air').get('season_number', 0)}E"
+                f"{data.get('next_episode_to_air').get('episode_number', 0)}: "
+                f"{data.get('next_episode_to_air').get('name', 'N/A')}**\n"
+                f"`air date: {data.get('next_episode_to_air').get('air_date', 'N/A')}`"
+            )
+            embed.add_field(
+                name="Info on next episode", value=next_episode_info, inline=False
+            )
         if data.get("tagline", "") != "":
             embed.add_field(name="Tagline", value=data.get("tagline"))
         embed.set_footer(
