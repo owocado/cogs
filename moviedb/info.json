@@ -1,0 +1,17 @@
+{
+    "name": "MovieDB",
+    "short": "Fetch various info about a movie or TV series.",
+    "description": "Fetch various info about a movie or TV series from The Movie DB API.",
+    "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
+    "install_msg": "Hi, thanks for installing this cog. Please note that this cog requires an API key from themoviedb.org.\nYou can find instructions on how to register for a free TMDB API key over at:\n<https://developers.themoviedb.org/3/getting-started/introduction>\n\nOnce you have the said API key, you can then set it in your redbot instance with:\n```[p]set api tmdb api_key <api_key>```",
+    "author": [
+        "siu3334 (<@306810730055729152>)"
+    ],
+    "required_cogs": {},
+    "requirements": [],
+    "tags": ["movie", "movies", "tv", "tv-series", "themoviedb", "moviedb", "tmdb"],
+    "min_bot_version": "3.4.0",
+    "hidden": false,
+    "disabled": false,
+    "type": "COG"
+}
