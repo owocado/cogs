@@ -133,14 +133,14 @@ class MovieDB(commands.Cog):
             mins = data.get("runtime", 0) % 60
             embed.add_field(name="Runtime", value=f"{hours}h {mins}m")
         if data.get("budget") > 0:
-            embed.add_field(name="Budget", value=humanize_number(data.get("budget")))
+            embed.add_field(name="Budget", value="$" + humanize_number(data.get("budget")))
         if data.get("revenue") > 0:
-            embed.add_field(name="Revenue", value=humanize_number(data.get("revenue")))
+            embed.add_field(name="Revenue", value="$" + humanize_number(data.get("revenue")))
         if data.get("vote_average") > 0.0 and data.get("vote_count") > 0:
             rating = f"{round(data.get('vote_average') * 10)}% ({humanize_number(data.get('vote_count'))} votes)"
             embed.add_field(name="TMDB Rating", value=rating)
-        genres = ", ".join([m.get("name") for m in data.get("genres")])
-        embed.add_field(name="Genres", value=genres, inline=False)
+        genres = "\n".join([m.get("name") for m in data.get("genres")])
+        embed.add_field(name="Genres", value=genres)
         spoken_languages = ", ".join(
             [m.get("english_name") for m in data.get("spoken_languages")]
         )
