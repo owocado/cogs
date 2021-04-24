@@ -38,7 +38,7 @@ class MovieDB(commands.Cog):
         params = {"api_key": api_key, "query": query}
         try:
             async with self.session.get(url, params=params) as response:
-                if resp.status != 200:
+                if response.status != 200:
                     return None
                 data = await response.json()
         except asyncio.TimeoutError:
@@ -172,7 +172,7 @@ class MovieDB(commands.Cog):
         params = {"api_key": api_key, "query": query}
         try:
             async with self.session.get(url, params=params) as response:
-                if resp.status != 200:
+                if response.status != 200:
                     return None
                 data = await response.json()
         except asyncio.TimeoutError:
