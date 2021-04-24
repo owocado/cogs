@@ -147,7 +147,7 @@ class MovieDB(commands.Cog):
         embed.add_field(
             name="Production compananies", value=production_companies, inline=False
         )
-        production_countries = "\n".join(
+        production_countries = ", ".join(
             [m.get("name") for m in data.get("production_countries")]
         )
         embed.add_field(
@@ -288,7 +288,7 @@ class MovieDB(commands.Cog):
         embed.add_field(
             name="Production compananies", value=production_companies, inline=False
         )
-        production_countries = "\n".join(
+        production_countries = ", ".join(
             [m.get("name") for m in data.get("production_countries")]
         )
         embed.add_field(
