@@ -1,29 +1,29 @@
+import datetime
+
 from collections import Counter
-from typing import Any, Dict, Literal
+from dateutil import relativedelta
 
 # Required by Red
 import discord
-from redbot.core import checks, commands
-from redbot.core.bot import Red
+from redbot.core import commands
+from redbot.core.commands import GuildConverter
 from redbot.core.utils import AsyncIter
 from redbot.core.utils.chat_formatting import pagify
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
-
-RequestType = Literal["discord_deleted_user", "owner", "user", "user_strict"]
 
 
 class BadgeTools(commands.Cog):
     """Various commands to show the stats about users' profile badges."""
 
-    __author__ = ["siu3334", "<@306810730055729152>", "Fixator10"]
-    __version__ = "0.0.4"
+    __author__ = ["siu3334 (<@306810730055729152>)", "Fixator10"]
+    __version__ = "0.0.5"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
         pre_processed = super().format_help_for_context(ctx)
         return f"{pre_processed}\n\nCog Version: {self.__version__}"
 
-    def __init__(self, bot: Red):
+    def __init__(self, bot):
         self.bot = bot
         self.emojis = self.bot.loop.create_task(self.init())
         self.valid = [
@@ -41,18 +41,6 @@ class BadgeTools(commands.Cog):
             "verified_bot",
             "verified_bot_developer",
         ]
-
-    # credits to jack1142
-    async def red_get_data_for_user(self, *, user_id: int) -> Dict[str, Any]:
-        # this cog does not story any data
-        return {}
-
-    # credits to jack1142
-    async def red_delete_data_for_user(
-        self, *, requester: RequestType, user_id: int
-    ) -> None:
-        # this cog does not story any data
-        pass
 
     def cog_unload(self):
         if self.emojis:
@@ -87,9 +75,9 @@ class BadgeTools(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
-    async def badgecount(self, ctx: commands.Context):
+    async def badgecount(self, ctx: commands.Context, guild: GuildConverter = None):
         """Shows the summary of badgecount of the server."""
-        guild = ctx.guild
+        guild = guild or ctx.guild
 
         count = Counter()
         # Credits to Fixator10 for improving this snippet
@@ -109,12 +97,13 @@ class BadgeTools(commands.Cog):
         await ctx.send(embed=e)
 
     @commands.command()
+    @commands.is_owner()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
-    async def inbadge(self, ctx: commands.Context, badge: str):
+    async def inbadge(self, ctx: commands.Context, badge: str, guild: GuildConverter = None):
         """Returns the list of users with X profile badge in the server."""
 
-        guild = ctx.guild
+        guild = guild or ctx.guild
 
         badgeslist = ", ".join(m for m in self.valid)
         warn = (
@@ -159,7 +148,7 @@ class BadgeTools(commands.Cog):
             em.set_footer(text=f"Found {total} users with {badge.replace('_', ' ').title()} badge")
             embed_list.append(em)
         if not embed_list:
-            return await ctx.send("No results.")
+            return await ctx.send("I couldn't find any users with `{badge}` badge.")
         elif len(embed_list) == 1:
             return await ctx.send(embed=embed_list[0])
         else:
@@ -168,12 +157,12 @@ class BadgeTools(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
-    async def boosters(self, ctx: commands.Context):
+    async def boosters(self, ctx: commands.Context, guild: GuildConverter = None):
         """Returns the list of active boosters of the server."""
 
-        guild = ctx.guild
+        guild = guild or ctx.guild
 
-        b_list = "{status}  {name}#{tag}"
+        b_list = "{status}  `since {since:>15}`  {name}#{tag}"
         all_boosters = [
             b_list.format(
                 status=f"{self.status_emojis['mobile']}"
@@ -192,13 +181,14 @@ class BadgeTools(commands.Cog):
                 else f"{self.status_emojis['away']}",
                 name=usr.name,
                 tag=usr.discriminator,
+                since=self.accurate_timedelta(usr.premium_since),
             )
             for usr in sorted(guild.premium_subscribers, key=lambda x: x.premium_since)
         ]
         output = "\n".join(all_boosters)
         footer = (
             f"This server currently has {guild.premium_subscription_count} boosts "
-            f"thanks to these {len(guild.premium_subscribers)} awesome people! ❤️"
+            f"thanks to these {len(guild.premium_subscribers)} boosters! ❤️"
         )
 
         embed_list = []
@@ -208,8 +198,18 @@ class BadgeTools(commands.Cog):
             em.set_footer(text=footer)
             embed_list.append(em)
         if not embed_list:
-            return await ctx.send("No results.")
+            return await ctx.send(f"`{guild.name}` doesn't have any boost(er)s yet.")
         elif len(embed_list) == 1:
             return await ctx.send(embed=embed_list[0])
         else:
             await menu(ctx, embed_list, DEFAULT_CONTROLS, timeout=60.0)
+
+    @staticmethod
+    def accurate_timedelta(date_time):
+        dt1 = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+        dt2 = date_time
+        diff = relativedelta.relativedelta(dt1, dt2)
+        yrs, mths, days = (diff.years, diff.months, diff.days)
+        hrs, mins, secs = (diff.hours, diff.minutes, diff.seconds)
+        pretty = f"{yrs}y {mths}mth {days}d {hrs}h {mins}m {secs}s"
+        to_join = " ".join([x for x in pretty.split() if x[0] != '0'][:3])

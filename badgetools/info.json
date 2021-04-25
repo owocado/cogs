@@ -5,11 +5,12 @@
     "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
     "install_msg": "This cog displays users' profile badge count of your server. If you wish for the badge emojis to work, you must have you bot added to the friends of Martine server. You can request it to be added here: https://discord.gg/eKxTEsF",
     "author": [
-        "siu3334"
+        "siu3334",
+        "Fixator10"
     ],
     "required_cogs": {},
-    "requirements": [],
-    "tags": ["badgetools", "inbadge", "badgecount"],
+    "requirements": ["python-dateutil"],
+    "tags": ["badgetools", "inbadge", "badgecount", "boosters"],
     "min_bot_version": "3.4.0",
     "hidden": false,
 	"disabled": false,
