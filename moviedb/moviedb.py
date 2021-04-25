@@ -4,8 +4,7 @@ import asyncio
 # Required by Red
 import discord
 from redbot.core import commands
-from redbot.core.utils.chat_formatting import bold, humanize_number, pagify
-from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
+from redbot.core.utils.chat_formatting import humanize_number
 
 # Taken from https://github.com/flaree/Flare-Cogs/blob/master/dankmemer/dankmemer.py#L16
 # Many thanks to flare <3

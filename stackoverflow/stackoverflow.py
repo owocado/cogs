@@ -7,7 +7,7 @@ from typing import Optional
 
 import discord
 from redbot.core import commands
-from redbot.core.utils.chat_formatting import humanize_number, pagify
+from redbot.core.utils.chat_formatting import humanize_number
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 BASE_API_URL = "http://api.stackexchange.com/2.2/search/advanced"

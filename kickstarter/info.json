@@ -1,0 +1,16 @@
+{
+    "name": "Kickstarter",
+    "short": "Search for your query to fetch info on a Kickstarter project.",
+    "description": "Search for your query to fetch info on a Kickstarter project.",
+    "end_user_data_statement": "Thanks for installing this cog. I hope you will find this cog useful and enjoy it. :)",
+    "author": [
+        "siu3334 (<@306810730055729152>)"
+    ],
+    "required_cogs": {},
+    "requirements": [],
+    "tags": ["kickstarter"],
+    "min_bot_version": "3.4.0",
+    "hidden": false,
+    "disabled": false,
+    "type": "COG"
+}
