@@ -162,7 +162,7 @@ class BadgeTools(commands.Cog):
 
         guild = guild or ctx.guild
 
-        b_list = "{status}  `since {since:>15}`  {name}#{tag}"
+        b_list = "{status}  `since {since:>15}`  {user_name_tag}"
         all_boosters = [
             b_list.format(
                 status=f"{self.status_emojis['mobile']}"
@@ -179,9 +179,8 @@ class BadgeTools(commands.Cog):
                 else f"{self.status_emojis['dnd']}"
                 if usr.status.name == "dnd"
                 else f"{self.status_emojis['away']}",
-                name=usr.name,
-                tag=usr.discriminator,
-                since=self.accurate_timedelta(usr.premium_since),
+                user_name_tag=str(usr),
+                since=self._accurate_timedelta(usr.premium_since),
             )
             for usr in sorted(guild.premium_subscribers, key=lambda x: x.premium_since)
         ]
@@ -205,11 +204,16 @@ class BadgeTools(commands.Cog):
             await menu(ctx, embed_list, DEFAULT_CONTROLS, timeout=60.0)
 
     @staticmethod
-    def accurate_timedelta(date_time):
+    def _accurate_timedelta(date_time):
         dt1 = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
         dt2 = date_time
+
         diff = relativedelta.relativedelta(dt1, dt2)
+
         yrs, mths, days = (diff.years, diff.months, diff.days)
         hrs, mins, secs = (diff.hours, diff.minutes, diff.seconds)
+
         pretty = f"{yrs}y {mths}mth {days}d {hrs}h {mins}m {secs}s"
         to_join = " ".join([x for x in pretty.split() if x[0] != '0'][:3])
+
+        return to_join
