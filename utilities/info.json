@@ -20,7 +20,7 @@
         "screenshot",
         "thum-io",
         "thumio",
-        "screenshotapi",
+        "screenshotapi"
     ],
     "min_bot_version": "3.4.0",
     "hidden": true,
