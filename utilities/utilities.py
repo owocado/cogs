@@ -2,18 +2,22 @@ import aiohttp
 import asyncio
 import datetime
 
+from collections import OrderedDict
 from dateutil import relativedelta
 from io import BytesIO
 
 import discord
 from redbot.core import commands
+from redbot.core.utils import AsyncIter
+from redbot.core.utils.chat_formatting import box, pagify
+from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 
 class Utilities(commands.Cog):
     """Some of my useful utility commands."""
 
-    __author__ = "<@306810730055729152>"
-    __version__ = "0.0.1"
+    __author__ = "siu3334 (<@306810730055729152>)"
+    __version__ = "0.0.2"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -125,7 +129,6 @@ class Utilities(commands.Cog):
     @commands.command()
     @commands.is_owner()
     @commands.bot_has_permissions(attach_files=True)
-    @commands.cooldown(1, 5, commands.BucketType.member)
     async def thumio(self, ctx: commands.Context, url: str):
         """Get a free landspace screenshot of a valid publicly accessible webpage."""
         base_url = f"https://image.thum.io/get/width/1920/crop/675/noanimate/{url}"
@@ -144,7 +147,6 @@ class Utilities(commands.Cog):
     @commands.command()
     @commands.is_owner()
     @commands.bot_has_permissions(attach_files=True)
-    @commands.cooldown(1, 5, commands.BucketType.member)
     async def screenshot(
         self,
         ctx: commands.Context,
@@ -175,8 +177,8 @@ class Utilities(commands.Cog):
         if api_key is None:
             return await ctx.send_help()
 
-        width = 1920 if width > 7680 else width
-        height = 1080 if height > 4320 else height
+        width = 1920 if 100 > width > 7680 else width
+        height = 1080 if 100 > height > 4320 else height
         full_page = "false" if full_page not in ["true", "false"] else full_page
         fresh = "true" if fresh not in ["true", "false"] else fresh
         block_ads = "false" if block_ads not in ["true", "false"] else block_ads
@@ -204,7 +206,7 @@ class Utilities(commands.Cog):
 
         async with ctx.typing():
             try:
-                async with self.session(base_url, params=params) as response:
+                async with self.session.get(base_url, params=params) as response:
                     if response.status != 200:
                         return await ctx.send(f"https://http.cat/{response.status}")
                     data = BytesIO(await response.read())
@@ -213,6 +215,44 @@ class Utilities(commands.Cog):
                 return await ctx.send("Operation timed out.")
 
             await ctx.send(file=discord.File(data, "screenshot.png"))
+
+    @commands.command()
+    @commands.cooldown(1, 10, commands.BucketType.member)
+    async def seenlist(self, ctx: commands.Context):
+        """Fetch a list of last seen time of all the server members."""
+        # I mainly made this for my own convenience and personal use some time ago,
+        # making it public in case someone finds it useful.
+
+        cog = self.bot.get_cog("Seen")
+        if not cog:
+            return await ctx.send("This command requires Seen cog to be loaded.")
+        
+        seen_list = ""
+        data = await cog.config.all_members(ctx.guild)
+        sorted_data = OrderedDict(sorted(data.items(), key=lambda i: i[1]['seen']))
+        async for user, seen in AsyncIter(sorted_data.items()):
+            if ctx.guild.get_member(user):
+                now_dt = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+                seen_dt = datetime.datetime.utcfromtimestamp(seen.get("seen"))
+                seen_delta = self._accurate_timedelta(now_dt, seen_dt)
+                seen_list += f"seen {seen_delta:>15} ago | {ctx.guild.get_member(user)}\n"
+            else:
+                seen_list += ""
+        embed_list = []
+        pages = []
+        for page in pagify(seen_list, ["\n"], page_length=750):
+            pages.append(box(page))
+        max_i = len(pages)
+        i = 1
+        for page in pages:
+            embed_list.append(f"Page `{i}` of `{max_i}`:\n\n" + page)
+            i += 1
+        if not embed_list:
+            return await ctx.send("No results.")
+        elif len(embed_list) == 1:
+            return await ctx.send(embed_list[0])
+        else:
+            await menu(ctx, embed_list, DEFAULT_CONTROLS, timeout=60.0)
 
     @staticmethod
     def _accurate_timedelta(value1, value2):
