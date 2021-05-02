@@ -17,7 +17,7 @@ class Utilities(commands.Cog):
     """Some of my useful utility commands."""
 
     __author__ = "siu3334 (<@306810730055729152>)"
-    __version__ = "0.0.2"
+    __version__ = "0.0.3"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -37,6 +37,7 @@ class Utilities(commands.Cog):
 
         or compare timedelta difference between 2 snowflakes.
         """
+        to_match = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
         try:
             snowflake = discord.utils.snowflake_time(snowflake)
         except (ValueError, OverflowError):
@@ -52,12 +53,13 @@ class Utilities(commands.Cog):
                 return
 
         diff = self._accurate_timedelta(snowflake, snowflake2)
-        strftime1 = snowflake.strftime("%A, %d %B, %Y at %H:%M:%S")
-        strftime2 = "Time 2: " + snowflake2.strftime("%A, %d %B, %Y at %H:%M:%S") if snowflake2 else ""
+        strftime1 = snowflake.strftime("%d %b, %Y at %H:%M:%S")
+        strftime2 = "**Time 2:** " + snowflake2.strftime("%d %b, %Y at %H:%M:%S") + " UTC\n" if snowflake2 == to_match else ""
+        when = "ago" if snowflake2 > snowflake else "in future"
 
         final_message = (
-            f"Time : {strftime1} UTC\n{strftime2}\n"
-            f"Difference: {diff}"
+            f"**Time  :** {strftime1} UTC\n{strftime2}"
+            f"**Diff  :** {diff} {when}"
         )
 
         await ctx.send(final_message)
@@ -226,7 +228,7 @@ class Utilities(commands.Cog):
         cog = self.bot.get_cog("Seen")
         if not cog:
             return await ctx.send("This command requires Seen cog to be loaded.")
-        
+
         seen_list = ""
         data = await cog.config.all_members(ctx.guild)
         sorted_data = OrderedDict(sorted(data.items(), key=lambda i: i[1]['seen']))
@@ -235,7 +237,7 @@ class Utilities(commands.Cog):
                 now_dt = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
                 seen_dt = datetime.datetime.utcfromtimestamp(seen.get("seen"))
                 seen_delta = self._accurate_timedelta(now_dt, seen_dt)
-                seen_list += f"seen {seen_delta:>15} ago | {ctx.guild.get_member(user)}\n"
+                seen_list += f"seen {seen_delta:>20} ago | {ctx.guild.get_member(user)}\n"
             else:
                 seen_list += ""
         embed_list = []
@@ -265,6 +267,6 @@ class Utilities(commands.Cog):
         hrs, mins, secs = (diff.hours, diff.minutes, diff.seconds)
 
         pretty = f"{yrs}y {mths}mth {days}d {hrs}h {mins}m {secs}s"
-        to_join = " ".join([x for x in pretty.split() if x[0] != '0'][:3])
+        to_join = " ".join([x for x in pretty.split() if x[0] != '0'][:5])
 
         return to_join

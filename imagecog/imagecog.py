@@ -102,7 +102,7 @@ class ImageCog(commands.Cog):
     @commands.command()
     @commands.bot_has_permissions(attach_files=True)
     @commands.cooldown(1, 5, commands.BucketType.member)
-    async def dicebear(self, ctx: commands.Context, text: str = Non, avatar_type: str = "avataaars"):
+    async def dicebear(self, ctx: commands.Context, text: str = None, avatar_type: str = "avataaars"):
         """Fetch a random avatar from Dicebear API.
 
         Following Dicebear avatar types are supported:
