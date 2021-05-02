@@ -3,6 +3,8 @@ import asyncio
 import io
 import random
 
+from cairosvg import svg2png
+
 import discord
 from redbot.core import commands
 
@@ -21,8 +23,8 @@ async def tokencheck(ctx):
 class ImageCog(commands.Cog):
     """Various fun image generation commands."""
 
-    __author__ = "<@306810730055729152>"
-    __version__ = "0.0.1"
+    __author__ = "siu3334 (<@306810730055729152>)"
+    __version__ = "0.0.2"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -32,6 +34,7 @@ class ImageCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.session = aiohttp.ClientSession()
+        self.dicebear_endpoints = ["male", "female", "initials", "identicon", "jdenticon", "bottts", "avataaars", "human"]
 
     def cog_unload(self):
         self.bot.loop.create_task(self.session.close())
@@ -97,17 +100,34 @@ class ImageCog(commands.Cog):
                 await ctx.send("Operation timed out.")
 
     @commands.command()
-    @commands.bot_has_permissions(embed_links=True)
+    @commands.bot_has_permissions(attach_files=True)
     @commands.cooldown(1, 5, commands.BucketType.member)
-    async def dicebear(self, ctx: commands.Context, gender: str, emotion: str, *, name: str):
-        """Fetch a random avatar from Dicebear API"""
-        if gender not in ["male", "female"]:
-            return await ctx.send("Only `male` or `female` gender is allowed for gender parameter.")
+    async def dicebear(self, ctx: commands.Context, text: str = Non, avatar_type: str = "avataaars"):
+        """Fetch a random avatar from Dicebear API.
 
-        if emotion not in ["happy", "sad", "surprised"]:
-            return await ctx.send("Valid values for emotion parameter are either `happy`, `sad` or `surprised`.")
+        Following Dicebear avatar types are supported:
+        `male`, `female`, `initials`, `identicon`, `jdenticon`, `bottts`, `avataaars`, `human`
 
-        await ctx.send(f"https://avatars.dicebear.com/api/{gender}/{name}.png?width=285&height=285&mood[]={emotion}")
+        Try them out to see what kind of avatar each endpoint returns.
+        Probably something funny or amusing or something meh.
+        """
+        if avatar_type not in self.dicebear_endpoints:
+            return await ctx.send(
+                f"Supported avatar types are: {', '.join(self.dicebear_endpoints)}"
+            )
+        text = str(ctx.author.name) if not text else text
+        base_url = f"https://avatars.dicebear.com/api/{avatar_type}/{text}.svg?width=600&height=600"
+        async with ctx.typing():
+            try:
+                async with self.session.get(base_url) as response:
+                    if response.status != 200:
+                        return await ctx.send(f"https://http.cat/{response.status}")
+                    avatar = await response.read()
+            except asyncio.TimeoutError:
+                return await ctx.send("Operation timed out.")
+
+            attachment = io.BytesIO(svg2png(bytestring=avatar))
+            await ctx.send(file=discord.File(attachment, "dicebear.png"))
 
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
@@ -115,7 +135,7 @@ class ImageCog(commands.Cog):
     async def adorable(self, ctx: commands.Context, text: str):
         """Fetch an \"adorable\" avatar."""
 
-        await ctx.send(f"https://api.hello-avatar.com/adorables/285/{text}.png")
+        await ctx.send(f"https://api.hello-avatar.com/adorables/400/{text}.png")
 
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
