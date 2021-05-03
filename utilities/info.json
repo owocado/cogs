@@ -20,7 +20,9 @@
         "screenshot",
         "thum-io",
         "thumio",
-        "screenshotapi"
+        "screenshotapi",
+        "inviteinfo",
+        "invite-info"
     ],
     "min_bot_version": "3.4.0",
     "hidden": true,

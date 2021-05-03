@@ -1,23 +1,29 @@
 import aiohttp
 import asyncio
 import datetime
+import re
 
 from collections import OrderedDict
 from dateutil import relativedelta
 from io import BytesIO
+from typing import Pattern
 
 import discord
 from redbot.core import commands
 from redbot.core.utils import AsyncIter
-from redbot.core.utils.chat_formatting import box, pagify
+from redbot.core.utils.chat_formatting import bold, box, humanize_number, inline, pagify
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
+
+INVITE_URL_REGEX: Pattern = re.compile(
+    r"((https:\/\/)?(discord|discordapp)\.(com|gg)\/(invite)?\/?[\w-]+)"
+)
 
 
 class Utilities(commands.Cog):
     """Some of my useful utility commands."""
 
     __author__ = "siu3334 (<@306810730055729152>)"
-    __version__ = "0.0.3"
+    __version__ = "0.0.4"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -52,7 +58,7 @@ class Utilities(commands.Cog):
                 await ctx.send("Value of given `snowflake2` parameter is out of range.")
                 return
 
-        diff = self._accurate_timedelta(snowflake, snowflake2)
+        diff = self._accurate_timedelta(snowflake, snowflake2, 5)
         strftime1 = snowflake.strftime("%d %b, %Y at %H:%M:%S")
         strftime2 = "**Time 2:** " + snowflake2.strftime("%d %b, %Y at %H:%M:%S") + " UTC\n" if snowflake2 == to_match else ""
         when = "ago" if snowflake2 > snowflake else "in future"
@@ -236,7 +242,7 @@ class Utilities(commands.Cog):
             if ctx.guild.get_member(user):
                 now_dt = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
                 seen_dt = datetime.datetime.utcfromtimestamp(seen.get("seen"))
-                seen_delta = self._accurate_timedelta(now_dt, seen_dt)
+                seen_delta = self._accurate_timedelta(now_dt, seen_dt, 3)
                 seen_list += f"seen {seen_delta:>20} ago | {ctx.guild.get_member(user)}\n"
             else:
                 seen_list += ""
@@ -256,8 +262,84 @@ class Utilities(commands.Cog):
         else:
             await menu(ctx, embed_list, DEFAULT_CONTROLS, timeout=60.0)
 
+    @commands.command(aliases=["invinfo"])
+    @commands.cooldown(1, 10, commands.BucketType.member)
+    @commands.bot_has_permissions(embed_links=True)
+    async def inviteinfo(self, ctx: commands.Context, invite_link_or_code: str):
+        """Get some basic info about a Discord invite and it's parent guild."""
+        match = INVITE_URL_REGEX.match(invite_link_or_code)
+        invite_link_or_code = match.group(1).split("/")[-1] if match else invite_link_or_code
+
+        try:
+            invite = await self.bot.fetch_invite(invite_link_or_code)
+        except (discord.NotFound, discord.HTTPException):
+            return await ctx.send("The invite is either invalid or has expired.")
+
+        verif_lvl = "**Server verification level:**  " + str(invite.guild.verification_level).title()
+        created_on = invite.guild.created_at
+        now = ctx.message.created_at
+        created_delta = self._accurate_timedelta(now, created_on, 2) + " ago"
+        guild_info = (
+            f"Server ID: {invite.guild.id} • "
+            f"Server created ({created_delta}) on"
+        )
+        embed = discord.Embed(
+            description=(f"{invite.guild.description}\n\n" if invite.guild.description else "\n") + verif_lvl,
+            colour=await ctx.embed_colour(),
+        )
+        # attribution : https://github.com/Cog-Creators/Red-DiscordBot/blob/V3/develop/redbot/cogs/general/general.py#L412
+        embed.set_author(
+            name="Invite Info for: " + str(invite.guild.name),
+            icon_url="https://cdn.discordapp.com/emojis/457879292152381443.png"
+            if "VERIFIED" in invite.guild.features
+            else "https://cdn.discordapp.com/emojis/508929941610430464.png"
+            if "PARTNERED" in invite.guild.features
+            else discord.Embed.Empty,
+        )
+        embed.timestamp = created_on
+        embed.set_footer(text=guild_info)
+        embed.set_thumbnail(url=str(invite.guild.icon_url))
+        online_emoji = discord.utils.get(self.bot.emojis, id=749221433552404581)
+        online_emoji = online_emoji if online_emoji else "\N{LARGE GREEN CIRCLE}"
+        offline_emoji = discord.utils.get(self.bot.emojis, id=749221433049088082)
+        offline_emoji = offline_emoji if offline_emoji else "\N{MEDIUM WHITE CIRCLE}"
+        approx_total = humanize_number(invite.approximate_member_count)
+        approx_online = humanize_number(invite.approximate_presence_count)
+        users_count = f"{online_emoji} {approx_online} Online\n{offline_emoji} {approx_total} Total"
+        embed.add_field(name="Approx. Users", value=users_count)
+        if invite.inviter:
+            embed.add_field(name="Inviter", value=str(invite.inviter))
+        else:
+            embed.add_field(name="Vanity invite?", value="✅ Most likely")
+        embed.add_field(
+            name="Invite channel",
+            value=f"#{invite.channel.name}\n{inline(f'<#{invite.channel.id}>')}",
+        )
+        # embed.add_field(name="Server ID", value=str(invite.guild.id))
+        # embed.add_field(name="Verification Level", value=verif_lvl)
+        assets_info = f"[Server Icon]({invite.guild.icon_url})"
+        if invite.guild.banner:
+            assets_info += f" • [Server Banner]({invite.guild.banner_url_as(format='png', size=2048)})"
+        if invite.guild.splash:
+            assets_info += f" • [Invite Splash]({invite.guild.splash_url_as(format='png', size=2048)})"
+        embed.add_field(name="Server Assets", value=assets_info)
+        embed.add_field(
+            name="Server features",
+            value="\n".join("• " + x.replace("_", " ").title() for x in sorted(invite.guild.features)),
+            inline=False,
+        )
+        if invite.guild.id in [x.id for x in self.bot.guilds]:
+            embed.add_field(
+                name="\u200b",
+                value="Oh look, I am a member of this server. 😃",
+                inline=False,
+            )
+
+        await ctx.send(embed=embed)
+
+
     @staticmethod
-    def _accurate_timedelta(value1, value2):
+    def _accurate_timedelta(value1, value2, index: int):
         if value1 > value2:
             diff = relativedelta.relativedelta(value1, value2)
         else:
@@ -267,6 +349,6 @@ class Utilities(commands.Cog):
         hrs, mins, secs = (diff.hours, diff.minutes, diff.seconds)
 
         pretty = f"{yrs}y {mths}mth {days}d {hrs}h {mins}m {secs}s"
-        to_join = " ".join([x for x in pretty.split() if x[0] != '0'][:5])
+        to_join = " ".join([x for x in pretty.split() if x[0] != '0'][:index])
 
         return to_join
