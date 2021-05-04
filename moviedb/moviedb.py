@@ -287,12 +287,13 @@ class MovieDB(commands.Cog):
         embed.add_field(
             name="Production compananies", value=production_companies, inline=False
         )
-        production_countries = ", ".join(
-            [m.get("name") for m in data.get("production_countries")]
-        )
-        embed.add_field(
-            name="Production countries", value=production_countries, inline=False
-        )
+        if data.get("production_countries"):
+            production_countries = ", ".join(
+                [m.get("name") for m in data.get("production_countries")]
+            )
+            embed.add_field(
+                name="Production countries", value=production_countries, inline=False
+            )
         avg_episode_runtime = (
             f"Average episode runtime: {data.get('episode_run_time')[0]} minutes"
         )
