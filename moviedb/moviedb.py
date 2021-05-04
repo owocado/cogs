@@ -17,7 +17,7 @@ class MovieDB(commands.Cog):
     """Show various info about a movie or a TV show/series."""
 
     __author__ = ["siu3334 (<@306810730055729152>)"]
-    __version__ = "0.0.1"
+    __version__ = "0.0.4"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -263,8 +263,9 @@ class MovieDB(commands.Cog):
                 name="Seasons",
                 value=f"{data.get('number_of_seasons')} ({data.get('number_of_episodes')} episodes)",
             )
-        creators = ", ".join([m.get("name") for m in data.get("created_by")])
-        embed.add_field(name="Creators", value=creators)
+        if data.get("created_by"):
+            creators = ", ".join(m.get("name") for m in data.get("created_by"))
+            embed.add_field(name="Creators", value=creators)
         genres = "\n".join([m.get("name") for m in data.get("genres")])
         embed.add_field(name="Genres", value=genres)
         if data.get("vote_average") > 0.0 and data.get("vote_count") > 0:
@@ -310,7 +311,7 @@ class MovieDB(commands.Cog):
             value=f"{seasons_meta}\n{avg_episode_runtime}",
             inline=False,
         )
-        if data.get('next_episode_to_air') is not None:
+        if data.get('next_episode_to_air'):
             next_episode_info = (
                 f"**S{data.get('next_episode_to_air').get('season_number', 0)}E"
                 f"{data.get('next_episode_to_air').get('episode_number', 0)}: "
