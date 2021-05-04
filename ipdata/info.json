@@ -3,10 +3,8 @@
     "short": "IP Geolocation and Proxy Detection.",
     "description": "This cog returns various info about given IP.",
     "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
-    "install_msg": "This cog shows various info about given IP. Please note that it requires an API key.\nYou can get one by signing up at : https://ipdata.co/sign-up.html\nOnce you received API key, set it with:\n`[p]set api ipdata api_key <api_key>`",
-    "author": [
-        "siu3334"
-    ],
+    "install_msg": "Thanks for installing. This cog shows various info about given **>> public IP address <<** from ipdata.co.",
+    "author": ["siu3334"],
     "required_cogs": {},
     "requirements": [],
     "tags": ["ip", "whois", "ipdata", "traceroute"],
