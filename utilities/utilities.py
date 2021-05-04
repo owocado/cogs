@@ -323,11 +323,12 @@ class Utilities(commands.Cog):
         if invite.guild.splash:
             assets_info += f" • [Invite Splash]({invite.guild.splash_url_as(format='png', size=2048)})"
         embed.add_field(name="Server Assets", value=assets_info)
-        embed.add_field(
-            name="Server features",
-            value="\n".join("• " + x.replace("_", " ").title() for x in sorted(invite.guild.features)),
-            inline=False,
-        )
+        if invite.guild.features:
+            embed.add_field(
+                name="Server features",
+                value="\n".join("• " + x.replace("_", " ").title() for x in sorted(invite.guild.features)),
+                inline=False,
+            )
         if invite.guild.id in [x.id for x in self.bot.guilds]:
             embed.add_field(
                 name="\u200b",
