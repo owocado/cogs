@@ -58,7 +58,7 @@ class iTunes(commands.Cog):
                 embed.url = data.get("trackViewUrl")
                 embed.set_author(
                     name="Apple iTunes",
-                    url="",
+                    url="https://www.apple.com/itunes/",
                     icon_url="https://i.imgur.com/PR29ow0.jpg",
                 )
                 embed.set_thumbnail(url=data.get("artworkUrl100").replace("100", "500"))
