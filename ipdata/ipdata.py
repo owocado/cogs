@@ -39,11 +39,11 @@ class IPData(commands.Cog):
             return await ctx.send_help()
         async with ctx.typing():
             try:
-                session = aiohttp.ClientSession()
-                async with session.get(f"https://api.ipdata.co/{ip_address}?api-key={api_key}") as response:
-                    if response.status != 200:
-                        return await ctx.send(f"https://http.cat/{response.status}")
-                    data = await response.json()
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(f"https://api.ipdata.co/{ip_address}?api-key={api_key}") as response:
+                        if response.status != 200:
+                            return await ctx.send(f"https://http.cat/{response.status}")
+                        data = await response.json()
             except asyncio.TimeoutError:
                 return await ctx.send("Operation timed out.")
 

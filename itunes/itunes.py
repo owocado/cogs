@@ -12,7 +12,7 @@ class iTunes(commands.Cog):
     """Search for a song on Apple iTunes."""
 
     __author__ = "siu3334 (<@306810730055729152>)"
-    __version__ = "0.0.1"
+    __version__ = "0.0.2"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -32,7 +32,8 @@ class iTunes(commands.Cog):
         """
         async with ctx.typing():
             base_url = "https://itunes.apple.com/search"
-            params = {"term": "trustyjaid",
+            params = {
+                "term": query,
                 "media": "music",
                 "entity": "song",
                 "limit": 10,
@@ -71,6 +72,7 @@ class iTunes(commands.Cog):
                 seconds = data.get("trackTimeMillis", 0) % 60
                 embed.add_field(name="Track Length", value=f"{minutes}m {seconds}s")
                 embed.add_field(name="Track Price", value=f"{data.get('trackPrice')} {data.get('currency')}")
+                embed.set_footer(text=f"Page {i + 1} of {results.get('resultCount')}")
                 pages.append(embed)
 
             if len(pages) == 1:
