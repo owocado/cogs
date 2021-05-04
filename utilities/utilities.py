@@ -262,7 +262,7 @@ class Utilities(commands.Cog):
         else:
             await menu(ctx, embed_list, DEFAULT_CONTROLS, timeout=60.0)
 
-    @commands.command(aliases=["invinfo"])
+    @commands.command()
     @commands.cooldown(1, 10, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True)
     async def inviteinfo(self, ctx: commands.Context, invite_link_or_code: str):
