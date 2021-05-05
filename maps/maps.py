@@ -12,7 +12,7 @@ class Maps(commands.Cog):
     """Fetch a Google map of a specific location."""
 
     __author__ = "siu3334 (<@306810730055729152>)"
-    __version__ = "1.0.0"
+    __version__ = "1.0.1"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -56,7 +56,7 @@ class Maps(commands.Cog):
         if not api_key:
             return await ctx.send_help()
 
-        zoom = zoom if 1 <= zoom <= 20 else 12
+        zoom = zoom if (zoom and 1 <= zoom <= 20) else 12
         maptype = "roadmap" if maptype not in self.maptypes else maptype
 
         async with ctx.typing():
@@ -80,5 +80,5 @@ class Maps(commands.Cog):
             except asyncio.TimeoutError:
                 return await ctx.send("Operation timed out.")
 
-            url = f"<https://www.google.com/maps/search/{location}>"
+            url = f"<https://www.google.com/maps/search/{location.replace(' ', '+')}>"
             await ctx.send(content=url, file=discord.File(image, "map.png"))
