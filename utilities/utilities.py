@@ -3,6 +3,7 @@ import asyncio
 import datetime
 import re
 
+from bs4 import BeautifulSoup
 from collections import OrderedDict
 from dateutil import relativedelta
 from io import BytesIO
@@ -20,10 +21,10 @@ INVITE_URL_REGEX: Pattern = re.compile(
 
 
 class Utilities(commands.Cog):
-    """Some of my useful utility commands."""
+    """Some of my useful & fun utility commands, grouped in one cog."""
 
     __author__ = "siu3334 (<@306810730055729152>)"
-    __version__ = "0.0.4"
+    __version__ = "0.0.5"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -83,7 +84,10 @@ class Utilities(commands.Cog):
         offline = sum(x.status == discord.Status.offline for x in users)
         percent = offline / count
 
-        to_send = f"({round(percent * 100, 2)}%) __**{offline}**__ out of {count} users in **{role.name}** role are currently offline."
+        to_send = (
+            f"({round(percent * 100, 2)}%) __**{offline}**__ out of "
+            f"{count} users in **{role.name}** role are currently offline."
+        )
         await ctx.send(to_send)
 
     @commands.command(aliases=["urlshorten"])
@@ -338,6 +342,30 @@ class Utilities(commands.Cog):
 
         await ctx.send(embed=embed)
 
+    @commands.command(aliases=["kymeme"])
+    @commands.bot_has_permissions(embed_links=True)
+    async def knowyourmeme(self, ctx: commands.Context, *, query: str):
+        """Searches Know Your Meme for your meme query."""
+        base_url = f"https://knowyourmeme.com/search?q={query}"
+        user_agent = {
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
+        }
+
+        async with ctx.typing():
+            try:
+                async with self.session.get(base_url, headers=user_agent) as response:
+                    if response.status != 200:
+                        await ctx.send(f"https://http.cat/{response.status}")
+                        return
+                    data = BeautifulSoup(await response.content.read(), "html.parser")
+            except asyncio.TimeoutError:
+                await ctx.send("Operation timed out.")
+                return
+
+            meme_endpoint = data.findAll("tbody")[0].tr.td.a["href"]
+            meme_url = "https://knowyourmeme.com" + str(meme_endpoint)
+
+            await ctx.send(meme_url)
 
     @staticmethod
     def _accurate_timedelta(value1, value2, index: int):

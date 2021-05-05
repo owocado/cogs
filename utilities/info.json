@@ -8,24 +8,23 @@
         "siu3334 (<@306810730055729152>)"
     ],
     "required_cogs": {},
-    "requirements": ["python-dateutil"],
+    "requirements": ["python-dateutil", "beautifulsoup4"],
     "tags": [
         "offlinecount",
         "bitly",
-        "urlshorten",
-        "shorten-url",
+        "url shorten",
+        "shorten url",
         "snowflake",
         "timestamp",
-        "compare-snowflake",
+        "compare snowflake",
         "screenshot",
-        "thum-io",
-        "thumio",
         "screenshotapi",
         "inviteinfo",
-        "invite-info"
+        "invite info",
+        "know your meme"
     ],
     "min_bot_version": "3.4.0",
-    "hidden": true,
+    "hidden": false,
     "disabled": false,
     "type": "COG"
 }
