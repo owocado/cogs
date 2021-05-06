@@ -203,7 +203,7 @@ class Pokebase(commands.Cog):
                 f"{' ' * (20 - round((base_stats['speed'] / 255) * 10) * 2)}|` **{base_stats['speed']}**\n"
                 "`-----------------------------------`\n"
                 f"`Total      : |{'█' * round((total_base_stats / 1125) * 10) * 2}"
-                f"{' ' * (20 - round((total_base_stats / 1125) * 10) * 2)}| **{total_base_stats}**`\n"
+                f"{' ' * (20 - round((total_base_stats / 1125) * 10) * 2)}|` **{total_base_stats}**\n"
             )
             embed.add_field(
                 name="Base Stats (Base Form)", value=pretty_base_stats, inline=False
