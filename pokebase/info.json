@@ -9,7 +9,7 @@
         "phalt"
     ],
     "required_cogs": {},
-    "requirements": [],
+    "requirements": ["aiocache"],
     "tags": ["pokemon", "pokedex", "pokebase", "pokeapi"],
     "min_bot_version": "3.4.0",
     "hidden": false,
