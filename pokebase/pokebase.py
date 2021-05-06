@@ -109,12 +109,12 @@ class Pokebase(commands.Cog):
             # pages = []
             embed = discord.Embed(colour=await ctx.embed_colour())
             embed.set_author(
-                name=f"#{str(data.get('id').zfill(3))} - {data.get('name').title()}",
-                url=SEREBII + f"/{str(data.get('id').zfill(3))}.shtml",
-                icon_url=SEREBII + f"/icon/{str(data.get('id').zfill(3))}.png",
+                name=f"#{str(data.get('id')).zfill(3)} - {data.get('name').title()}",
+                url=SEREBII + f"/{str(data.get('id')).zfill(3)}.shtml",
+                icon_url=SEREBII + f"/icon/{str(data.get('id')).zfill(3)}.png",
             )
             embed.set_thumbnail(
-                url=f"https://serebii.net/pokemon/art/{str(data.get('id').zfill(3))}.png",
+                url=f"https://serebii.net/pokemon/art/{str(data.get('id')).zfill(3)}.png",
             )
             introduced_in = str(
                 self.intro_games[self.intro_gen[self.get_generation(data.get("id", 0))]]
