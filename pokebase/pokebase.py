@@ -21,7 +21,7 @@ class Pokebase(commands.Cog):
     """Search for various info about a Pokémon and related data."""
 
     __author__ = ["phalt", "siu3334 (<@306810730055729152>)"]
-    __version__ = "0.0.2"
+    __version__ = "0.0.4"
 
     def format_help_for_context(self, ctx: Context) -> str:
         """Thanks Sinbad!"""
@@ -122,7 +122,7 @@ class Pokebase(commands.Cog):
             embed.add_field(name="Introduced In", value=introduced_in)
             humanize_height = (
                 f"{floor(data.get('height', 0) * 3.94 // 12)}'"
-                f"{floor(data.get('height', 0) * 3.94 // 12)}\""
+                f"{floor(data.get('height', 0) * 3.94 % 12)}\""
                 f" ({data.get('height') / 10} m.)"
             )
             embed.add_field(name="Height", value=humanize_height)
@@ -190,20 +190,20 @@ class Pokebase(commands.Cog):
 
             pretty_base_stats = (
                 f"`HP         : |{'█' * round((base_stats['hp'] / 255) * 10) * 2}"
-                f"{' ' * (20 - round((base_stats['hp'] / 255) * 10) * 2)}|` **{base_stats['hp']}**"
+                f"{' ' * (20 - round((base_stats['hp'] / 255) * 10) * 2)}|` **{base_stats['hp']}**\n"
                 f"`Attack     : |{'█' * round((base_stats['attack'] / 255) * 10) * 2}"
-                f"{' ' * (20 - round((base_stats['attack'] / 255) * 10) * 2)}|` **{base_stats['attack']}**"
+                f"{' ' * (20 - round((base_stats['attack'] / 255) * 10) * 2)}|` **{base_stats['attack']}**\n"
                 f"`Defense    : |{'█' * round((base_stats['defense'] / 255) * 10) * 2}"
-                f"{' ' * (20 - round((base_stats['defense'] / 255) * 10) * 2)}|` **{base_stats['defense']}**"
+                f"{' ' * (20 - round((base_stats['defense'] / 255) * 10) * 2)}|` **{base_stats['defense']}**\n"
                 f"`Sp. Attack : |{'█' * round((base_stats['special-attack'] / 255) * 10) * 2}"
-                f"{' ' * (20 - round((base_stats['special-attack'] / 255) * 10) * 2)}|` **{base_stats['special-attack']}**"
+                f"{' ' * (20 - round((base_stats['special-attack'] / 255) * 10) * 2)}|` **{base_stats['special-attack']}**\n"
                 f"`Sp. Defense: |{'█' * round((base_stats['special-defense'] / 255) * 10) * 2}"
-                f"{' ' * (20 - round((base_stats['special-defense'] / 255) * 10) * 2)}|` **{base_stats['special-defense']}**"
+                f"{' ' * (20 - round((base_stats['special-defense'] / 255) * 10) * 2)}|` **{base_stats['special-defense']}**\n"
                 f"`Speed      : |{'█' * round((base_stats['speed'] / 255) * 10) * 2}"
-                f"{' ' * (20 - round((base_stats['speed'] / 255) * 10) * 2)}|` **{base_stats['speed']}**"
-                "`-----------------------------------`"
+                f"{' ' * (20 - round((base_stats['speed'] / 255) * 10) * 2)}|` **{base_stats['speed']}**\n"
+                "`-----------------------------------`\n"
                 f"Total      : |{'█' * round((total_base_stats / 1125) * 10) * 2}"
-                f"{' ' * (20 - round((total_base_stats / 1125) * 10) * 2)}| **{total_base_stats}**"
+                f"{' ' * (20 - round((total_base_stats / 1125) * 10) * 2)}| **{total_base_stats}**\n"
             )
             embed.add_field(
                 name="Base Stats (Base Form)", value=pretty_base_stats, inline=False
