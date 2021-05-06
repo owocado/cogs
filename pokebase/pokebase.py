@@ -186,21 +186,21 @@ class Pokebase(commands.Cog):
             base_stats = {}
             for stat in data.get("stats"):
                 base_stats[stat.get("stat").get("name")] = stat.get("base_stat")
-            total_base_stats = sum(base_stat.values())
+            total_base_stats = sum(base_stats.values())
 
             pretty_base_stats = (
-                f"`HP         : |{'█' * round((base_stat['hp'] / 255) * 10) * 2}"
-                f"{' ' * (20 - round((base_stat['hp'] / 255) * 10) * 2)}|` **{base_stat['hp']}**"
-                f"`Attack     : |{'█' * round((base_stat['attack'] / 255) * 10) * 2}"
-                f"{' ' * (20 - round((base_stat['attack'] / 255) * 10) * 2)}|` **{base_stat['attack']}**"
-                f"`Defense    : |{'█' * round((base_stat['defense'] / 255) * 10) * 2}"
-                f"{' ' * (20 - round((base_stat['defense'] / 255) * 10) * 2)}|` **{base_stat['defense']}**"
-                f"`Sp. Attack : |{'█' * round((base_stat['special-attack'] / 255) * 10) * 2}"
-                f"{' ' * (20 - round((base_stat['special-attack'] / 255) * 10) * 2)}|` **{base_stat['special-attack']}**"
-                f"`Sp. Defense: |{'█' * round((base_stat['special-defense'] / 255) * 10) * 2}"
-                f"{' ' * (20 - round((base_stat['special-defense'] / 255) * 10) * 2)}|` **{base_stat['special-defense']}**"
-                f"`Speed      : |{'█' * round((base_stat['speed'] / 255) * 10) * 2}"
-                f"{' ' * (20 - round((base_stat['speed'] / 255) * 10) * 2)}|` **{base_stat['speed']}**"
+                f"`HP         : |{'█' * round((base_stats['hp'] / 255) * 10) * 2}"
+                f"{' ' * (20 - round((base_stats['hp'] / 255) * 10) * 2)}|` **{base_stats['hp']}**"
+                f"`Attack     : |{'█' * round((base_stats['attack'] / 255) * 10) * 2}"
+                f"{' ' * (20 - round((base_stats['attack'] / 255) * 10) * 2)}|` **{base_stats['attack']}**"
+                f"`Defense    : |{'█' * round((base_stats['defense'] / 255) * 10) * 2}"
+                f"{' ' * (20 - round((base_stats['defense'] / 255) * 10) * 2)}|` **{base_stats['defense']}**"
+                f"`Sp. Attack : |{'█' * round((base_stats['special-attack'] / 255) * 10) * 2}"
+                f"{' ' * (20 - round((base_stats['special-attack'] / 255) * 10) * 2)}|` **{base_stats['special-attack']}**"
+                f"`Sp. Defense: |{'█' * round((base_stats['special-defense'] / 255) * 10) * 2}"
+                f"{' ' * (20 - round((base_stats['special-defense'] / 255) * 10) * 2)}|` **{base_stats['special-defense']}**"
+                f"`Speed      : |{'█' * round((base_stats['speed'] / 255) * 10) * 2}"
+                f"{' ' * (20 - round((base_stats['speed'] / 255) * 10) * 2)}|` **{base_stats['speed']}**"
                 "`-----------------------------------`"
                 f"Total      : |{'█' * round((total_base_stats / 1125) * 10) * 2}"
                 f"{' ' * (20 - round((total_base_stats / 1125) * 10) * 2)}| **{total_base_stats}**"
