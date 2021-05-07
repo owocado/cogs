@@ -2,26 +2,23 @@ import aiohttp
 import asyncio
 
 from aiocache import cached, SimpleMemoryCache
-from itertools import repeat
 from math import floor
 from random import choice
 
 import discord
 from redbot.core import commands
 from redbot.core.commands import Context
-from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 cache = SimpleMemoryCache()
 
 API_URL = "https://pokeapi.co/api/v2"
-SEREBII = "https://www.serebii.net/pokedex-swsh"
 
 
 class Pokebase(commands.Cog):
     """Search for various info about a Pokémon and related data."""
 
     __author__ = ["phalt", "siu3334 (<@306810730055729152>)"]
-    __version__ = "0.0.4"
+    __version__ = "0.1.4"
 
     def format_help_for_context(self, ctx: Context) -> str:
         """Thanks Sinbad!"""
@@ -33,15 +30,15 @@ class Pokebase(commands.Cog):
         self.session = aiohttp.ClientSession()
         self.intro_gen = ["na", "rb", "gs", "rs", "dp", "bw", "xy", "sm", "ss"]
         self.intro_games = {
-            "na": "None (Unknown)",
-            "rb": "Red/Blue",
-            "gs": "Gold/Silver",
-            "rs": "Ruby/Sapphire",
-            "dp": "Diamond/Pearl",
-            "bw": "Black/White",
-            "xy": "X/Y",
-            "sm": "Sun/Moon",
-            "ss": "Sword/Shield",
+            "na": "Unknown",
+            "rb": "Red/Blue\n(Gen. 1)",
+            "gs": "Gold/Silver\n(Gen. 2)",
+            "rs": "Ruby/Sapphire\n(Gen. 3)",
+            "dp": "Diamond/Pearl\n(Gen. 4)",
+            "bw": "Black/White\n(Gen. 5)",
+            "xy": "X/Y\n(Gen. 6)",
+            "sm": "Sun/Moon\n(Gen. 7)",
+            "ss": "Sword/Shield\n(Gen. 8)",
         }
 
     def cog_unload(self):
@@ -83,12 +80,24 @@ class Pokebase(commands.Cog):
 
         return species_data
 
+    @cached(ttl=86400, cache=SimpleMemoryCache)
+    async def get_evolution_chain(self, evo_url: str):
+        try:
+            async with self.session.get(evo_url) as response:
+                if response.status != 200:
+                    return None
+                evolution_data = await response.json()
+        except asyncio.TimeoutError:
+            return None
+
+        return evolution_data
+
     @commands.command()
     @cached(ttl=86400, cache=SimpleMemoryCache)
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 5, commands.BucketType.member)
+    @commands.cooldown(1, 10, commands.BucketType.member)
     async def pokemon(self, ctx: Context, pokemon: str):
-        """Search for various info for a Pokémon.
+        """Search for various info about a Pokémon.
 
         You can search by name or ID of a Pokémon.
         ID refers to National Pokédex number.
@@ -110,30 +119,29 @@ class Pokebase(commands.Cog):
             embed = discord.Embed(colour=await ctx.embed_colour())
             embed.set_author(
                 name=f"#{str(data.get('id')).zfill(3)} - {data.get('name').title()}",
-                url=SEREBII + f"/{str(data.get('id')).zfill(3)}.shtml",
-                icon_url=SEREBII + f"/icon/{str(data.get('id')).zfill(3)}.png",
+                url=f"https://www.pokemon.com/us/pokedex/{data.get('name')}",
             )
             embed.set_thumbnail(
-                url=f"https://serebii.net/pokemon/art/{str(data.get('id')).zfill(3)}.png",
+                url=f"https://assets.pokemon.com/assets/cms2/img/pokedex/full/{str(data.get('id')).zfill(3)}.png",
             )
             introduced_in = str(
                 self.intro_games[self.intro_gen[self.get_generation(data.get("id", 0))]]
             )
             embed.add_field(name="Introduced In", value=introduced_in)
             humanize_height = (
-                f"{floor(data.get('height', 0) * 3.94 // 12)}'"
-                f"{floor(data.get('height', 0) * 3.94 % 12)}\""
-                f" ({data.get('height') / 10} m.)"
+                f"{floor(data.get('height', 0) * 3.94 // 12)} ft."
+                f"{floor(data.get('height', 0) * 3.94 % 12)} in."
+                f"\n({data.get('height') / 10} m.)"
             )
             embed.add_field(name="Height", value=humanize_height)
             humanize_weight = (
                 f"{round(data.get('weight', 0) * 0.2205, 2)} lbs."
-                f" ({data.get('weight') / 10} kgs.)"
+                f"\n({data.get('weight') / 10} kgs.)"
             )
             embed.add_field(name="Weight", value=humanize_weight)
             embed.add_field(
                 name="Types",
-                value="\n".join(
+                value="/".join(
                     x.get("type").get("name").title() for x in data.get("types")
                 ),
             )
@@ -144,15 +152,17 @@ class Pokebase(commands.Cog):
                 male_ratio = 100 - ((gender_rate / 8) * 100)
                 female_ratio = (gender_rate / 8) * 100
                 genders = {
-                    "male": 0 if gender_rate == -1 else male_ratio,
-                    "female": 0 if gender_rate == -1 else female_ratio,
+                    "male": 0.0 if gender_rate == -1 else male_ratio,
+                    "female": 0.0 if gender_rate == -1 else female_ratio,
                     "genderless": True if gender_rate == -1 else False,
                 }
-                final_gender_rate = (
-                    "Genderless"
-                    if genders["genderless"]
-                    else f"♂️ {genders['male']}%  ♀️ {genders['female']}%"
-                )
+                final_gender_rate = ""
+                if genders["genderless"]:
+                    final_gender_rate += "Genderless"
+                if genders["male"] != 0.0:
+                    final_gender_rate += f"♂️ {genders['male']}%\n"
+                if genders["female"] != 0.0:
+                    final_gender_rate += f"♀️ {genders['female']}%"
                 embed.add_field(name="Gender Rate", value=final_gender_rate)
                 embed.add_field(
                     name="Base Happiness",
@@ -181,7 +191,32 @@ class Pokebase(commands.Cog):
                     .replace("\r", " ")
                 )
                 flavor_text = flavor_text
-                embed.description = f"**{genus_text}**\n{flavor_text}"
+                embed.description = f"**{genus_text}**\n\n{flavor_text}"
+
+            if data.get("held_items"):
+                held_items = ""
+                for item in data.get("held_items"):
+                    held_items += "{} ({}%)\n".format(
+                        item.get("item").get("name").replace("-", " ").title(),
+                        item.get("version_details")[0].get("rarity"),
+                    )
+                embed.add_field(name="Held Items", value=held_items)
+            else:
+                embed.add_field(name="Held Items", value="None")
+
+            abilities = ""
+            for ability in data.get("abilities"):
+                abilities += "[{}](https://bulbapedia.bulbagarden.net/wiki/{}_(Ability)){}\n".format(
+                    ability.get("ability").get("name").replace("-", " ").title(),
+                    ability.get("ability")
+                    .get("name")
+                    .replace("-", " ")
+                    .title()
+                    .replace(" ", "_"),
+                    " (Hidden Ability)" if ability.get("is_hidden") else "",
+                )
+
+            embed.add_field(name="Abilities", value=abilities)
 
             base_stats = {}
             for stat in data.get("stats"):
@@ -208,17 +243,35 @@ class Pokebase(commands.Cog):
             embed.add_field(
                 name="Base Stats (Base Form)", value=pretty_base_stats, inline=False
             )
-            abilities = ""
-            for ability in data.get("abilities"):
-                abilities += "[{}](https://bulbapedia.bulbagarden.net/wiki/{}_(Ability)){}\n".format(
-                    ability.get("ability").get("name").replace("-", " ").title(),
-                    ability.get("ability")
-                    .get("name")
-                    .replace("-", " ")
-                    .title()
-                    .replace(" ", "_"),
-                    " (Hidden Ability)" if ability.get("is_hidden") else "",
-                )
 
-            embed.add_field(name="Abilities", value=abilities, inline=False)
+            evolves_to = ""
+            if species_data.get("evolution_chain"):
+                evo_url = species_data.get("evolution_chain").get("url")
+                evo_data = (
+                    (await self.get_evolution_chain(evo_url))
+                    .get("chain")
+                    .get("evolves_to")
+                )
+                if evo_data:
+                    evolves_to += " -> " + "/".join(
+                        x.get("species").get("name").title() for x in evo_data
+                    )
+                if evo_data and evo_data[0].get("evolves_to"):
+                    evolves_to += " -> " + "/".join(
+                        x.get("species").get("name").title()
+                        for x in evo_data[0].get("evolves_to")
+                    )
+
+            evolves_from = ""
+            if species_data.get("evolves_from_species"):
+                evolves_from += (
+                    species_data.get("evolves_from_species").get("name").title()
+                    + " -> "
+                )
+            embed.add_field(
+                name="Evolution Chain",
+                value=f"{evolves_from}**{data.get('name').title()}**{evolves_to}",
+                inline=False,
+            )
+
             await ctx.send(embed=embed)
