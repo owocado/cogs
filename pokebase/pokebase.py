@@ -4,10 +4,12 @@ import asyncio
 from aiocache import cached, SimpleMemoryCache
 from math import floor
 from random import choice
+from string import capwords
 
 import discord
 from redbot.core import commands
 from redbot.core.commands import Context
+from redbot.core.utils.chat_formatting import bold
 
 cache = SimpleMemoryCache()
 
@@ -96,7 +98,7 @@ class Pokebase(commands.Cog):
     @cached(ttl=86400, cache=SimpleMemoryCache)
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 10, commands.BucketType.member)
-    async def pokemon(self, ctx: Context, pokemon: str):
+    async def pdex(self, ctx: Context, pokemon: str):
         """Search for various info about a Pokémon.
 
         You can search by name or ID of a Pokémon.
@@ -106,7 +108,7 @@ class Pokebase(commands.Cog):
         async with ctx.typing():
             try:
                 async with self.session.get(
-                    API_URL + f"/pokemon/{pokemon}"
+                    API_URL + f"/pokemon/{pokemon.lower()}"
                 ) as response:
                     if response.status != 200:
                         await ctx.send(f"https://http.cat/{response.status}")
@@ -208,11 +210,7 @@ class Pokebase(commands.Cog):
             for ability in data.get("abilities"):
                 abilities += "[{}](https://bulbapedia.bulbagarden.net/wiki/{}_(Ability)){}\n".format(
                     ability.get("ability").get("name").replace("-", " ").title(),
-                    ability.get("ability")
-                    .get("name")
-                    .replace("-", " ")
-                    .title()
-                    .replace(" ", "_"),
+                    ability.get("ability").get("name").title().replace("-", "_"),
                     " (Hidden Ability)" if ability.get("is_hidden") else "",
                 )
 
@@ -273,5 +271,153 @@ class Pokebase(commands.Cog):
                 value=f"{evolves_from}**{data.get('name').title()}**{evolves_to}",
                 inline=False,
             )
+            embed.set_footer(text="Powered by Poke API")
+            await ctx.send(embed=embed)
+
+    @commands.command()
+    @cached(ttl=86400, cache=SimpleMemoryCache)
+    @commands.bot_has_permissions(embed_links=True)
+    @commands.cooldown(1, 5, commands.BucketType.member)
+    async def ability(self, ctx: Context, *, ability: str):
+        """Search for a known Pokémon ability.
+        You can search by ability's name or it's unique ID.
+
+        Abilities provide passive effects for Pokémon in battle or in the overworld.
+        Pokémon have multiple possible abilities but can have only one ability at a time.
+        Check out Bulbapedia for greater detail:
+        http://bulbapedia.bulbagarden.net/wiki/Ability
+        """
+        async with ctx.typing():
+            try:
+                async with self.session.get(
+                    API_URL + f"/ability/{ability.replace(' ', '-').lower()}/"
+                ) as response:
+                    if response.status != 200:
+                        await ctx.send(f"https://http.cat/{response.status}")
+                        return
+                    data = await response.json()
+            except asyncio.TimeoutError:
+                return await ctx.send("Operation timed out.")
+
+            embed = discord.Embed(colour=discord.Color.random())
+            embed.title = data.get("name").replace("-", " ").title()
+            embed.url = "https://bulbapedia.bulbagarden.net/wiki/{}_(Ability)".format(
+                data.get("name").title().replace("-", "_")
+            )
+            embed.description = [
+                x.get("effect")
+                for x in data.get("effect_entries")
+                if x.get("language").get("name") == "en"
+            ][0]
+
+            if data.get("generation"):
+                embed.add_field(
+                    name="Introduced In",
+                    value="Gen. "
+                    + bold(
+                        str(data.get("generation").get("name").split("-")[1].upper())
+                    ),
+                )
+            short_effect = [
+                x.get("short_effect")
+                for x in data.get("effect_entries")
+                if x.get("language").get("name") == "en"
+            ][0]
+            embed.add_field(name="Ability's Effect", value=short_effect, inline=False)
+            if data.get("pokemon"):
+                pokemons = ", ".join(
+                    x.get("pokemon").get("name").title() for x in data.get("pokemon")
+                )
+                embed.add_field(
+                    name=f"Pokémons with {data.get('name').title()}",
+                    value=pokemons,
+                    inline=False,
+                )
+            embed.set_footer(text="Powered by Poke API")
+
+            await ctx.send(embed=embed)
+
+    @commands.command()
+    @cached(ttl=86400, cache=SimpleMemoryCache)
+    @commands.bot_has_permissions(embed_links=True)
+    @commands.cooldown(1, 5, commands.BucketType.member)
+    async def move(self, ctx: Context, *, move: str):
+        """Get info about a Pokémon's move.
+        You can search by a move name or it's ID.
+
+        Moves are the skills of Pokémon in battle.
+        In battle, a Pokémon uses one move each turn.
+        Some moves (including those learned by Hidden Machine) can be used outside of battle as well,
+        usually for the purpose of removing obstacles or exploring new areas.
+        """
+        move_query = move.replace(',', ' ').replace(' ', '-').replace('\'', '').lower()
+        async with ctx.typing():
+            try:
+                async with self.session.get(
+                    API_URL + f"/move/{move_query}/"
+                ) as response:
+                    if response.status != 200:
+                        await ctx.send(f"https://http.cat/{response.status}")
+                        return
+                    data = await response.json()
+            except asyncio.TimeoutError:
+                return await ctx.send("Operation timed out.")
+
+            embed = discord.Embed(colour=discord.Color.random())
+            embed.title = data.get("name").replace("-", " ").title()
+            embed.url = "https://bulbapedia.bulbagarden.net/wiki/{}_(move)".format(
+                capwords(move).replace(" ", "_")
+            )
+            if data.get("effect_entries"):
+                effect = "\n".join(
+                    [
+                        f"{x.get('short_effect')}\n{x.get('effect')}"
+                        for x in data.get("effect_entries")
+                        if x.get("language").get("name") == "en"
+                    ]
+                )
+                embed.description = f"**Move Effect:** \n\n{effect}"
+
+            if data.get("generation"):
+                embed.add_field(
+                    name="Introduced In",
+                    value="Gen. "
+                    + bold(
+                        str(data.get("generation").get("name").split("-")[1].upper())
+                    ),
+                )
+            if data.get("accuracy"):
+                embed.add_field(name="Accuracy", value=f"{data.get('accuracy')}%")
+            embed.add_field(name="Base Power", value=str(data.get("power")))
+            if data.get("effect_chance"):
+                embed.add_field(
+                    name="Effect Chance", value=f"{data.get('effect_chance')}%"
+                )
+            embed.add_field(name="Power Points (PP)", value=str(data.get("pp")))
+            if data.get("type"):
+                embed.add_field(
+                    name="Move Type", value=data.get("type").get("name").title()
+                )
+            if data.get("contest_type"):
+                embed.add_field(
+                    name="Contest Type",
+                    value=data.get("contest_type").get("name").title(),
+                )
+            if data.get("damage_class"):
+                embed.add_field(
+                    name="Damage Class",
+                    value=data.get("damage_class").get("name").title(),
+                )
+            embed.add_field(name="\u200b", value="\u200b")
+            if data.get("learned_by_pokemon"):
+                learned_by = [
+                    x.get("name").title() for x in data.get("learned_by_pokemon")
+                ]
+                embed.add_field(
+                    name=f"Learned by {str(len(learned_by))} Pokémons",
+                    value=", ".join(learned_by)[:500] + "... and more.",
+                    inline=False,
+                )
+            embed.set_footer(text="Powered by Poke API")
 
             await ctx.send(embed=embed)
