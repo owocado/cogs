@@ -1,14 +1,8 @@
-import json
-from pathlib import Path
-
-from redbot.core.bot import Red
-
 from .today import Today
 
-with open(Path(__file__).parent / "info.json") as fp:
-    __red_end_user_data_statement__ = json.load(fp)["end_user_data_statement"]
+__red_end_user_data_statement__ = "This cog does not persistently store any data or metadata about users."
 
 
-async def setup(bot: Red):
+async def setup(bot):
     n = Today(bot)
     bot.add_cog(n)
