@@ -1,7 +1,9 @@
 import aiohttp
 import asyncio
+import base64
 
 from aiocache import cached, SimpleMemoryCache
+from io import BytesIO
 from math import floor
 from random import choice
 from string import capwords
@@ -41,6 +43,31 @@ class Pokebase(commands.Cog):
             "xy": "X/Y\n(Gen. 6)",
             "sm": "Sun/Moon\n(Gen. 7)",
             "ss": "Sword/Shield\n(Gen. 8)",
+        }
+        self.styles = {
+            "default": 3,
+            "black": 50,
+            "collector": 96,
+            "dp": 5,
+            "purple": 43,
+        }
+        self.trainers = {
+            "ash": 13,
+            "red": 922,
+            "ethan": 900,
+            "lyra": 901,
+            "brendan": 241,
+            "may": 255,
+            "lucas": 747,
+            "dawn": 856,
+        }
+        self.badges = {
+            "kanto": [2, 3, 4, 5, 6, 7, 8, 9],
+            "johto": [10, 11, 12, 13, 14, 15, 16, 17],
+            "hoenn": [18, 19, 20, 21, 22, 23, 24, 25],
+            "sinnoh": [26, 27, 28, 29, 30, 31, 32, 33],
+            "unova": [34, 35, 36, 37, 38, 39, 40, 41],
+            "kalos": [44, 45, 46, 47, 48, 49, 50, 51],
         }
 
     def cog_unload(self):
@@ -279,13 +306,14 @@ class Pokebase(commands.Cog):
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 5, commands.BucketType.member)
     async def ability(self, ctx: Context, *, ability: str):
-        """Search for a known Pokémon ability.
+        """Get various info about a known Pokémon ability.
         You can search by ability's name or it's unique ID.
 
         Abilities provide passive effects for Pokémon in battle or in the overworld.
         Pokémon have multiple possible abilities but can have only one ability at a time.
         Check out Bulbapedia for greater detail:
         http://bulbapedia.bulbagarden.net/wiki/Ability
+        https://bulbapedia.bulbagarden.net/wiki/Ability#List_of_Abilities
         """
         async with ctx.typing():
             try:
@@ -342,15 +370,18 @@ class Pokebase(commands.Cog):
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 5, commands.BucketType.member)
     async def move(self, ctx: Context, *, move: str):
-        """Get info about a Pokémon's move.
+        """Get various info about a Pokémon's move.
         You can search by a move name or it's ID.
 
         Moves are the skills of Pokémon in battle.
         In battle, a Pokémon uses one move each turn.
         Some moves (including those learned by Hidden Machine) can be used outside of battle as well,
         usually for the purpose of removing obstacles or exploring new areas.
+
+        You can find a list of known Pokémon moves here:
+        https://bulbapedia.bulbagarden.net/wiki/List_of_moves
         """
-        move_query = move.replace(',', ' ').replace(' ', '-').replace('\'', '').lower()
+        move_query = move.replace(",", " ").replace(" ", "-").replace("'", "").lower()
         async with ctx.typing():
             try:
                 async with self.session.get(
@@ -421,3 +452,76 @@ class Pokebase(commands.Cog):
             embed.set_footer(text="Powered by Poke API")
 
             await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.bot_has_permissions(attach_files=True, embed_links=True)
+    @commands.cooldown(1, 10, commands.BucketType.guild)
+    async def trainercard(
+        self,
+        ctx: Context,
+        name: str,
+        style: str,
+        trainer: str,
+        badge: str,
+        *,
+        pokemons: str,
+    ):
+        """Generate a trainer card for a Pokémon trainer in different styles.
+
+        This command requires you to pass values for multiple parameters.
+        These parameters are explained briefly as follows:
+
+        `name` - Provide any personalised name of your choice.
+        `style` - Only `default`, `black`, `collector`, `dp`, `purple` styles are supported.
+        `trainer` - `ash`, `red`, `ethan`, `lyra`, `brendan`, `may`, `lucas`, `dawn` are supported.
+        `badge` - `kanto`, `johto`, `hoenn`, `sinnoh`, `unova` and `kalos`  badge leagues are supported.
+        `pokemons` - You can provide up to 6 Pokémon's IDs maximum (not Pokémon names).
+        """
+        base_url = "https://pokecharms.com/index.php?trainer-card-maker/render"
+        if style not in ["default", "black", "collector", "dp", "purple"]:
+            return await ctx.send_help()
+        if trainer not in [
+            "ash",
+            "red",
+            "ethan",
+            "lyra",
+            "brendan",
+            "may",
+            "lucas",
+            "dawn",
+        ]:
+            return await ctx.send_help()
+        if badge not in ["kanto", "johto", "hoenn", "sinnoh", "unova", "kalos"]:
+            return await ctx.send_help()
+        if len(pokemons.split()) > 6:
+            return await ctx.send_help()
+
+        async with ctx.typing():
+            form = aiohttp.FormData()
+            form.add_field("trainername", name[:12])
+            form.add_field("background", str(self.styles[style]))
+            form.add_field("character", str(self.trainers[trainer]))
+            form.add_field("badges", "8")
+            form.add_field("badgesUsed", ",".join(str(x) for x in self.badges[badge]))
+            form.add_field("pokemon", str(len(pokemons.split())))
+            form.add_field("pokemonUsed", ",".join(pokemons.split()))
+            form.add_field("_xfResponseType", "json")
+            try:
+                async with self.session.post(base_url, data=form) as response:
+                    if response.status != 200:
+                        return await ctx.send(f"https://http.cat/{response.status}")
+                    output = await response.json()
+            except asyncio.TimeoutError:
+                return await ctx.send("Operation timed out.")
+
+            base64_card_string = output.get("trainerCard")
+            if base64_card_string:
+                base64_img_bytes = base64_card_string.encode("utf-8")
+                decoded_image_data = BytesIO(base64.decodebytes(base64_img_bytes))
+                decoded_image_data.seek(0)
+                await ctx.send(
+                    file=discord.File(decoded_image_data, "trainer-card.png")
+                )
+                return
+            else:
+                await ctx.send("No trainer card was generated. :(")
