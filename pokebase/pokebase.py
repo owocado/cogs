@@ -3,6 +3,7 @@ import asyncio
 import base64
 
 from aiocache import cached, SimpleMemoryCache
+from bs4 import BeautifulSoup as bsp
 from io import BytesIO
 from math import floor
 from random import choice
@@ -21,7 +22,7 @@ API_URL = "https://pokeapi.co/api/v2"
 class Pokebase(commands.Cog):
     """Search for various info about a Pokémon and related data."""
 
-    __author__ = ["phalt", "siu3334 (<@306810730055729152>)"]
+    __author__ = ["phalt", "siu3334"]
     __version__ = "0.1.4"
 
     def format_help_for_context(self, ctx: Context) -> str:
@@ -96,6 +97,20 @@ class Pokebase(commands.Cog):
             return 0
 
     @cached(ttl=86400, cache=SimpleMemoryCache)
+    async def get_pokemon_data(self, pokemon: str):
+        try:
+            async with self.session.get(
+                API_URL + f"/pokemon/{pokemon.lower()}"
+            ) as response:
+                if response.status != 200:
+                    return None
+                pokemon_data = await response.json()
+        except asyncio.TimeoutError:
+            return None
+
+        return pokemon_data
+
+    @cached(ttl=86400, cache=SimpleMemoryCache)
     async def get_species_data(self, pkmn_id: int):
         try:
             async with self.session.get(
@@ -129,20 +144,13 @@ class Pokebase(commands.Cog):
         """Search for various info about a Pokémon.
 
         You can search by name or ID of a Pokémon.
-        ID refers to National Pokédex number.
+        Pokémon ID refers to National Pokédex number.
         https://bulbapedia.bulbagarden.net/wiki/List_of_Pok%C3%A9mon_by_National_Pok%C3%A9dex_number
         """
         async with ctx.typing():
-            try:
-                async with self.session.get(
-                    API_URL + f"/pokemon/{pokemon.lower()}"
-                ) as response:
-                    if response.status != 200:
-                        await ctx.send(f"https://http.cat/{response.status}")
-                        return
-                    data = await response.json()
-            except asyncio.TimeoutError:
-                return await ctx.send("Operation timed out.")
+            data = await self.get_pokemon_data(pokemon)
+            if not data:
+                return await ctx.send("No results.")
 
             # pages = []
             embed = discord.Embed(colour=await ctx.embed_colour())
@@ -277,7 +285,7 @@ class Pokebase(commands.Cog):
                     .get("chain")
                     .get("evolves_to")
                 )
-                if evo_data:
+                if evo_data and evo_data[0]["species"]["name"] != data.get("name"):
                     evolves_to += " -> " + "/".join(
                         x.get("species").get("name").title() for x in evo_data
                     )
@@ -454,8 +462,9 @@ class Pokebase(commands.Cog):
             await ctx.send(embed=embed)
 
     @commands.command()
+    @cached(ttl=86400, cache=SimpleMemoryCache)
     @commands.bot_has_permissions(attach_files=True, embed_links=True)
-    @commands.cooldown(1, 10, commands.BucketType.guild)
+    @commands.cooldown(1, 60, commands.BucketType.guild)
     async def trainercard(
         self,
         ctx: Context,
@@ -475,21 +484,13 @@ class Pokebase(commands.Cog):
         `style` - Only `default`, `black`, `collector`, `dp`, `purple` styles are supported.
         `trainer` - `ash`, `red`, `ethan`, `lyra`, `brendan`, `may`, `lucas`, `dawn` are supported.
         `badge` - `kanto`, `johto`, `hoenn`, `sinnoh`, `unova` and `kalos`  badge leagues are supported.
-        `pokemons` - You can provide up to 6 Pokémon's IDs maximum (not Pokémon names).
+        `pokemons` - You can provide maximum up to 6 Pokémon's names or IDs.
+        (Pokémons from #891 to #898 are not supported yet for trainer card)
         """
         base_url = "https://pokecharms.com/index.php?trainer-card-maker/render"
         if style not in ["default", "black", "collector", "dp", "purple"]:
             return await ctx.send_help()
-        if trainer not in [
-            "ash",
-            "red",
-            "ethan",
-            "lyra",
-            "brendan",
-            "may",
-            "lucas",
-            "dawn",
-        ]:
+        if trainer not in ["ash", "red", "ethan", "lyra", "brendan", "may", "lucas", "dawn"]:
             return await ctx.send_help()
         if badge not in ["kanto", "johto", "hoenn", "sinnoh", "unova", "kalos"]:
             return await ctx.send_help()
@@ -497,6 +498,27 @@ class Pokebase(commands.Cog):
             return await ctx.send_help()
 
         async with ctx.typing():
+            pkmn_ids = []
+            for pokemon in pokemons.split():
+                get_ids = await self.get_pokemon_data(pokemon)
+                if get_ids.get("id"):
+                    pkmn_ids.append(get_ids["id"])
+
+            panel_ids = []
+            for npn in pkmn_ids:
+                panel_url = "https://pokecharms.com/trainer-card-maker/pokemon-panels"
+                payload = aiohttp.FormData()
+                payload.add_field("number", npn)
+                payload.add_field("_xfResponseType", "json")
+                async with self.session.post(panel_url, data=payload) as resp:
+                    if resp.status != 200:
+                        panel_ids.append("1")
+                    soup = bsp((await resp.json()).get("templateHtml"), "html.parser")
+                    try:
+                        panel_ids.append(soup.find_all('li')[0].get('data-id'))
+                    except IndexError:
+                        panel_ids.append("1")
+
             form = aiohttp.FormData()
             form.add_field("trainername", name[:12])
             form.add_field("background", str(self.styles[style]))
@@ -504,7 +526,7 @@ class Pokebase(commands.Cog):
             form.add_field("badges", "8")
             form.add_field("badgesUsed", ",".join(str(x) for x in self.badges[badge]))
             form.add_field("pokemon", str(len(pokemons.split())))
-            form.add_field("pokemonUsed", ",".join(pokemons.split()))
+            form.add_field("pokemonUsed", ",".join(panel_ids))
             form.add_field("_xfResponseType", "json")
             try:
                 async with self.session.post(base_url, data=form) as response:

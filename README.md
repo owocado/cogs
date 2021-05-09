@@ -7,7 +7,7 @@ This serves as a cog repo for my own mods/created cogs. All credits belongs to t
 To install cogs from this repo, you can run below commands in given order.
 Please replace `[p]` with your bot's prefix.
 
-If not loaded already, first load core downloader cog with:
+First load core downloader cog, if not loaded already, with:
 ```
 [p]load downloader
 ```
@@ -15,17 +15,22 @@ If not loaded already, first load core downloader cog with:
 Then to add repo and install my cogs, do:
 ```
 [p]repo add owo https://github.com/siu3334/owo-cogs
+
+# To view the list of my cogs, do:
+[p]cog list owo
+
 [p]cog install owo <list of cogs>
 [p]load <list of cogs>
 ```
 
 
 ## Credits
-* [jack1142](https://github.com/jack1142) for providing auto info.json generator and EUD data deletion and statement methods
-* [TrustyJAID](https://github.com/TrustyJAID) for allowing me permission to use moviepy logic from his crabrave cog
-* [Fixator](https://github.com/fixator10) for helping me improve badgetools cog code
-* [flare](https://github.com/flaree) for giving permission to use custom emojis code logic in badgetools cog from his userinfo cog
-* All other helpful active folks in [Red Discord server](https://discord.gg/red)
+* [Dragon Fire](https://github.com/dragonfire535) for being very humble, kind and helpful person and inspiring me to make these cogs.
+* [jack1142](https://github.com/jack1142) for providing EUD data deletion and statement methods.
+* [TrustyJAID](https://github.com/TrustyJAID) for allowing me permission to use moviepy logic from his crabrave cog.
+* [Fixator](https://github.com/fixator10) for helping me improve badgetools cog code.
+* [flare](https://github.com/flaree) for giving permission to use custom emojis code logic in badgetools cog from his userinfo cog.
+* All other helpful active folks in [Red Discord server](https://discord.gg/red).
 
 
 ## Contact
