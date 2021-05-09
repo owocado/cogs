@@ -23,7 +23,7 @@ class Pokebase(commands.Cog):
     """Search for various info about a Pokémon and related data."""
 
     __author__ = ["phalt", "siu3334"]
-    __version__ = "0.1.4"
+    __version__ = "0.2.4"
 
     def format_help_for_context(self, ctx: Context) -> str:
         """Thanks Sinbad!"""
