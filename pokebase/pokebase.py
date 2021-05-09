@@ -3,6 +3,7 @@ import asyncio
 import base64
 
 from aiocache import cached, SimpleMemoryCache
+from bs4 import BeautifulSoup as bsp
 from io import BytesIO
 from math import floor
 from random import choice
@@ -11,7 +12,7 @@ from string import capwords
 import discord
 from redbot.core import commands
 from redbot.core.commands import Context
-from redbot.core.utils.chat_formatting import bold
+from redbot.core.utils.chat_formatting import bold, humanize_number
 
 cache = SimpleMemoryCache()
 
@@ -21,8 +22,8 @@ API_URL = "https://pokeapi.co/api/v2"
 class Pokebase(commands.Cog):
     """Search for various info about a Pokémon and related data."""
 
-    __author__ = ["phalt", "siu3334 (<@306810730055729152>)"]
-    __version__ = "0.1.4"
+    __author__ = ["phalt", "siu3334"]
+    __version__ = "0.2.4"
 
     def format_help_for_context(self, ctx: Context) -> str:
         """Thanks Sinbad!"""
@@ -96,6 +97,20 @@ class Pokebase(commands.Cog):
             return 0
 
     @cached(ttl=86400, cache=SimpleMemoryCache)
+    async def get_pokemon_data(self, pokemon: str):
+        try:
+            async with self.session.get(
+                API_URL + f"/pokemon/{pokemon.lower()}"
+            ) as response:
+                if response.status != 200:
+                    return None
+                pokemon_data = await response.json()
+        except asyncio.TimeoutError:
+            return None
+
+        return pokemon_data
+
+    @cached(ttl=86400, cache=SimpleMemoryCache)
     async def get_species_data(self, pkmn_id: int):
         try:
             async with self.session.get(
@@ -129,20 +144,13 @@ class Pokebase(commands.Cog):
         """Search for various info about a Pokémon.
 
         You can search by name or ID of a Pokémon.
-        ID refers to National Pokédex number.
+        Pokémon ID refers to National Pokédex number.
         https://bulbapedia.bulbagarden.net/wiki/List_of_Pok%C3%A9mon_by_National_Pok%C3%A9dex_number
         """
         async with ctx.typing():
-            try:
-                async with self.session.get(
-                    API_URL + f"/pokemon/{pokemon.lower()}"
-                ) as response:
-                    if response.status != 200:
-                        await ctx.send(f"https://http.cat/{response.status}")
-                        return
-                    data = await response.json()
-            except asyncio.TimeoutError:
-                return await ctx.send("Operation timed out.")
+            data = await self.get_pokemon_data(pokemon)
+            if not data:
+                return await ctx.send("No results.")
 
             # pages = []
             embed = discord.Embed(colour=await ctx.embed_colour())
@@ -235,7 +243,7 @@ class Pokebase(commands.Cog):
 
             abilities = ""
             for ability in data.get("abilities"):
-                abilities += "[{}](https://bulbapedia.bulbagarden.net/wiki/{}_(Ability)){}\n".format(
+                abilities += "[{}](https://bulbapedia.bulbagarden.net/wiki/{}_%28Ability%29){}\n".format(
                     ability.get("ability").get("name").replace("-", " ").title(),
                     ability.get("ability").get("name").title().replace("-", "_"),
                     " (Hidden Ability)" if ability.get("is_hidden") else "",
@@ -270,34 +278,30 @@ class Pokebase(commands.Cog):
             )
 
             evolves_to = ""
+            evolves_to_2 = ""
             if species_data.get("evolution_chain"):
                 evo_url = species_data.get("evolution_chain").get("url")
-                evo_data = (
-                    (await self.get_evolution_chain(evo_url))
-                    .get("chain")
-                    .get("evolves_to")
-                )
-                if evo_data:
+                evo_data = (await self.get_evolution_chain(evo_url)).get("chain")
+                base_evo = evo_data.get("species").get("name").title()
+                if evo_data.get("evolves_to"):
                     evolves_to += " -> " + "/".join(
-                        x.get("species").get("name").title() for x in evo_data
+                        x.get("species").get("name").title() for x in evo_data["evolves_to"]
                     )
-                if evo_data and evo_data[0].get("evolves_to"):
-                    evolves_to += " -> " + "/".join(
+                if evo_data.get("evolves_to") and evo_data.get("evolves_to")[0].get("evolves_to"):
+                    evolves_to_2 += " -> " + "/".join(
                         x.get("species").get("name").title()
-                        for x in evo_data[0].get("evolves_to")
+                        for x in evo_data.get("evolves_to")[0].get("evolves_to")
                     )
-
-            evolves_from = ""
-            if species_data.get("evolves_from_species"):
-                evolves_from += (
-                    species_data.get("evolves_from_species").get("name").title()
-                    + " -> "
-                )
             embed.add_field(
                 name="Evolution Chain",
-                value=f"{evolves_from}**{data.get('name').title()}**{evolves_to}",
+                value=f"{base_evo} -> {evolves_to} {evolves_to_2}",
                 inline=False,
             )
+            type_effectiveness = (
+                "[See it on Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/"
+                f"{data.get('name').title()}_%28Pokémon%29#Type_effectiveness)"
+            )
+            embed.add_field(name="Weakness/Resistance", value=type_effectiveness)
             embed.set_footer(text="Powered by Poke API")
             await ctx.send(embed=embed)
 
@@ -329,7 +333,7 @@ class Pokebase(commands.Cog):
 
             embed = discord.Embed(colour=discord.Color.random())
             embed.title = data.get("name").replace("-", " ").title()
-            embed.url = "https://bulbapedia.bulbagarden.net/wiki/{}_(Ability)".format(
+            embed.url = "https://bulbapedia.bulbagarden.net/wiki/{}_%28Ability%29".format(
                 data.get("name").title().replace("-", "_")
             )
             embed.description = [
@@ -396,7 +400,7 @@ class Pokebase(commands.Cog):
 
             embed = discord.Embed(colour=discord.Color.random())
             embed.title = data.get("name").replace("-", " ").title()
-            embed.url = "https://bulbapedia.bulbagarden.net/wiki/{}_(move)".format(
+            embed.url = "https://bulbapedia.bulbagarden.net/wiki/{}_%28move%29".format(
                 capwords(move).replace(" ", "_")
             )
             if data.get("effect_entries"):
@@ -454,8 +458,9 @@ class Pokebase(commands.Cog):
             await ctx.send(embed=embed)
 
     @commands.command()
+    @cached(ttl=86400, cache=SimpleMemoryCache)
     @commands.bot_has_permissions(attach_files=True, embed_links=True)
-    @commands.cooldown(1, 10, commands.BucketType.guild)
+    @commands.cooldown(1, 60, commands.BucketType.guild)
     async def trainercard(
         self,
         ctx: Context,
@@ -475,21 +480,13 @@ class Pokebase(commands.Cog):
         `style` - Only `default`, `black`, `collector`, `dp`, `purple` styles are supported.
         `trainer` - `ash`, `red`, `ethan`, `lyra`, `brendan`, `may`, `lucas`, `dawn` are supported.
         `badge` - `kanto`, `johto`, `hoenn`, `sinnoh`, `unova` and `kalos`  badge leagues are supported.
-        `pokemons` - You can provide up to 6 Pokémon's IDs maximum (not Pokémon names).
+        `pokemons` - You can provide maximum up to 6 Pokémon's names or IDs.
+        (Pokémons from #891 to #898 are not supported yet for trainer card)
         """
         base_url = "https://pokecharms.com/index.php?trainer-card-maker/render"
         if style not in ["default", "black", "collector", "dp", "purple"]:
             return await ctx.send_help()
-        if trainer not in [
-            "ash",
-            "red",
-            "ethan",
-            "lyra",
-            "brendan",
-            "may",
-            "lucas",
-            "dawn",
-        ]:
+        if trainer not in ["ash", "red", "ethan", "lyra", "brendan", "may", "lucas", "dawn"]:
             return await ctx.send_help()
         if badge not in ["kanto", "johto", "hoenn", "sinnoh", "unova", "kalos"]:
             return await ctx.send_help()
@@ -497,6 +494,27 @@ class Pokebase(commands.Cog):
             return await ctx.send_help()
 
         async with ctx.typing():
+            pkmn_ids = []
+            for pokemon in pokemons.split():
+                get_ids = await self.get_pokemon_data(pokemon)
+                if get_ids.get("id"):
+                    pkmn_ids.append(get_ids["id"])
+
+            panel_ids = []
+            for npn in pkmn_ids:
+                panel_url = "https://pokecharms.com/trainer-card-maker/pokemon-panels"
+                payload = aiohttp.FormData()
+                payload.add_field("number", npn)
+                payload.add_field("_xfResponseType", "json")
+                async with self.session.post(panel_url, data=payload) as resp:
+                    if resp.status != 200:
+                        panel_ids.append("1")
+                    soup = bsp((await resp.json()).get("templateHtml"), "html.parser")
+                    try:
+                        panel_ids.append(soup.find_all('li')[0].get('data-id'))
+                    except IndexError:
+                        panel_ids.append("1")
+
             form = aiohttp.FormData()
             form.add_field("trainername", name[:12])
             form.add_field("background", str(self.styles[style]))
@@ -504,7 +522,7 @@ class Pokebase(commands.Cog):
             form.add_field("badges", "8")
             form.add_field("badgesUsed", ",".join(str(x) for x in self.badges[badge]))
             form.add_field("pokemon", str(len(pokemons.split())))
-            form.add_field("pokemonUsed", ",".join(pokemons.split()))
+            form.add_field("pokemonUsed", ",".join(panel_ids))
             form.add_field("_xfResponseType", "json")
             try:
                 async with self.session.post(base_url, data=form) as response:
@@ -525,3 +543,96 @@ class Pokebase(commands.Cog):
                 return
             else:
                 await ctx.send("No trainer card was generated. :(")
+
+    @cached(ttl=86400, cache=SimpleMemoryCache)
+    async def get_item_info(self, query_url: str):
+        try:
+            async with self.session.get(query_url) as response:
+                if response.status != 200:
+                    return None
+                item_data = await response.json()
+        except asyncio.TimeoutError:
+            return None
+
+        return item_data
+
+    @commands.command()
+    @cached(ttl=86400, cache=SimpleMemoryCache)
+    @commands.bot_has_permissions(embed_links=True)
+    @commands.cooldown(1, 5, commands.BucketType.member)
+    async def item(self, ctx: Context, *, item: str):
+        """Get various info about a Pokémon item.
+        You can search by an item's name or unique ID.
+
+        An item is an object in the games which the player can pick up,
+        keep in their bag, and use in some manner.
+        They have various uses, including healing, powering up,
+        helping catch Pokémon, or to access a new area. For more info:
+        https://bulbapedia.bulbagarden.net/wiki/Item
+        https://bulbapedia.bulbagarden.net/wiki/Category:Items
+        """
+        item = item.replace(" ", "-").lower()
+        async with ctx.typing():
+            embed = discord.Embed(colour=await ctx.embed_colour())
+            item_query_url = f"https://pokeapi.co/api/v2/item/{item}"
+            item_data = await self.get_item_info(item_query_url)
+            if not item_data:
+                return await ctx.send("No results.")
+
+            embed.title = item_data.get("name").title().replace("-", " ")
+            embed.url = "https://bulbapedia.bulbagarden.net/wiki/{}".format(item.title().replace("-", "_"))
+            item_effect = "**Item effect:** " + [
+                x.get("effect")
+                for x in item_data.get("effect_entries")
+                if x.get("language").get("name") == "en"
+            ][0]
+            item_summary = "**Summary:** " + [
+                x.get("short_effect")
+                for x in item_data.get("effect_entries")
+                if x.get("language").get("name") == "en"
+            ][0]
+            embed.description = f"{item_effect}\n\n{item_summary}"
+            embed.add_field(name="Cost", value=humanize_number(item_data.get("cost")))
+            embed.add_field(
+                name="Category",
+                value=str(item_data.get("category").get("name", "unknown").title().replace("-", " ")),
+            )
+            if item_data.get("attributes"):
+                attributes = "\n".join(x.get("name").title().replace("-", " ") for x in item_data["attributes"])
+                embed.add_field(name="Attributes", value=attributes)
+            if item_data.get("fling_power"):
+                embed.add_field(name="Fling Power", value=humanize_number(item_data["fling_power"]))
+            if item_data.get("fling_effect"):
+                fling_data = await self.get_item_info(item_data["fling_effect"]["url"])
+                if fling_data:
+                    fling_effect = [
+                        x.get("effect")
+                        for x in fling_data.get("effect_entries")
+                        if x.get("language").get("name") == "en"
+                    ][0]
+                    embed.add_field(name="Fling Effect", value=fling_effect, inline=False)
+            if item_data.get("held_by_pokemon"):
+                held_by = ", ".join(x.get("pokemon").get("name").title() for x in item_data["held_by_pokemon"])
+                embed.add_field(name="Held by Pokémon(s)", value=held_by, inline=False)
+            embed.set_footer(text="Powered by Poke API!")
+            await ctx.send(embed=embed)
+
+    @commands.command(name="itemcat")
+    @cached(ttl=86400, cache=SimpleMemoryCache)
+    @commands.bot_has_permissions(embed_links=True)
+    async def item_category(self, ctx: Context, *, category: str):
+        """Returns the list of items in a given Pokémon item category."""
+        category = category.replace(" ", "-").lower()
+        async with ctx.typing():
+            category_data = await self.get_item_info(f"https://pokeapi.co/api/v2/item-category/{category}/")
+            if not category_data:
+                return await ctx.send("No results.")
+            embed = discord.Embed(colour=await ctx.embed_colour())
+            embed.title = f"{category_data['name'].title().replace('-', ' ')}"
+            items_list = ""
+            for count, item in enumerate(category_data.get("items")):
+                items_list += "**{}.** {}\n".format(count + 1, item.get("name").title().replace('-', ' '))
+
+            embed.description = "__**List of items in this category:**__\n\n" + items_list
+            embed.set_footer(text="Powered by Poke API!")
+            await ctx.send(embed=embed)
