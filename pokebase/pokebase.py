@@ -12,7 +12,7 @@ from string import capwords
 import discord
 from redbot.core import commands
 from redbot.core.commands import Context
-from redbot.core.utils.chat_formatting import bold
+from redbot.core.utils.chat_formatting import bold, humanize_number
 
 cache = SimpleMemoryCache()
 
@@ -243,7 +243,7 @@ class Pokebase(commands.Cog):
 
             abilities = ""
             for ability in data.get("abilities"):
-                abilities += "[{}](https://bulbapedia.bulbagarden.net/wiki/{}_(Ability)){}\n".format(
+                abilities += "[{}](https://bulbapedia.bulbagarden.net/wiki/{}_%28Ability%29){}\n".format(
                     ability.get("ability").get("name").replace("-", " ").title(),
                     ability.get("ability").get("name").title().replace("-", "_"),
                     " (Hidden Ability)" if ability.get("is_hidden") else "",
@@ -278,34 +278,30 @@ class Pokebase(commands.Cog):
             )
 
             evolves_to = ""
+            evolves_to_2 = ""
             if species_data.get("evolution_chain"):
                 evo_url = species_data.get("evolution_chain").get("url")
-                evo_data = (
-                    (await self.get_evolution_chain(evo_url))
-                    .get("chain")
-                    .get("evolves_to")
-                )
-                if evo_data and evo_data[0]["species"]["name"] != data.get("name"):
+                evo_data = (await self.get_evolution_chain(evo_url)).get("chain")
+                base_evo = evo_data.get("species").get("name").title()
+                if evo_data.get("evolves_to"):
                     evolves_to += " -> " + "/".join(
-                        x.get("species").get("name").title() for x in evo_data
+                        x.get("species").get("name").title() for x in evo_data["evolves_to"]
                     )
-                if evo_data and evo_data[0].get("evolves_to"):
-                    evolves_to += " -> " + "/".join(
+                if evo_data.get("evolves_to") and evo_data.get("evolves_to")[0].get("evolves_to"):
+                    evolves_to_2 += " -> " + "/".join(
                         x.get("species").get("name").title()
-                        for x in evo_data[0].get("evolves_to")
+                        for x in evo_data.get("evolves_to")[0].get("evolves_to")
                     )
-
-            evolves_from = ""
-            if species_data.get("evolves_from_species"):
-                evolves_from += (
-                    species_data.get("evolves_from_species").get("name").title()
-                    + " -> "
-                )
             embed.add_field(
                 name="Evolution Chain",
-                value=f"{evolves_from}**{data.get('name').title()}**{evolves_to}",
+                value=f"{base_evo} -> {evolves_to} {evolves_to_2}",
                 inline=False,
             )
+            type_effectiveness = (
+                "[See it on Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/"
+                f"{data.get('name').title()}_%28Pokémon%29#Type_effectiveness)"
+            )
+            embed.add_field(name="Weakness/Resistance", value=type_effectiveness)
             embed.set_footer(text="Powered by Poke API")
             await ctx.send(embed=embed)
 
@@ -337,7 +333,7 @@ class Pokebase(commands.Cog):
 
             embed = discord.Embed(colour=discord.Color.random())
             embed.title = data.get("name").replace("-", " ").title()
-            embed.url = "https://bulbapedia.bulbagarden.net/wiki/{}_(Ability)".format(
+            embed.url = "https://bulbapedia.bulbagarden.net/wiki/{}_%28Ability%29".format(
                 data.get("name").title().replace("-", "_")
             )
             embed.description = [
@@ -404,7 +400,7 @@ class Pokebase(commands.Cog):
 
             embed = discord.Embed(colour=discord.Color.random())
             embed.title = data.get("name").replace("-", " ").title()
-            embed.url = "https://bulbapedia.bulbagarden.net/wiki/{}_(move)".format(
+            embed.url = "https://bulbapedia.bulbagarden.net/wiki/{}_%28move%29".format(
                 capwords(move).replace(" ", "_")
             )
             if data.get("effect_entries"):
@@ -547,3 +543,96 @@ class Pokebase(commands.Cog):
                 return
             else:
                 await ctx.send("No trainer card was generated. :(")
+
+    @cached(ttl=86400, cache=SimpleMemoryCache)
+    async def get_item_info(self, query_url: str):
+        try:
+            async with self.session.get(query_url) as response:
+                if response.status != 200:
+                    return None
+                item_data = await response.json()
+        except asyncio.TimeoutError:
+            return None
+
+        return item_data
+
+    @commands.command()
+    @cached(ttl=86400, cache=SimpleMemoryCache)
+    @commands.bot_has_permissions(embed_links=True)
+    @commands.cooldown(1, 5, commands.BucketType.member)
+    async def item(self, ctx: Context, *, item: str):
+        """Get various info about a Pokémon item.
+        You can search by an item's name or unique ID.
+
+        An item is an object in the games which the player can pick up,
+        keep in their bag, and use in some manner.
+        They have various uses, including healing, powering up,
+        helping catch Pokémon, or to access a new area. For more info:
+        https://bulbapedia.bulbagarden.net/wiki/Item
+        https://bulbapedia.bulbagarden.net/wiki/Category:Items
+        """
+        item = item.replace(" ", "-").lower()
+        async with ctx.typing():
+            embed = discord.Embed(colour=await ctx.embed_colour())
+            item_query_url = f"https://pokeapi.co/api/v2/item/{item}"
+            item_data = await self.get_item_info(item_query_url)
+            if not item_data:
+                return await ctx.send("No results.")
+
+            embed.title = item_data.get("name").title().replace("-", " ")
+            embed.url = "https://bulbapedia.bulbagarden.net/wiki/{}".format(item.title().replace("-", "_"))
+            item_effect = "**Item effect:** " + [
+                x.get("effect")
+                for x in item_data.get("effect_entries")
+                if x.get("language").get("name") == "en"
+            ][0]
+            item_summary = "**Summary:** " + [
+                x.get("short_effect")
+                for x in item_data.get("effect_entries")
+                if x.get("language").get("name") == "en"
+            ][0]
+            embed.description = f"{item_effect}\n\n{item_summary}"
+            embed.add_field(name="Cost", value=humanize_number(item_data.get("cost")))
+            embed.add_field(
+                name="Category",
+                value=str(item_data.get("category").get("name", "unknown").title().replace("-", " ")),
+            )
+            if item_data.get("attributes"):
+                attributes = "\n".join(x.get("name").title().replace("-", " ") for x in item_data["attributes"])
+                embed.add_field(name="Attributes", value=attributes)
+            if item_data.get("fling_power"):
+                embed.add_field(name="Fling Power", value=humanize_number(item_data["fling_power"]))
+            if item_data.get("fling_effect"):
+                fling_data = await self.get_item_info(item_data["fling_effect"]["url"])
+                if fling_data:
+                    fling_effect = [
+                        x.get("effect")
+                        for x in fling_data.get("effect_entries")
+                        if x.get("language").get("name") == "en"
+                    ][0]
+                    embed.add_field(name="Fling Effect", value=fling_effect, inline=False)
+            if item_data.get("held_by_pokemon"):
+                held_by = ", ".join(x.get("pokemon").get("name").title() for x in item_data["held_by_pokemon"])
+                embed.add_field(name="Held by Pokémon(s)", value=held_by, inline=False)
+            embed.set_footer(text="Powered by Poke API!")
+            await ctx.send(embed=embed)
+
+    @commands.command(name="itemcat")
+    @cached(ttl=86400, cache=SimpleMemoryCache)
+    @commands.bot_has_permissions(embed_links=True)
+    async def item_category(self, ctx: Context, *, category: str):
+        """Returns the list of items in a given Pokémon item category."""
+        category = category.replace(" ", "-").lower()
+        async with ctx.typing():
+            category_data = await self.get_item_info(f"https://pokeapi.co/api/v2/item-category/{category}/")
+            if not category_data:
+                return await ctx.send("No results.")
+            embed = discord.Embed(colour=await ctx.embed_colour())
+            embed.title = f"{category_data['name'].title().replace('-', ' ')}"
+            items_list = ""
+            for count, item in enumerate(category_data.get("items")):
+                items_list += "**{}.** {}\n".format(count + 1, item.get("name").title().replace('-', ' '))
+
+            embed.description = "__**List of items in this category:**__\n\n" + items_list
+            embed.set_footer(text="Powered by Poke API!")
+            await ctx.send(embed=embed)
