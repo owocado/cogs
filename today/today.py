@@ -40,12 +40,12 @@ class Today(commands.Cog):
         """
         day = (
             datetime.datetime.now(datetime.timezone.utc).day
-            if (day > 31 or day < 1 or not day)
+            if not day
             else day
         )
         month = (
             datetime.datetime.now(datetime.timezone.utc).month
-            if (month > 12 or month < 1 or not month)
+            if not month
             else month
         )
         base_url = f"https://history.muffinlabs.com/date/{month}/{day}"
@@ -84,11 +84,10 @@ class Today(commands.Cog):
 
         Or doodles of specific month/year if `month` and `year` values are provided.
         """
-        month = (
-            datetime.datetime.now(datetime.timezone.utc).month
-            if (month > 12 or month < 1 or not month)
-            else month
-        )
+        if not month:
+            month = datetime.datetime.now(datetime.timezone.utc).month
+        elif (month > 12 or month < 1):
+            month = datetime.datetime.now(datetime.timezone.utc).month
         year = datetime.datetime.now(datetime.timezone.utc).year if not year else year
 
         async with ctx.typing():
@@ -126,11 +125,11 @@ class Today(commands.Cog):
             await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
 
     @commands.command()
-    async def calendar(self, ctx: commands.Context, month: int = None, year: int = None):
+    async def calendar(self, ctx: commands.Context, month: int, year: int = None):
         """Displays a calendar of current month or for a specific month for a specific year."""
         month = (
             datetime.datetime.now(datetime.timezone.utc).month
-            if (month > 12 or month < 1 or not month)
+            if (month > 12 or month < 1)
             else month
         )
 
