@@ -132,5 +132,6 @@ class Today(commands.Cog):
             if (month > 12 or month < 1)
             else month
         )
+        year = datetime.datetime.now(datetime.timezone.utc).year if not year else year
 
         await ctx.send(box(calendar.month(year, month), lang="py"))
