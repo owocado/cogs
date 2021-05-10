@@ -93,6 +93,8 @@ class AverageFan(commands.Cog):
 
         There must be exactly 1 `,` to split the message
         """
+        text1 = text1[:15]
+        text2 = text2[:15]
         async with ctx.typing():
             if not await self.check_video_file(MEME_LINK, "meme_template.mp4"):
                 return await ctx.send("I couldn't download average fan template video.")
