@@ -52,7 +52,9 @@ class AverageFan(commands.Cog):
             except asyncio.TimeoutError:
                 log.exception("Error downloading the average meme video")
             except Exception:
-                log.error("Error downloading average meme video template", exc_info=True)
+                log.error(
+                    "Error downloading average meme video template", exc_info=True
+                )
                 return False
         return True
 
@@ -86,23 +88,19 @@ class AverageFan(commands.Cog):
     @commands.cooldown(1, 60, commands.BucketType.guild)
     @commands.max_concurrency(1, commands.BucketType.channel)
     @commands.bot_has_permissions(attach_files=True)
-    async def averagefan(self, ctx: commands.Context, *, text: str) -> None:
+    async def averagefan(self, ctx: commands.Context, text1: str, text2: str) -> None:
         """Make Average Fan Vs Average Enjoyer meme videos.
 
         There must be exactly 1 `,` to split the message
         """
         async with ctx.typing():
-            t = ctx.message.clean_content[len(f"{ctx.prefix}{ctx.invoked_with}") :]
-            t = t.upper().replace(", ", ",").split(",")
             if not await self.check_video_file(MEME_LINK, "meme_template.mp4"):
                 return await ctx.send("I couldn't download average fan template video.")
             if not await self.check_font_file():
                 return await ctx.send("I couldn't download the font file.")
-            if len(t) != 2:
-                return await ctx.send("You must submit exactly two strings split by comma.")
-            if (not t[0] and not t[0].strip()) or (not t[1] and not t[1].strip()):
-                return await ctx.send("Cannot render empty text.")
-            fake_task = functools.partial(self.make_meme, t=t, u_id=ctx.message.id)
+            fake_task = functools.partial(
+                self.make_meme, text1, text2, u_id=ctx.message.id
+            )
             task = self.bot.loop.run_in_executor(None, fake_task)
 
             try:
@@ -123,7 +121,7 @@ class AverageFan(commands.Cog):
             except Exception:
                 log.error("Error deleting memerave video", exc_info=True)
 
-    def make_meme(self, t: str, u_id: int) -> bool:
+    def make_meme(self, text1: str, text2: str, u_id: int) -> bool:
         """Non blocking meme rave video generation from DankMemer bot
 
         https://github.com/DankMemer/meme-server/blob/master/endpoints/meme.py
@@ -132,19 +130,29 @@ class AverageFan(commands.Cog):
         clip = VideoFileClip(str(cog_data_path(self)) + "/meme_template.mp4")
         # clip.volume(0.5)
         text = TextClip(
-            t[0], fontsize=48, color="black", stroke_width=2, stroke_color="black", font=fp
+            text1,
+            fontsize=48,
+            color="black",
+            stroke_width=2,
+            stroke_color="black",
+            font=fp,
         )
         text = text.set_position((20, 20)).set_duration(15.0)
-        text2 = (
+        text_2 = (
             TextClip(
-                t[1], fontsize=48, color="black", stroke_width=2, stroke_color="black", font=fp
+                text2,
+                fontsize=48,
+                color="black",
+                stroke_width=2,
+                stroke_color="black",
+                font=fp,
             )
             .set_position((550, 20))
             .set_duration(15.0)
         )
 
         video = CompositeVideoClip(
-            [clip, text.crossfadein(1), text2.crossfadein(1), text2.crossfadein(1)]
+            [clip, text.crossfadein(1), text_2.crossfadein(1), text_2.crossfadein(1)]
         ).set_duration(15.0)
         video = video.volumex(0.8)
         video.write_videofile(
