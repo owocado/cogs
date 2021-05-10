@@ -21,7 +21,7 @@ FONT_FILE = "https://github.com/matomo-org/travis-scripts/raw/master/fonts/Verda
 log = logging.getLogger("red.owo-cogs.averagefan")
 
 
-class CrabRave(commands.Cog):
+class AverageFan(commands.Cog):
     """
     Create your very own Average Fan Vs Average Enjoyer meme videos.
     """
