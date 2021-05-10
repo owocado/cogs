@@ -5,6 +5,8 @@ import asyncio
 import discord
 from redbot.core import commands
 from redbot.core.utils.chat_formatting import humanize_number
+from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
+
 
 # Taken from https://github.com/flaree/Flare-Cogs/blob/master/dankmemer/dankmemer.py#L16
 # Many thanks to flare <3
@@ -17,7 +19,7 @@ class MovieDB(commands.Cog):
     """Show various info about a movie or a TV show/series."""
 
     __author__ = ["siu3334 (<@306810730055729152>)"]
-    __version__ = "0.0.4"
+    __version__ = "0.0.6"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -90,12 +92,11 @@ class MovieDB(commands.Cog):
 
     @commands.command()
     @commands.check(tokencheck)
-    @commands.cooldown(1, 10, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True, read_message_history=True)
     async def movie(self, ctx: commands.Context, *, query: str):
         """Show various info about a movie."""
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
-
+        await ctx.trigger_typing()
         movie_id = await self.fetch_movie_id(ctx, query)
         if movie_id is None:
             return await ctx.send("Could not find any results.")
@@ -111,7 +112,7 @@ class MovieDB(commands.Cog):
             return await ctx.send("Operation timed out.")
 
         embed = discord.Embed(
-            title=data.get("title", "Untitled movie"),
+            title=str(data["title"]),
             description=data.get("overview", "No summary."),
             colour=await ctx.embed_color(),
         )
@@ -220,12 +221,11 @@ class MovieDB(commands.Cog):
 
     @commands.command(aliases=["tv"])
     @commands.check(tokencheck)
-    @commands.cooldown(1, 10, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True, read_message_history=True)
     async def tvshow(self, ctx: commands.Context, *, query: str):
         """Show various info about a movie."""
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
-
+        await ctx.trigger_typing()
         tv_series_id = await self.fetch_tv_series_id(ctx, query)
         if tv_series_id is None:
             return await ctx.send("Could not find any results.")
@@ -241,7 +241,7 @@ class MovieDB(commands.Cog):
             return await ctx.send("Operation timed out.")
 
         embed = discord.Embed(
-            title=data.get("name", "Untitled movie"),
+            title=str(data["name"]),
             description=data.get("overview", "No summary."),
             colour=await ctx.embed_color(),
         )
@@ -329,3 +329,98 @@ class MovieDB(commands.Cog):
         )
 
         await ctx.send(embed=embed)
+
+    @commands.group()
+    @commands.check(tokencheck)
+    @commands.bot_has_permissions(embed_links=True, read_message_history=True)
+    async def recommend(self, ctx: commands.Context):
+        """Get list of recommendations related to a movie/TV series title."""
+
+    @recommend.command()
+    async def movie(self, ctx: commands.Context, *, query: str):
+        """Get a list of recommended movies for a movie."""
+        api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
+
+        await ctx.trigger_typing()
+        movie_id = await self.fetch_movie_id(ctx, query)
+        if movie_id is None:
+            return await ctx.send("Could not find any results.")
+
+        base_url = f"https://api.themoviedb.org/3/movie/{movie_id}/recommendations"
+        params = {"api_key": api_key}
+        try:
+            async with self.session.get(base_url, params=params) as response:
+                if response.status != 200:
+                    return await ctx.send(f"https://http.cat/{response.status}")
+                output = await response.json()
+        except asyncio.TimeoutError:
+            return await ctx.send("Operation timed out.")
+
+        pages = []
+        for i, data in enumerate(output.get("results")):
+            embed = discord.Embed(colour=await ctx.embed_color())
+            embed.title = str(data["title"])
+            embed.description = data.get("overview", "No summary.")
+            embed.url = f"https://www.themoviedb.org/movie/{data.get('id', '')}"
+            embed.set_image(url=f"https://image.tmdb.org/t/p/w500{data.get('backdrop_path', '/')}")
+            embed.set_thumbnail(url=f"https://image.tmdb.org/t/p/w500{data.get('poster_path', '/')}")
+            if data.get("release_date") != "":
+                embed.add_field(name="Release Date", value=data["release_date"])
+            if data.get("vote_average") > 0.0 and data.get("vote_count") > 0:
+                rating = f"{round(data['vote_average'] * 10)}% ({humanize_number(data['vote_count'])} votes)"
+                embed.add_field(name="TMDB Rating", value=rating)
+            embed.set_footer(
+                text=f"Page {i + 1} of {len(output['results'])} | Powered by themoviedb API ❤️",
+                icon_url="https://i.imgur.com/3K3QMv9.png",
+            )
+            pages.append(embed)
+
+        if len(pages) == 1:
+            return await ctx.send(embed=pages[0])
+        else:
+            await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
+
+    @recommend.command(aliases=["tv"])
+    async def tvshow(self, ctx: commands.Context, *, query: str):
+        """Get the list of TV show recommendations for a TV series query."""
+        api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
+        await ctx.trigger_typing()
+        tv_series_id = await self.fetch_tv_series_id(ctx, query)
+        if tv_series_id is None:
+            return await ctx.send("Could not find any results.")
+
+        base_url = f"https://api.themoviedb.org/3/tv/{tv_series_id}/recommendations"
+        params = {"api_key": api_key}
+        try:
+            async with self.session.get(base_url, params=params) as response:
+                if response.status != 200:
+                    return await ctx.send(f"https://http.cat/{response.status}")
+                output = await response.json()
+        except asyncio.TimeoutError:
+            return await ctx.send("Operation timed out.")
+
+        pages = []
+        for i, data in enumerate(output.get("results")):
+            embed = discord.Embed(
+                title=str(data["name"]),
+                description=data.get("overview", "No summary."),
+                colour=await ctx.embed_color(),
+            )
+            embed.url = f"https://www.themoviedb.org/tv/{data.get('id', '')}"
+            embed.set_image(url=f"https://image.tmdb.org/t/p/w500{data.get('backdrop_path', '/')}")
+            embed.set_thumbnail(url=f"https://image.tmdb.org/t/p/w500{data.get('poster_path', '/')}")
+            if data.get("first_air_date") != "":
+                embed.add_field(name="First Air Date", value=data["first_air_date"])
+            if data.get("vote_average") > 0.0 and data.get("vote_count") > 0:
+                rating = f"{round(data['vote_average'] * 10)}% ({humanize_number(data['vote_count'])} votes)"
+                embed.add_field(name="TMDB Rating", value=rating)
+            embed.set_footer(
+                text=f"Page {i + 1} of {len(output['results'])} | Powered by themoviedb API ❤️",
+                icon_url="https://i.imgur.com/3K3QMv9.png",
+            )
+            pages.append(embed)
+
+        if len(pages) == 1:
+            return await ctx.send(embed=pages[0])
+        else:
+            await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
