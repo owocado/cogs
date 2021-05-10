@@ -9,7 +9,7 @@ class IPData(commands.Cog):
     """IP Geolocation and Proxy Detection cog."""
 
     __author__ = "siu3334 (<@306810730055729152>)"
-    __version__ = "0.0.6"
+    __version__ = "0.0.7"
 
     def __init__(self, bot):
         self.bot = bot
@@ -52,10 +52,11 @@ class IPData(commands.Cog):
                 name=f"Info for IP: {data.get('ip')}",
                 icon_url=str(data.get("flag")),
             )
-            em.add_field(name="ASN (Carrier)", value=str(data.get("asn").get("name")))
-            em.add_field(name="ASN Type", value=str(data.get("asn").get("type")))
-            em.add_field(name="ASN Domain", value=str(data.get("asn").get("domain")))
-            em.add_field(name="ASN Route", value=str(data.get("asn").get("route")))
+            if data.get("asn"):
+                em.add_field(name="ASN (Carrier)", value=str(data["asn"].get("name")))
+                em.add_field(name="ASN Type", value=str(data["asn"].get("type")))
+                em.add_field(name="ASN Domain", value=str(data["asn"].get("domain")))
+                em.add_field(name="ASN Route", value=str(data["asn"].get("route")))
             em.add_field(name="City", value=str(data.get("city")))
             em.add_field(name="Region", value=str(data.get("region")))
             em.add_field(name="Country", value=str(data.get("country_name")))
