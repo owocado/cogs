@@ -12,7 +12,8 @@ from string import capwords
 import discord
 from redbot.core import commands
 from redbot.core.commands import Context
-from redbot.core.utils.chat_formatting import bold, humanize_number
+from redbot.core.utils.chat_formatting import bold, humanize_number, pagify
+from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 cache = SimpleMemoryCache()
 
@@ -23,7 +24,7 @@ class Pokebase(commands.Cog):
     """Search for various info about a Pokémon and related data."""
 
     __author__ = ["phalt", "siu3334"]
-    __version__ = "0.2.4"
+    __version__ = "0.2.5"
 
     def format_help_for_context(self, ctx: Context) -> str:
         """Thanks Sinbad!"""
@@ -373,7 +374,40 @@ class Pokebase(commands.Cog):
     @cached(ttl=86400, cache=SimpleMemoryCache)
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 5, commands.BucketType.member)
-    async def move(self, ctx: Context, *, move: str):
+    async def moves(self, ctx: Context, pokemon: str):
+        """Get the list of all possible moves a Pokémon has."""
+        async with ctx.typing():
+            data = await self.get_pokemon_data(pokemon)
+            if not data:
+                return await ctx.send("No results.")
+
+            if not data.get("moves"):
+                return await ctx.send("No moves found for this Pokémon.")
+
+            moves_list = ""
+            for i, move in enumerate(data["moves"]):
+                moves_list += "`[{}]` **{}**\n".format(
+                    str(i + 1).zfill(2),
+                    move["move"]["name"].title().replace("-", " "),
+                )
+
+            pages = []
+            for page in pagify(moves_list, delims=["\n"], page_length=400):
+                embed = discord.Embed(colour=await ctx.embed_colour())
+                embed.title = f"Moves for : {data['name'].title()} (#{str(data['id']).zfill(3)})"
+                embed.set_thumbnail(
+                    url=f"https://assets.pokemon.com/assets/cms2/img/pokedex/full/{str(data['id']).zfill(3)}.png",
+                )
+                embed.description = page
+                pages.append(embed)
+
+        await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
+
+    @commands.command()
+    @cached(ttl=86400, cache=SimpleMemoryCache)
+    @commands.bot_has_permissions(embed_links=True)
+    @commands.cooldown(1, 5, commands.BucketType.member)
+    async def moveinfo(self, ctx: Context, *, move: str):
         """Get various info about a Pokémon's move.
         You can search by a move name or it's ID.
 
