@@ -55,7 +55,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
         `[p]timer [to] [timer_text] [in] <time>`
 
         `<time>` supports commas, spaces, and "and":
-        `12h30m`, `6 hours 15 minutes`, `2 weeks, 4 days, and 10 seconds`
+        `12h30m`, `6 hours and 15 minutes`
         Accepts seconds, minutes, hours, days, and weeks.
 
         You can also add `every <repeat_time>` to the command for repeating timers.
@@ -64,10 +64,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
         Examples:
         `[p]timer in 8min45sec to do that thing`
         `[p]timer to water my plants in 2 hours`
-        `[p]timer in 3 days`
         `[p]timer 8h`
-        `[p]timer every 1 week to take out the trash`
-        `[p]timer in 1 hour to drink some water every 1 day`
         """
         await self._create_timer(ctx, time_and_optional_text)
 
@@ -221,7 +218,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
             await self._send_non_existant_msg(ctx, timer_id)
             return
         text = text.strip()
-        if len(text) > 1000:
+        if len(text) > 250:
             await self._send_message(ctx, "Your timer text is too long.")
             return
 
