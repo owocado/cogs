@@ -15,7 +15,7 @@ log = logging.getLogger("red.pcxcogs.timer")
 
 
 class Timer(Commands, commands.Cog, metaclass=CompositeMetaClass):
-    """Never forget anything anymore."""
+    """Set a timer of short duration to remind you of something in a channel instead of in DMs."""
 
     default_global_settings = {
         "schema_version": 0,
@@ -210,10 +210,10 @@ class Timer(Commands, commands.Cog, metaclass=CompositeMetaClass):
                     reason = ""
                 else:
                     reason = f"(for: **{timer['TIMER']}**)"
-                dummy = f"\N{ALARM CLOCK} Hey {user.mention}, your {timer['FUTURE_TEXT']} of timer is up! {reason}\n\n"
+                dummy = f"⏰ Hey {user.mention}, your {timer['FUTURE_TEXT']} of timer is up! {reason}\n\n"
                 if delay > self.SEND_DELAY_SECONDS:
                     dummy += (
-                        "\N{WARNING SIGN} Due to issues with Discord, this timer was delayed"
+                        "⚠️ Due to issues with Discord, this timer was delayed"
                         f" by {humanize_timedelta(seconds=delay)}. Sorry about that!\n"
                     )
                 if "REPEAT" in timer and timer["REPEAT"]:
