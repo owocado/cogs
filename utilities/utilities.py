@@ -24,7 +24,7 @@ class Utilities(commands.Cog):
     """Some of my useful & fun utility commands, grouped in one cog."""
 
     __author__ = "siu3334 (<@306810730055729152>)"
-    __version__ = "0.0.5"
+    __version__ = "0.0.6"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -94,8 +94,10 @@ class Utilities(commands.Cog):
     async def bitly(self, ctx: commands.Context, url: str, custom_bitlink: str = None):
         """Generate a shortened URL with Bitly API.
 
+        `custom_bitlink` needs to be in format: `bit.ly/yourvanitycode`
+
         This command requires a generic access token from Bitly.
-        You can get one free from: https://bitly.is/accesstoken
+        You can get one for free from: https://bitly.is/accesstoken
         You will be require to register for an account first.
 
         Once you have the token, set it with:
@@ -110,33 +112,33 @@ class Utilities(commands.Cog):
         head = {"Authorization": "Bearer " + api_key, "Content-Type": "application/json"}
         payload = {"long_url": url, "domain": "bit.ly"}
         base_url = "https://api-ssl.bitly.com/v4/shorten"
-        async with ctx.typing():
-            try:
-                async with self.session.post(base_url, headers=head, json=payload) as response:
-                    if response.status != 200:
-                        return await ctx.send(f"https://http.cat/{response.status}")
-                    data = await response.json()
-            except asyncio.TimeoutError:
-                return await ctx.send("Operation timed out.")
+        await ctx.trigger_typing()
+        try:
+            async with self.session.post(base_url, headers=head, json=payload) as response:
+                if not (300 > response.status >= 200):
+                    return await ctx.send(f"https://http.cat/{response.status}")
+                data = await response.json()
+        except asyncio.TimeoutError:
+            return await ctx.send("Operation timed out.")
 
-            link = data.get("link", "Missing shortened URL.")
+        link = data.get("link", "Missing shortened URL.")
 
-            if custom_bitlink is None:
-                return await ctx.send(link)
+        if custom_bitlink is None:
+            return await ctx.send(link)
 
-            bitlink_id = data.get("id", "bitly.is ID missing.").replace("bitly.is", "bit.ly")
-            xpayload = {"custom_bitlink": custom_bitlink, "bitlink_id": bitlink_id}
-            xbase_url = "https://api-ssl.bitly.com/v4/custom_bitlinks"
-            try:
-                async with self.session.post(xbase_url, headers=head, json=xpayload) as resp:
-                    if resp.status != 200:
-                        return await ctx.send(f"https://http.cat/{resp.status}")
-                    output = await resp.json()
-            except asyncio.TimeoutError:
-                return await ctx.send("Operation timed out.")
+        bitlink_id = data.get("id", "bitly.is ID missing.").replace("bitly.is", "bit.ly")
+        xpayload = {"custom_bitlink": custom_bitlink, "bitlink_id": bitlink_id}
+        xbase_url = "https://api-ssl.bitly.com/v4/custom_bitlinks"
+        try:
+            async with self.session.post(xbase_url, headers=head, json=xpayload) as resp:
+                if not (300 > resp.status >= 200):
+                    return await ctx.send(f"https://http.cat/{resp.status}")
+                output = await resp.json()
+        except asyncio.TimeoutError:
+            return await ctx.send("Operation timed out.")
 
-            custom_link = output.get("bitlink").get("custom_bitlinks")[0]
-            await ctx.send(custom_link)
+        custom_link = output.get("bitlink").get("custom_bitlinks")[0]
+        await ctx.send(custom_link)
 
     @commands.command()
     @commands.is_owner()
@@ -144,17 +146,17 @@ class Utilities(commands.Cog):
     async def thumio(self, ctx: commands.Context, url: str):
         """Get a free landspace screenshot of a valid publicly accessible webpage."""
         base_url = f"https://image.thum.io/get/width/1920/crop/675/noanimate/{url}"
-        async with ctx.typing():
-            try:
-                async with self.session.get(base_url) as resp:
-                    if resp.status != 200:
-                        return await ctx.send(f"https://http.cat/{resp.status}")
-                    data = BytesIO(await resp.read())
-                    data.seek(0)
-            except asyncio.TimeoutError:
-                return await ctx.send("Operation timed out.")
+        await ctx.trigger_typing()
+        try:
+            async with self.session.get(base_url) as resp:
+                if resp.status != 200:
+                    return await ctx.send(f"https://http.cat/{resp.status}")
+                data = BytesIO(await resp.read())
+                data.seek(0)
+        except asyncio.TimeoutError:
+            return await ctx.send("Operation timed out.")
 
-            await ctx.send(file=discord.File(data, "screenshot.png"))
+        await ctx.send(file=discord.File(data, "screenshot.png"))
 
     @commands.command()
     @commands.is_owner()
@@ -163,9 +165,9 @@ class Utilities(commands.Cog):
         self,
         ctx: commands.Context,
         web_url: str,
+        full_page: str = "false",
         width: int = 1680,
         height: int = 876,
-        full_page: str = "false",
         fresh: str = "true",
         block_ads: str = "false",
         no_cookie_banners: str = "false",
@@ -189,9 +191,9 @@ class Utilities(commands.Cog):
         if api_key is None:
             return await ctx.send_help()
 
+        full_page = "false" if full_page not in ["true", "false"] else full_page
         width = 1920 if 100 > width > 7680 else width
         height = 1080 if 100 > height > 4320 else height
-        full_page = "false" if full_page not in ["true", "false"] else full_page
         fresh = "true" if fresh not in ["true", "false"] else fresh
         block_ads = "false" if block_ads not in ["true", "false"] else block_ads
         no_cookie_banners = "false" if no_cookie_banners not in ["true", "false"] else no_cookie_banners
@@ -216,17 +218,17 @@ class Utilities(commands.Cog):
             "dark_mode": dark_mode
         }
 
-        async with ctx.typing():
-            try:
-                async with self.session.get(base_url, params=params) as response:
-                    if response.status != 200:
-                        return await ctx.send(f"https://http.cat/{response.status}")
-                    data = BytesIO(await response.read())
-                    data.seek(0)
-            except asyncio.TimeoutError:
-                return await ctx.send("Operation timed out.")
+        await ctx.trigger_typing()
+        try:
+            async with self.session.get(base_url, params=params) as response:
+                if response.status != 200:
+                    return await ctx.send(f"https://http.cat/{response.status}")
+                data = BytesIO(await response.read())
+                data.seek(0)
+        except asyncio.TimeoutError:
+            return await ctx.send("Operation timed out.")
 
-            await ctx.send(file=discord.File(data, "screenshot.png"))
+        await ctx.send(file=discord.File(data, "screenshot.png"))
 
     @commands.command()
     @commands.cooldown(1, 10, commands.BucketType.member)
@@ -351,21 +353,21 @@ class Utilities(commands.Cog):
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
         }
 
-        async with ctx.typing():
-            try:
-                async with self.session.get(base_url, headers=user_agent) as response:
-                    if response.status != 200:
-                        await ctx.send(f"https://http.cat/{response.status}")
-                        return
-                    data = BeautifulSoup(await response.content.read(), "html.parser")
-            except asyncio.TimeoutError:
-                await ctx.send("Operation timed out.")
-                return
+        await ctx.trigger_typing()
+        try:
+            async with self.session.get(base_url, headers=user_agent) as response:
+                if response.status != 200:
+                    await ctx.send(f"https://http.cat/{response.status}")
+                    return
+                data = BeautifulSoup(await response.content.read(), "html.parser")
+        except asyncio.TimeoutError:
+            await ctx.send("Operation timed out.")
+            return
 
-            meme_endpoint = data.findAll("tbody")[0].tr.td.a["href"]
-            meme_url = "https://knowyourmeme.com" + str(meme_endpoint)
+        meme_endpoint = data.findAll("tbody")[0].tr.td.a["href"]
+        meme_url = "https://knowyourmeme.com" + str(meme_endpoint)
 
-            await ctx.send(meme_url)
+        await ctx.send(meme_url)
 
     @staticmethod
     def _accurate_timedelta(value1, value2, index: int):
