@@ -24,7 +24,7 @@ class Pokebase(commands.Cog):
     """Search for various info about a Pokémon and related data."""
 
     __author__ = ["phalt", "siu3334"]
-    __version__ = "0.2.5"
+    __version__ = "0.2.6"
 
     def format_help_for_context(self, ctx: Context) -> str:
         """Thanks Sinbad!"""
@@ -295,7 +295,7 @@ class Pokebase(commands.Cog):
                     )
             embed.add_field(
                 name="Evolution Chain",
-                value=f"{base_evo} -> {evolves_to} {evolves_to_2}",
+                value=f"{base_evo} {evolves_to} {evolves_to_2}",
                 inline=False,
             )
             type_effectiveness = (
@@ -304,7 +304,8 @@ class Pokebase(commands.Cog):
             )
             embed.add_field(name="Weakness/Resistance", value=type_effectiveness)
             embed.set_footer(text="Powered by Poke API")
-            await ctx.send(embed=embed)
+
+        await ctx.send(embed=embed)
 
     @commands.command()
     @cached(ttl=86400, cache=SimpleMemoryCache)
@@ -368,7 +369,7 @@ class Pokebase(commands.Cog):
                 )
             embed.set_footer(text="Powered by Poke API")
 
-            await ctx.send(embed=embed)
+        await ctx.send(embed=embed)
 
     @commands.command()
     @cached(ttl=86400, cache=SimpleMemoryCache)
@@ -489,7 +490,7 @@ class Pokebase(commands.Cog):
                 )
             embed.set_footer(text="Powered by Poke API")
 
-            await ctx.send(embed=embed)
+        await ctx.send(embed=embed)
 
     @commands.command()
     @cached(ttl=86400, cache=SimpleMemoryCache)
@@ -562,21 +563,20 @@ class Pokebase(commands.Cog):
                 async with self.session.post(base_url, data=form) as response:
                     if response.status != 200:
                         return await ctx.send(f"https://http.cat/{response.status}")
-                    output = await response.json()
+                    output = (await response.json()).get("trainerCard")
             except asyncio.TimeoutError:
                 return await ctx.send("Operation timed out.")
 
-            base64_card_string = output.get("trainerCard")
-            if base64_card_string:
-                base64_img_bytes = base64_card_string.encode("utf-8")
-                decoded_image_data = BytesIO(base64.decodebytes(base64_img_bytes))
-                decoded_image_data.seek(0)
-                await ctx.send(
-                    file=discord.File(decoded_image_data, "trainer-card.png")
-                )
-                return
-            else:
-                await ctx.send("No trainer card was generated. :(")
+        if output:
+            base64_img_bytes = output.encode("utf-8")
+            decoded_image_data = BytesIO(base64.decodebytes(base64_img_bytes))
+            decoded_image_data.seek(0)
+            await ctx.send(
+                file=discord.File(decoded_image_data, "trainer-card.png")
+            )
+            return
+        else:
+            await ctx.send("No trainer card was generated. :(")
 
     @cached(ttl=86400, cache=SimpleMemoryCache)
     async def get_item_info(self, query_url: str):
@@ -649,7 +649,8 @@ class Pokebase(commands.Cog):
                 held_by = ", ".join(x.get("pokemon").get("name").title() for x in item_data["held_by_pokemon"])
                 embed.add_field(name="Held by Pokémon(s)", value=held_by, inline=False)
             embed.set_footer(text="Powered by Poke API!")
-            await ctx.send(embed=embed)
+
+        await ctx.send(embed=embed)
 
     @commands.command(name="itemcat")
     @cached(ttl=86400, cache=SimpleMemoryCache)
@@ -669,4 +670,5 @@ class Pokebase(commands.Cog):
 
             embed.description = "__**List of items in this category:**__\n\n" + items_list
             embed.set_footer(text="Powered by Poke API!")
-            await ctx.send(embed=embed)
+
+        await ctx.send(embed=embed)
