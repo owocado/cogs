@@ -19,7 +19,7 @@ class MovieDB(commands.Cog):
     """Show various info about a movie or a TV show/series."""
 
     __author__ = ["siu3334 (<@306810730055729152>)"]
-    __version__ = "0.0.6"
+    __version__ = "0.0.7"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -337,7 +337,7 @@ class MovieDB(commands.Cog):
         """Get list of recommendations related to a movie/TV series title."""
 
     @recommend.command()
-    async def movie(self, ctx: commands.Context, *, query: str):
+    async def movies(self, ctx: commands.Context, *, query: str):
         """Get a list of recommended movies for a movie."""
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
 
@@ -380,8 +380,8 @@ class MovieDB(commands.Cog):
         else:
             await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
 
-    @recommend.command(aliases=["tv"])
-    async def tvshow(self, ctx: commands.Context, *, query: str):
+    @recommend.command(aliases=["series"])
+    async def shows(self, ctx: commands.Context, *, query: str):
         """Get the list of TV show recommendations for a TV series query."""
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
         await ctx.trigger_typing()
