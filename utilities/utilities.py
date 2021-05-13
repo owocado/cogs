@@ -369,6 +369,27 @@ class Utilities(commands.Cog):
 
         await ctx.send(meme_url)
 
+    @commands.command(name="unredirect")
+    async def unredirect_url(self, ctx: commands.Context, url: str):
+        """Find out where those pesky shady redirect URLs leads you to."""
+        url = url.lstrip("<").rstrip(">")
+
+        await ctx.trigger_typing()
+        try:
+            async with self.session.get(url, allow_redirects=False) as response:
+                if not response.status in [300, 301, 302, 303, 304, 305, 306, 307, 308]:
+                    await ctx.send("Provided URL is not a redirect URL. 🤔")
+                    return
+                # Code attribution and credits to original author : https://stackoverflow.com/a/49091337
+                url_meta = str(response).split("Location': \'")[1].split("\'")[0]
+        except aiohttp.InvalidURL:
+            return await ctx.send("You provided an invalid URL. Trying to make me error huh? 😏")
+        except (asyncio.TimeoutError, IndexError):
+            return await ctx.send("Operation timed out.")
+
+        to_send = f"**Given URL redirects to:**\n\n{url_meta}"
+        await ctx.maybe_send_embed(to_send)
+
     @staticmethod
     def _accurate_timedelta(value1, value2, index: int):
         if value1 > value2:
