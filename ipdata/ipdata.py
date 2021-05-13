@@ -3,14 +3,13 @@ import asyncio
 
 import discord
 from redbot.core import commands
-from redbot.core.utils.chat_formatting import box
 
 
 class IPData(commands.Cog):
     """IP Geolocation and Proxy Detection cog."""
 
     __author__ = "siu3334 (<@306810730055729152>)"
-    __version__ = "0.0.8"
+    __version__ = "0.0.9"
 
     def __init__(self, bot):
         self.bot = bot
@@ -71,21 +70,21 @@ class IPData(commands.Cog):
             f"{data.get('latitude')},{data.get('longitude')})"
         )
         embed.add_field(name="Latitude/Longitude", value=lat_long_maps)
-        threat_info = "\u200b"
+        threat_info = ""
         if data.get("threat").get("is_anonymous"):
-            threat_info += "Is anonymous? : ✅\n"
+            threat_info += "✅ : Is anonymous?"
         if data.get("threat").get("is_bogon"):
-            threat_info += "Is Bogon?     : ✅\n"
+            threat_info += "✅ : Is Bogon?"
         if data.get("threat").get("is_known_abuser"):
-            threat_info += "Known abuser? : ✅\n"
+            threat_info += "✅ : Is known abuser?"
         if data.get("threat").get("is_known_attacker"):
-            threat_info += "Is attacker?  : ✅\n"
+            threat_info += "✅ : Is attacker?"
         if data.get("threat").get("is_proxy"):
-            threat_info += "Is proxy?     : ✅\n"
+            threat_info += "✅ : Is proxy?"
         if data.get("threat").get("is_threat"):
-            threat_info += "Is threat?    : ✅\n"
+            threat_info += "✅ : Is threat?"
         if data.get("threat").get("is_tor"):
-            threat_info += "Is TOR?       : ✅\n"
-        embed.description = box(threat_info)
+            threat_info += "✅ : Is TOR?"
+        embed.description = threat_info
 
         await ctx.send(embed=embed)
