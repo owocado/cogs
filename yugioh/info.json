@@ -1,0 +1,15 @@
+{
+    "name": "YuGiOh",
+    "short": "Responds with info on a Yu-Gi-Oh! card.",
+    "description": "Responds with various info on a Yu-Gi-Oh! card.",
+    "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
+    "install_msg": "Thanks for installing Yu-Gi-Oh cog. Have fun!",
+    "author": ["siu3334"],
+    "required_cogs": {},
+    "requirements": [],
+    "tags": ["ygo", "ygo card", "yu gi oh", "yugioh"],
+    "min_bot_version": "3.4.0",
+    "hidden": false,
+    "disabled": false,
+    "type": "COG"
+}
