@@ -20,11 +20,12 @@ dockerclient = docker.from_env()
 # to port it for Red bot. LICENSE is included with the cog to respect authors.
 # All credits belong to the Manim Community Developers and not me. Thanks.
 
+
 class Manim(commands.Cog):
     """A cog for interacting with Manim python animation engine."""
 
-    __author__ = "<@306810730055729152>"
-    __version__ = "0.0.2"
+    __author__ = "Manim Community Developers, siu3334"
+    __version__ = "0.0.3"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -34,15 +35,14 @@ class Manim(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.guild_only()
+    @commands.command()
     @commands.is_owner()
-    @commands.command(aliases=["manim"])
     @commands.bot_has_permissions(attach_files=True)
     async def manimate(self, ctx: commands.Context, *, snippet: str):
-        """Render short and simple Manim scripts.
-        Code **must** be properly formatted and indented. Note that you can't animate through DM's.
+        """Evaluate short Manim code snippets to render mathematical animations.
+        Code **must** be properly formatted and indented in a markdown code block.
 
-        Supported tags:
+        Supported (CLI) flags:
         ```
         -t, --transparent, -i, --save_as_gif, -s, --save_last_frame
         ```
@@ -106,9 +106,7 @@ class Manim(commands.Cog):
 
         # for convenience: allow construct-only:
         if script.startswith("def construct(self):"):
-            script = ["class Manimation(Scene):"] + [
-                "    " + line for line in script.split("\n")
-            ]
+            script = "class Manimation(Scene):" + "\n".join(["    " + line for line in script.split("\n")])
         else:
             script = script.split("\n")
 
@@ -119,19 +117,19 @@ class Manim(commands.Cog):
             scriptfile = Path(tmpdirname) / "script.py"
             with open(scriptfile, "w", encoding="utf-8") as f:
                 f.write("\n".join(script))
-            try:  # now it's getting serious: get docker involved
+            try:
                 reply_args = None
                 container_stderr = dockerclient.containers.run(
-                    image="manimcommunity/manim:stable",
+                    image="manimcommunity/manim:v0.6.0",
                     volumes={tmpdirname: {"bind": "/manim/", "mode": "rw"}},
-                    command=f"timeout 120 manim /manim/script.py -qm --disable_caching --progress_bar False -o scriptoutput {cli_flags}",
+                    command=f"timeout 120 manim -qm --disable_caching --progress_bar=none -o scriptoutput {cli_flags} /manim/script.py",
                     user=os.getuid(),
                     stderr=True,
                     stdout=False,
                     remove=True,
                 )
                 if container_stderr:
-                    if len(container_stderr.decode("utf-8")) <= 1200:
+                    if len(container_stderr.decode("utf-8")) <= 2000:
                         reply_args = {
                             "content": "Something went wrong, here is "
                             "what Manim reports:\n"
@@ -139,22 +137,16 @@ class Manim(commands.Cog):
                         }
                     else:
                         reply_args = {
-                            "content": "Something went wrong, here is "
-                            "what Manim reports:\n",
+                            "content": "Something went wrong, here is the error log:\n",
                             "file": discord.File(
                                 fp=io.BytesIO(container_stderr),
                                 filename="Error.log",
                             ),
                         }
-
                     return reply_args
-
             except Exception as e:
-                reply_args = {"content": f"Something went wrong: ```{e}```"}
-                raise e
-            finally:
-                if reply_args:
-                    return reply_args
+                reply_args = {"content": f"Something went wrong while evaluating provided code snippet:\n```py\n{e}```"}
+                return reply_args
 
             try:
                 [outfilepath] = Path(tmpdirname).rglob("scriptoutput.*")
@@ -162,11 +154,10 @@ class Manim(commands.Cog):
                 reply_args = {
                     "content": "Something went wrong: no (unique) output file was produced. :cry:"
                 }
-                raise e
-            else:
-                reply_args = {
-                    "content": "Here you go:",
-                    "file": discord.File(outfilepath),
-                }
-            finally:
                 return reply_args
+
+            reply_args = {
+                "content": "Here you go:",
+                "file": discord.File(outfilepath),
+            }
+            return reply_args
