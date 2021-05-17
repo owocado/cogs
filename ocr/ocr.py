@@ -12,7 +12,7 @@ class OCR(commands.Cog):
     """Detect text in images using (OCR) Google Cloud Vision API."""
 
     __author__ = ["TrustyJAID", " siu3334 (<@306810730055729152>)"]
-    __version__ = "0.0.2"
+    __version__ = "0.0.3"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
