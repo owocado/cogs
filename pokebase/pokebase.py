@@ -723,8 +723,8 @@ class Pokebase(commands.Cog):
         """Responds with the location data for a Pokémon."""
         async with ctx.typing():
             data = await self.get_pokemon_data(pokemon)
-            if not data.get("location_area_encounters"):
-                return await ctx.send("No location data found for this Pokémon.")
+            if not (data and data.get("location_area_encounters")):
+                return await ctx.send("No location data found for said Pokémon.")
 
             get_encounters = await self.get_json(data["location_area_encounters"])
             if not get_encounters:
