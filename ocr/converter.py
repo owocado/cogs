@@ -8,7 +8,6 @@ from typing import Pattern, List, Union
 
 import discord
 from discord.ext.commands.converter import Converter
-from discord.ext.commands.errors import BadArgument
 from redbot.core import commands
 
 IMAGE_LINKS: Pattern = re.compile(
@@ -22,19 +21,40 @@ class ImageFinder(Converter):
     capabilities into a more general converter class
     """
 
-    async def search_for_images(
-        self, ctx: commands.Context
-    ) -> List[Union[discord.Asset, discord.Attachment, str]]:
+    async def convert(self, ctx: commands.Context, argument: str) -> List[str]:
+        attachments = ctx.message.attachments
+        matches = IMAGE_LINKS.finditer(argument)
         urls = []
-        if not ctx.channel.permissions_for(ctx.me).read_message_history:
-            raise BadArgument("I require \"Read Message History\" permission to find images in this channel's history.")
+        if matches:
+            for match in matches:
+                urls.append(match.group(1))
+        if attachments:
+            for attachment in attachments:
+                match = IMAGE_LINKS.match(attachment.url)
+                if match:
+                    urls.append(match.group(1))
+        return urls
+
+    async def find_images_in_replies(self, reference: discord.Message) -> List[str]:
+        urls = []
+        match = IMAGE_LINKS.search(reference.content)
+        if match:
+            urls.append(match.group(1))
+        if reference.attachments:
+            match = IMAGE_LINKS.match(reference.attachments[0].url)
+            if match:
+                urls.append(match.group(1))
+        return urls
+
+    async def search_for_images(self, ctx: commands.Context) -> List[str]:
+        urls = []
         async for message in ctx.channel.history(limit=20):
             if message.attachments:
                 for attachment in message.attachments:
-                    urls.append(attachment.url)
+                    match = IMAGE_LINKS.match(attachment.url)
+                    if match:
+                        urls.append(match.group(1))
             match = IMAGE_LINKS.search(message.content)
             if match:
                 urls.append(match.group(1))
-        if not urls:
-            raise BadArgument("No images were found in last 20 messages in this channel.")
         return urls
