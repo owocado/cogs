@@ -1,4 +1,6 @@
 # owo-cogs
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fsiu3334%2Fowo-cogs.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fsiu3334%2Fowo-cogs?ref=badge_shield)
+
 
 This serves as a cog repo for my own mods/created cogs. All credits belongs to the respective owners/creators.
 
@@ -35,3 +37,7 @@ Then to add repo and install my cogs, do:
 
 ## Contact
 I have my own [small discord server](https://discord.gg/YjFQSFqjJ3) if you need help, but you can also contact me in Red main server and cog support server or in DM.
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fsiu3334%2Fowo-cogs.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fsiu3334%2Fowo-cogs?ref=badge_large)
