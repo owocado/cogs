@@ -15,7 +15,7 @@ class RottenTomatoes(commands.Cog):
     """Get rottentomatoes reviews and ratings for a movie query."""
 
     __author__ = "siu3334 (<@306810730055729152>)"
-    __version__ = "0.0.1"
+    __version__ = "0.0.2"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -89,7 +89,7 @@ class RottenTomatoes(commands.Cog):
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True, read_message_history=True)
     async def rottentomatoes(self, ctx: commands.Context, *, query: str):
-        """Show various info about a Steam game."""
+        """Fetch movie ratings from Rotten Tomatoes website."""
         async with ctx.typing():
             movie_id = await self.fetch_movie_id(ctx, query)
             if movie_id is None:
@@ -104,7 +104,7 @@ class RottenTomatoes(commands.Cog):
                 async with self.session.get(base_url, headers=USER_AGENT) as response:
                     if response.status != 200:
                         return await ctx.send(f"https://http.cat/{response.status}")
-                    data = json.loads(await response.read())
+                    data = json.loads(await response.text(encoding="ISO-8859-1"))
             except asyncio.TimeoutError:
                 return await ctx.send("Operation timed out.")
 
