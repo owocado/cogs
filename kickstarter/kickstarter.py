@@ -14,7 +14,7 @@ class Kickstarter(commands.Cog):
     """Search for and get various info on a Kickstarter project."""
 
     __author__ = ["siu3334", "dragonfire535"]
-    __version__ = "0.0.2"
+    __version__ = "0.0.3"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -66,12 +66,12 @@ class Kickstarter(commands.Cog):
             # embed.add_field(name="Creator", value=creator)
             created_at = datetime.datetime.utcfromtimestamp(result.get("created_at"))
             pretty_created = (
-                created_at.strftime("%d %b, %Y") + f"\n({self._accurate_timedelta(created_at)} ago)"
+                created_at.strftime("%d %b, %Y") + f"  ({self._accurate_timedelta(created_at)} ago)"
             )
             # embed.add_field(name="Creation Date", value=pretty_created)
             launched_at = datetime.datetime.utcfromtimestamp(result.get("launched_at"))
             pretty_launched = (
-                launched_at.strftime("%d %b, %Y") + f"\n({self._accurate_timedelta(launched_at)} ago)"
+                launched_at.strftime("%d %b, %Y") + f"  ({self._accurate_timedelta(launched_at)} ago)"
             )
             # embed.add_field(name="Launched Date", value=pretty_launched)
             deadline = datetime.datetime.utcfromtimestamp(result.get("deadline"))
@@ -79,7 +79,7 @@ class Kickstarter(commands.Cog):
             past_or_future = "ago `**EXPIRED**`" if utcnow > deadline else "to go"
             pretty_deadline = (
                 deadline.strftime("%d %b, %Y")
-                + f"\n({self._accurate_timedelta(deadline)} {past_or_future})"
+                + f"  ({self._accurate_timedelta(deadline)} {past_or_future})"
             )
             embed.description = (
                 project_summary
