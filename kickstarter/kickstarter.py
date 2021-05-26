@@ -83,7 +83,7 @@ class Kickstarter(commands.Cog):
             )
             embed.description = (
                 project_summary
-                + f"**Creator**: {creator}\n"
+                + f"\n\n**Creator**: {creator}\n"
                 + f"**Creation Date**: {pretty_created}\n"
                 + f"**Launched Date**: {pretty_launched}\n"
                 + f"**Deadline**: {pretty_deadline}\n"
