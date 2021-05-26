@@ -1,13 +1,14 @@
 {
     "name": "Kickstarter",
-    "short": "Search for your query to fetch info on a Kickstarter project.",
+    "short": "Search for and get info on a Kickstarter project.",
     "description": "Search for your query to fetch info on a Kickstarter project.",
-    "end_user_data_statement": "Thanks for installing this cog. I hope you will find this cog useful and enjoy it. :)",
+    "install_msg": "Thanks for installing this MEH cog. 😔",
+    "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
     "author": [
         "siu3334 (<@306810730055729152>)"
     ],
     "required_cogs": {},
-    "requirements": [],
+    "requirements": ["python-dateutil"],
     "tags": ["kickstarter"],
     "min_bot_version": "3.4.0",
     "hidden": false,

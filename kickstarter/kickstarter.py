@@ -1,7 +1,8 @@
 import aiohttp
 import asyncio
+import datetime
 
-from datetime import datetime
+from dateutil import relativedelta
 
 import discord
 from redbot.core import commands
@@ -10,10 +11,10 @@ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 
 class Kickstarter(commands.Cog):
-    """Search for your query to fetch info on a Kickstarter project."""
+    """Search for and get various info on a Kickstarter project."""
 
-    __author__ = ["siu3334 (<@306810730055729152>)", "dragonfire535"]
-    __version__ = "0.0.1"
+    __author__ = ["siu3334", "dragonfire535"]
+    __version__ = "0.0.2"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -25,49 +26,94 @@ class Kickstarter(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 5, commands.BucketType.member)
+    @commands.cooldown(1, 3.0, commands.BucketType.member)
     async def kickstarter(self, ctx: commands.Context, *, query: str):
         """Search for a project on Kickstarter."""
-        base_url = "https://www.kickstarter.com/projects/search.json"
-        params = {"term": query}
-        async with ctx.typing():
-            try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(base_url, params=params) as response:
-                        if response.status != 200:
-                            return await ctx.send(f"https://http.cat/{response.status}")
-                        data = await response.json()
-            except asyncio.TimeoutError:
-                return await ctx.send("Operation timed out.")
+        base_url = f"https://www.kickstarter.com/projects/search.json?term={query}"
 
-            if len(data.get("projects")) == 0:
-                return await ctx.send("Could not find any result.")
+        await ctx.trigger_typing()
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(base_url) as response:
+                    if response.status != 200:
+                        return await ctx.send(f"https://http.cat/{response.status}")
+                    data = await response.json()
+        except asyncio.TimeoutError:
+            return await ctx.send("Operation timed out.")
 
-            embed_list = []
-            for result in data.get("projects"):
-                em = discord.Embed(colour=0x14E06E)
-                em.title = result.get("name")
-                em.url = result.get("urls").get("web").get("project")
-                em.set_author(name="Kickstarter", icon_url="https://i.imgur.com/EHDlH5t.png")
-                em.description = result.get("blurb", "No summary.")
-                if result.get("photo"):
-                    em.set_thumbnail(url=result.get("photo").get("full"))
-                em.add_field(name="Goal", value=f"{result.get('currency_symbol')}{humanize_number(round(result.get('goal')))}")
-                em.add_field(name="Pledged", value=f"{result.get('currency_symbol')}{humanize_number(round(result.get('pledged')))}")
-                em.add_field(name="Backers", value=humanize_number(result.get("backers_count")))
-                creator = f"[{result.get('creator').get('name')}]({result.get('creator').get('urls').get('web').get('user')})"
-                em.add_field(name="Creator", value=creator)
-                created_at = datetime.utcfromtimestamp(result.get("created_at")).strftime("%d %b, %Y")
-                em.add_field(name="Creation Date", value=created_at)
-                deadline = datetime.utcfromtimestamp(result.get("deadline")).strftime("%d %b, %Y")
-                em.add_field(name="Deadline", value=deadline)
-                if result.get("category"):
-                    em.set_footer(text=f"Category: {result.get('category').get('name')}")
-                embed_list.append(em)
+        if len(data["projects"]) == 0 and data["total_hits"] == 0:
+            return await ctx.send(f"Could not find any results. Did you mean `{data['suggestion']}`?")
 
-        if not embed_list:
-            return await ctx.send("No results.")
-        elif len(embed_list) == 1:
-            return await ctx.send(embed=embed_list[0])
+        pages = []
+        for i, result in enumerate(data["projects"]):
+            embed = discord.Embed(colour=0x14E06E)
+            embed.title = result.get("name")
+            embed.url = result.get("urls").get("web").get("project")
+            embed.set_author(name="Kickstarter", icon_url="https://i.imgur.com/EHDlH5t.png")
+            project_summary = result.get("blurb", "No summary.")
+            if result.get("photo"):
+                embed.set_thumbnail(url=result.get("photo").get("full"))
+            embed.add_field(
+                name="Goal",
+                value=f"{result.get('currency_symbol')}{humanize_number(round(result.get('goal')))}",
+            )
+            pledged = f"{result.get('currency_symbol')}{humanize_number(round(result.get('pledged')))}"
+            percent_funded = round((result.get('pledged') / result.get('goal')) * 100)
+            pretty_pledged = f"{pledged}\n({humanize_number(percent_funded)}% funded)"
+            embed.add_field(name="Pledged", value=pretty_pledged)
+            embed.add_field(name="Backers", value=humanize_number(result.get("backers_count")))
+            creator = f"[{result.get('creator').get('name')}]({result['creator']['urls']['web']['user']})"
+            # embed.add_field(name="Creator", value=creator)
+            created_at = datetime.datetime.utcfromtimestamp(result.get("created_at"))
+            pretty_created = (
+                created_at.strftime("%d %b, %Y") + f"\n({self._accurate_timedelta(created_at)} ago)"
+            )
+            # embed.add_field(name="Creation Date", value=pretty_created)
+            launched_at = datetime.datetime.utcfromtimestamp(result.get("launched_at"))
+            pretty_launched = (
+                launched_at.strftime("%d %b, %Y") + f"\n({self._accurate_timedelta(launched_at)} ago)"
+            )
+            # embed.add_field(name="Launched Date", value=pretty_launched)
+            deadline = datetime.datetime.utcfromtimestamp(result.get("deadline"))
+            utcnow = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+            past_or_future = "ago `**EXPIRED**`" if utcnow > deadline else "to go"
+            pretty_deadline = (
+                deadline.strftime("%d %b, %Y")
+                + f"\n({self._accurate_timedelta(deadline)} {past_or_future})"
+            )
+            embed.description = (
+                project_summary
+                + f"**Creator**: {creator}\n"
+                + f"**Creation Date**: {pretty_created}\n"
+                + f"**Launched Date**: {pretty_launched}\n"
+                + f"**Deadline**: {pretty_deadline}\n"
+            )
+            # embed.add_field(name="Deadline", value=pretty_deadline)
+            footer = f"Page {i + 1} of {len(data['projects'])}"
+            if result.get("category"):
+                footer += f" | Category: {result.get('category').get('name')}"
+            embed.set_footer(text=footer)
+            pages.append(embed)
+
+        if len(pages) == 1:
+            return await ctx.send(embed=pages[0])
         else:
-            await menu(ctx, embed_list, DEFAULT_CONTROLS, timeout=60.0)
+            await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
+
+    @staticmethod
+    def _accurate_timedelta(date_time):
+        dt1 = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+        dt2 = date_time
+
+        if dt1 > dt2:
+            diff = relativedelta.relativedelta(dt1, dt2)
+        else:
+            diff = relativedelta.relativedelta(dt2, dt1)
+
+        yrs, mths, days = (diff.years, diff.months, diff.days)
+        hrs, mins, secs = (diff.hours, diff.minutes, diff.seconds)
+
+        pretty = f"{yrs}y {mths}mth {days}d {hrs}h {mins}m {secs}s"
+        to_join = " ".join([x for x in pretty.split() if x[0] != "0"][:2])
+
+        return to_join
