@@ -24,7 +24,7 @@ class Pokebase(commands.Cog):
     """Search for various info about a Pokémon and related data."""
 
     __author__ = ["phalt", "siu3334"]
-    __version__ = "0.2.7"
+    __version__ = "0.2.8"
 
     def format_help_for_context(self, ctx: Context) -> str:
         """Thanks Sinbad!"""
@@ -167,14 +167,14 @@ class Pokebase(commands.Cog):
             )
             embed.add_field(name="Introduced In", value=introduced_in)
             humanize_height = (
-                f"{floor(data.get('height', 0) * 3.94 // 12)} ft."
-                f"{floor(data.get('height', 0) * 3.94 % 12)} in."
-                f"\n({data.get('height') / 10} m.)"
+                f"{floor(data.get('height', 0) * 3.94 // 12)} ft. "
+                + f"{floor(data.get('height', 0) * 3.94 % 12)} in."
+                + f"\n({data.get('height') / 10} m.)"
             )
             embed.add_field(name="Height", value=humanize_height)
             humanize_weight = (
                 f"{round(data.get('weight', 0) * 0.2205, 2)} lbs."
-                f"\n({data.get('weight') / 10} kgs.)"
+                + f"\n({data.get('weight') / 10} kgs.)"
             )
             embed.add_field(name="Weight", value=humanize_weight)
             embed.add_field(
@@ -259,20 +259,20 @@ class Pokebase(commands.Cog):
 
             pretty_base_stats = (
                 f"`HP         : |{'█' * round((base_stats['hp'] / 255) * 10) * 2}"
-                f"{' ' * (20 - round((base_stats['hp'] / 255) * 10) * 2)}|` **{base_stats['hp']}**\n"
-                f"`Attack     : |{'█' * round((base_stats['attack'] / 255) * 10) * 2}"
-                f"{' ' * (20 - round((base_stats['attack'] / 255) * 10) * 2)}|` **{base_stats['attack']}**\n"
-                f"`Defense    : |{'█' * round((base_stats['defense'] / 255) * 10) * 2}"
-                f"{' ' * (20 - round((base_stats['defense'] / 255) * 10) * 2)}|` **{base_stats['defense']}**\n"
-                f"`Sp. Attack : |{'█' * round((base_stats['special-attack'] / 255) * 10) * 2}"
-                f"{' ' * (20 - round((base_stats['special-attack'] / 255) * 10) * 2)}|` **{base_stats['special-attack']}**\n"
-                f"`Sp. Defense: |{'█' * round((base_stats['special-defense'] / 255) * 10) * 2}"
-                f"{' ' * (20 - round((base_stats['special-defense'] / 255) * 10) * 2)}|` **{base_stats['special-defense']}**\n"
-                f"`Speed      : |{'█' * round((base_stats['speed'] / 255) * 10) * 2}"
-                f"{' ' * (20 - round((base_stats['speed'] / 255) * 10) * 2)}|` **{base_stats['speed']}**\n"
-                "`-----------------------------------`\n"
-                f"`Total      : |{'█' * round((total_base_stats / 1125) * 10) * 2}"
-                f"{' ' * (20 - round((total_base_stats / 1125) * 10) * 2)}|` **{total_base_stats}**\n"
+                + f"{' ' * (20 - round((base_stats['hp'] / 255) * 10) * 2)}|` **{base_stats['hp']}**\n"
+                + f"`Attack     : |{'█' * round((base_stats['attack'] / 255) * 10) * 2}"
+                + f"{' ' * (20 - round((base_stats['attack'] / 255) * 10) * 2)}|` **{base_stats['attack']}**\n"
+                + f"`Defense    : |{'█' * round((base_stats['defense'] / 255) * 10) * 2}"
+                + f"{' ' * (20 - round((base_stats['defense'] / 255) * 10) * 2)}|` **{base_stats['defense']}**\n"
+                + f"`Sp. Attack : |{'█' * round((base_stats['special-attack'] / 255) * 10) * 2}"
+                + f"{' ' * (20 - round((base_stats['special-attack'] / 255) * 10) * 2)}|` **{base_stats['special-attack']}**\n"
+                + f"`Sp. Defense: |{'█' * round((base_stats['special-defense'] / 255) * 10) * 2}"
+                + f"{' ' * (20 - round((base_stats['special-defense'] / 255) * 10) * 2)}|` **{base_stats['special-defense']}**\n"
+                + f"`Speed      : |{'█' * round((base_stats['speed'] / 255) * 10) * 2}"
+                + f"{' ' * (20 - round((base_stats['speed'] / 255) * 10) * 2)}|` **{base_stats['speed']}**\n"
+                + "`-----------------------------------`\n"
+                + f"`Total      : |{'█' * round((total_base_stats / 1125) * 10) * 2}"
+                + f"{' ' * (20 - round((total_base_stats / 1125) * 10) * 2)}|` **{total_base_stats}**\n"
             )
             embed.add_field(
                 name="Base Stats (Base Form)", value=pretty_base_stats, inline=False
@@ -303,7 +303,7 @@ class Pokebase(commands.Cog):
             )
             type_effectiveness = (
                 "[See it on Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/"
-                f"{data.get('name').title()}_%28Pokémon%29#Type_effectiveness)"
+                + f"{data.get('name').title()}_%28Pokémon%29#Type_effectiveness)"
             )
             embed.add_field(name="Weakness/Resistance", value=type_effectiveness)
             embed.set_footer(text="Powered by Poke API")
@@ -526,9 +526,9 @@ class Pokebase(commands.Cog):
         (Pokémons from #891 to #898 are not supported yet for trainer card)
         """
         base_url = "https://pokecharms.com/index.php?trainer-card-maker/render"
-        if style not in ["default", "black", "collector", "dp", "purple"]:
+        if style.lower() not in ["default", "black", "collector", "dp", "purple"]:
             return await ctx.send_help()
-        if trainer not in [
+        if trainer.lower() not in [
             "ash",
             "red",
             "ethan",
@@ -539,7 +539,7 @@ class Pokebase(commands.Cog):
             "dawn",
         ]:
             return await ctx.send_help()
-        if badge not in ["kanto", "johto", "hoenn", "sinnoh", "unova", "kalos"]:
+        if badge.lower() not in ["kanto", "johto", "hoenn", "sinnoh", "unova", "kalos"]:
             return await ctx.send_help()
         if len(pokemons.split()) > 6:
             return await ctx.send_help()
@@ -568,10 +568,10 @@ class Pokebase(commands.Cog):
 
             form = aiohttp.FormData()
             form.add_field("trainername", name[:12])
-            form.add_field("background", str(self.styles[style]))
-            form.add_field("character", str(self.trainers[trainer]))
+            form.add_field("background", str(self.styles[style.lower()]))
+            form.add_field("character", str(self.trainers[trainer.lower()]))
             form.add_field("badges", "8")
-            form.add_field("badgesUsed", ",".join(str(x) for x in self.badges[badge]))
+            form.add_field("badgesUsed", ",".join(str(x) for x in self.badges[badge.lower()]))
             form.add_field("pokemon", str(len(pokemons.split())))
             form.add_field("pokemonUsed", ",".join(panel_ids))
             form.add_field("_xfResponseType", "json")
