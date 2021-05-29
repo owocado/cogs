@@ -84,22 +84,18 @@ class AverageFan(commands.Cog):
                 return False
         return True
 
-    @commands.command()
-    @commands.cooldown(1, 60, commands.BucketType.guild)
-    @commands.max_concurrency(1, commands.BucketType.channel)
+    @commands.command(hidden=True)
+    @commands.cooldown(1, 60, commands.BucketType.channel)
+    @commands.max_concurrency(1, commands.BucketType.guild)
     @commands.bot_has_permissions(attach_files=True)
     async def averagefan(self, ctx: commands.Context, text1: str, text2: str) -> None:
-        """Make Average Fan Vs Average Enjoyer meme videos.
-
-        There must be exactly 1 `,` to split the message
-        """
-        text1 = text1[:15]
-        text2 = text2[:15]
+        """Make Average Fan Vs Average Enjoyer meme video."""
         async with ctx.typing():
             if not await self.check_video_file(MEME_LINK, "meme_template.mp4"):
                 return await ctx.send("I couldn't download average fan template video.")
             if not await self.check_font_file():
                 return await ctx.send("I couldn't download the font file.")
+            warning = await ctx.send("Processing... This is a resource intensive operation and takes a while.")
             fake_task = functools.partial(
                 self.make_meme, text1, text2, u_id=ctx.message.id
             )
@@ -113,15 +109,17 @@ class AverageFan(commands.Cog):
                 return
             fp = cog_data_path(self) / f"{ctx.message.id}memerave.mp4"
             file = discord.File(str(fp), filename="memerave.mp4")
-            try:
-                await ctx.send(files=[file])
-            except Exception:
-                log.error("Error sending memerave video", exc_info=True)
-                pass
-            try:
-                os.remove(fp)
-            except Exception:
-                log.error("Error deleting memerave video", exc_info=True)
+
+        try:
+            await warning.delete()
+            await ctx.send(files=[file])
+        except Exception:
+            log.error("Error sending memerave video", exc_info=True)
+            pass
+        try:
+            os.remove(fp)
+        except Exception:
+            log.error("Error deleting memerave video", exc_info=True)
 
     def make_meme(self, text1: str, text2: str, u_id: int) -> bool:
         """Non blocking meme rave video generation from DankMemer bot
@@ -133,23 +131,27 @@ class AverageFan(commands.Cog):
         # clip.volume(0.5)
         text = TextClip(
             text1,
-            fontsize=48,
+            size=(350, 100),
+            fontsize=32,
             color="black",
-            stroke_width=2,
+            stroke_width=1,
             stroke_color="black",
+            method="caption",
             font=fp,
         )
-        text = text.set_position((20, 20)).set_duration(15.0)
+        text = text.set_position((5, 5)).set_duration(15.0)
         text_2 = (
             TextClip(
                 text2,
-                fontsize=48,
+                size=(350, 100),
+                fontsize=32,
                 color="black",
-                stroke_width=2,
+                stroke_width=1,
                 stroke_color="black",
+                method="caption",
                 font=fp,
             )
-            .set_position((365, 20))
+            .set_position((365, 5))
             .set_duration(15.0)
         )
 
