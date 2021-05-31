@@ -12,7 +12,7 @@ from typing import Pattern
 import discord
 from redbot.core import commands
 from redbot.core.utils import AsyncIter
-from redbot.core.utils.chat_formatting import bold, box, humanize_number, inline, pagify
+from redbot.core.utils.chat_formatting import box, humanize_number, inline, pagify
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 INVITE_URL_REGEX: Pattern = re.compile(
@@ -23,8 +23,8 @@ INVITE_URL_REGEX: Pattern = re.compile(
 class Utilities(commands.Cog):
     """Some of my useful & fun utility commands, grouped in one cog."""
 
-    __author__ = "siu3334 (<@306810730055729152>)"
-    __version__ = "0.0.6"
+    __author__ = "siu3334"
+    __version__ = "0.0.7"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -44,14 +44,14 @@ class Utilities(commands.Cog):
 
         or compare timedelta difference between 2 snowflakes.
         """
-        to_match = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+        time_now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
         try:
             snowflake = discord.utils.snowflake_time(snowflake)
         except (ValueError, OverflowError):
             await ctx.send("Value of given `snowflake` parameter is out of range.")
             return
         if snowflake2 is None:
-            snowflake2 = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+            snowflake2 = time_now
         else:
             try:
                 snowflake2 = discord.utils.snowflake_time(snowflake2)
@@ -59,21 +59,17 @@ class Utilities(commands.Cog):
                 await ctx.send("Value of given `snowflake2` parameter is out of range.")
                 return
 
-        diff = self._accurate_timedelta(snowflake, snowflake2, 5)
+        diff = self._relative_timedelta(snowflake, snowflake2, 5)
         strftime1 = snowflake.strftime("%d %b, %Y at %H:%M:%S")
-        strftime2 = "**Time 2:** " + snowflake2.strftime("%d %b, %Y at %H:%M:%S") + " UTC\n" if snowflake2 == to_match else ""
-        when = "ago" if snowflake2 > snowflake else "in future"
+        strftime2 = f"**Timestamp 2:** {snowflake2.strftime('%d %b, %Y at %H:%M:%S')} UTC\n" if snowflake2 != time_now else ""
 
-        final_message = (
-            f"**Time  :** {strftime1} UTC\n{strftime2}"
-            f"**Diff  :** {diff} {when}"
-        )
+        final_message = f"**Timestamp  :** {strftime1} UTC\n{strftime2}**Difference  :** {diff}"
 
         await ctx.send(final_message)
 
-    @commands.command()
-    async def inviscount(self, ctx: commands.Context, *, role: discord.role):
-        """Get number (and %) of offline users in a given role."""
+    @commands.command(name="inviscount")
+    async def invisible_users_in_role(self, ctx: commands.Context, *, role: discord.role):
+        """Get number (and %) of invisible users in a given role."""
         if role is None:
             return await ctx.send("Please provide a valid role name or role ID.")
 
@@ -86,7 +82,7 @@ class Utilities(commands.Cog):
 
         to_send = (
             f"({round(percent * 100, 2)}%) __**{offline}**__ out of "
-            f"{count} users in **{role.name}** role are currently offline."
+            + f"{count} users in **{role.name}** role are currently offline."
         )
         await ctx.send(to_send)
 
@@ -165,21 +161,21 @@ class Utilities(commands.Cog):
         self,
         ctx: commands.Context,
         web_url: str,
-        full_page: str = "false",
+        full_page: bool = False,
         width: int = 1680,
         height: int = 876,
-        fresh: str = "true",
-        block_ads: str = "false",
-        no_cookie_banners: str = "false",
-        omit_background: str = "false",
-        dark_mode: str = "false",
-        lazy_load: str = "false",
-        destroy_screenshot: str = "true",
+        fresh: bool = True,
+        block_ads: bool = False,
+        no_cookie_banners: bool = False,
+        omit_background: bool = False,
+        dark_mode: bool = False,
+        lazy_load: bool = False,
+        destroy_screenshot: bool = True,
     ):
-        """Get a screenshot of a valid publicly accessible webpage.
+        """Get a screenshot of a publicly accessible webpage.
 
         This command requires an API token. You can get a free token
-        by registering a free account on https://screenshotapi.net
+        by registering a free account on <https://screenshotapi.net>
 
         Once you have the API token, set it with:
         ```
@@ -191,16 +187,17 @@ class Utilities(commands.Cog):
         if api_key is None:
             return await ctx.send_help()
 
-        full_page = "false" if full_page not in ["true", "false"] else full_page
-        width = 1920 if 100 > width > 7680 else width
-        height = 1080 if 100 > height > 4320 else height
-        fresh = "true" if fresh not in ["true", "false"] else fresh
-        block_ads = "false" if block_ads not in ["true", "false"] else block_ads
-        no_cookie_banners = "false" if no_cookie_banners not in ["true", "false"] else no_cookie_banners
-        omit_background = "false" if omit_background not in ["true", "false"] else omit_background
-        dark_mode = "false" if dark_mode not in ["true", "false"] else dark_mode
-        lazy_load = "false" if lazy_load not in ["true", "false"] else lazy_load
-        destroy_screenshot = "true" if destroy_screenshot not in ["true", "false"] else destroy_screenshot
+        web_url = web_url.lstrip("<").rstrip(">")
+        full_page = "true" if full_page else "false"
+        width = 1920 if (width < 100 or width > 7680) else width
+        height = 1080 if (width < 100 or height > 4320) else height
+        fresh = "true" if fresh else "false"
+        block_ads = "true" if block_ads else "false"
+        no_cookie_banners = "true" if no_cookie_banners else "false"
+        omit_background = "true" if omit_background else "false"
+        dark_mode = "true" if dark_mode else "false"
+        lazy_load = "true" if lazy_load else "false"
+        destroy_screenshot = "true" if destroy_screenshot else "false"
 
         base_url = "https://shot.screenshotapi.net/screenshot"
         params = {
@@ -218,28 +215,27 @@ class Utilities(commands.Cog):
             "dark_mode": dark_mode
         }
 
-        await ctx.trigger_typing()
-        try:
-            async with self.session.get(base_url, params=params) as response:
-                if response.status != 200:
-                    return await ctx.send(f"https://http.cat/{response.status}")
-                data = BytesIO(await response.read())
-                data.seek(0)
-        except asyncio.TimeoutError:
-            return await ctx.send("Operation timed out.")
+        async with ctx.typing():
+            try:
+                async with self.session.get(base_url, params=params) as response:
+                    if response.status != 200:
+                        return await ctx.send(f"https://http.cat/{response.status}")
+                    data = BytesIO(await response.read())
+                    data.seek(0)
+            except asyncio.TimeoutError:
+                return await ctx.send("Operation timed out.")
 
         await ctx.send(file=discord.File(data, "screenshot.png"))
 
     @commands.command()
-    @commands.cooldown(1, 10, commands.BucketType.member)
+    @commands.check(lambda ctx: ctx.cog.qualified_name == "Seen")
+    @commands.cooldown(1, 5, commands.BucketType.member)
     async def seenlist(self, ctx: commands.Context):
         """Fetch a list of last seen time of all the server members."""
         # I mainly made this for my own convenience and personal use some time ago,
         # making it public in case someone finds it useful.
 
         cog = self.bot.get_cog("Seen")
-        if not cog:
-            return await ctx.send("This command requires Seen cog to be loaded.")
 
         seen_list = ""
         data = await cog.config.all_members(ctx.guild)
@@ -248,7 +244,7 @@ class Utilities(commands.Cog):
             if ctx.guild.get_member(user):
                 now_dt = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
                 seen_dt = datetime.datetime.utcfromtimestamp(seen.get("seen"))
-                seen_delta = self._accurate_timedelta(now_dt, seen_dt, 3)
+                seen_delta = self._relative_timedelta(now_dt, seen_dt, 3)
                 seen_list += f"seen {seen_delta:>20} ago | {ctx.guild.get_member(user)}\n"
             else:
                 seen_list += ""
@@ -284,10 +280,9 @@ class Utilities(commands.Cog):
         verif_lvl = "**Server verification level:**  " + str(invite.guild.verification_level).title()
         created_on = invite.guild.created_at
         now = ctx.message.created_at
-        created_delta = self._accurate_timedelta(now, created_on, 2) + " ago"
+        created_delta = self._relative_timedelta(now, created_on, 2) + " ago"
         guild_info = (
-            f"Server ID: {invite.guild.id} • "
-            f"Server created ({created_delta}) on"
+            f"Server ID: {invite.guild.id} • Server created ({created_delta}) on"
         )
         embed = discord.Embed(
             description=(f"{invite.guild.description}\n\n" if invite.guild.description else "\n") + verif_lvl,
@@ -306,9 +301,9 @@ class Utilities(commands.Cog):
         embed.set_footer(text=guild_info)
         embed.set_thumbnail(url=str(invite.guild.icon_url))
         online_emoji = discord.utils.get(self.bot.emojis, id=749221433552404581)
-        online_emoji = online_emoji if online_emoji else "\N{LARGE GREEN CIRCLE}"
+        online_emoji = online_emoji or "\N{LARGE GREEN CIRCLE}"
         offline_emoji = discord.utils.get(self.bot.emojis, id=749221433049088082)
-        offline_emoji = offline_emoji if offline_emoji else "\N{MEDIUM WHITE CIRCLE}"
+        offline_emoji = offline_emoji or "\N{MEDIUM WHITE CIRCLE}"
         approx_total = humanize_number(invite.approximate_member_count)
         approx_online = humanize_number(invite.approximate_presence_count)
         users_count = f"{online_emoji} {approx_online} Online\n{offline_emoji} {approx_total} Total"
@@ -391,7 +386,7 @@ class Utilities(commands.Cog):
         await ctx.maybe_send_embed(to_send)
 
     @staticmethod
-    def _accurate_timedelta(value1, value2, index: int):
+    def _relative_timedelta(value1, value2, index: int):
         if value1 > value2:
             diff = relativedelta.relativedelta(value1, value2)
         else:
