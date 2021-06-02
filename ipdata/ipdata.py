@@ -9,7 +9,7 @@ class IPData(commands.Cog):
     """IP Geolocation and Proxy Detection cog."""
 
     __author__ = "siu3334 (<@306810730055729152>)"
-    __version__ = "0.0.9"
+    __version__ = "0.0.10"
 
     def __init__(self, bot):
         self.bot = bot
@@ -25,25 +25,23 @@ class IPData(commands.Cog):
     async def ip(self, ctx: commands.Context, ip_address: str):
         """Fetch various geolocation data about a provided public IP address.
 
-        Please note that this command requires an API key.
-        You can get one for free by signing up at :
-        https://ipdata.co/sign-up.html
-
-        Once you received API key, set it with:
+        If you have your own API key and if you want to set it, you can do:
         ```
         [p]set api ipdata api_key <api_key>
         ```
         """
         api_key = (await ctx.bot.get_shared_api_tokens("ipdata")).get("api_key")
         if not api_key:
-            return await ctx.send_help()
+            api_key = "a01cfa2e81e015d3e07c65b13d199cdc9e7c4f7fa4e4a3c3bdea3923"
 
         await ctx.trigger_typing()
         base_url = f"https://api.ipdata.co/{ip_address}?api-key={api_key}"
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(base_url) as response:
-                    if response.status != 200:
+                    if response.status in [400, 401, 403]:
+                        return await ctx.send((await response.json())["message"])
+                    elif response.status != 200:
                         return await ctx.send(f"https://http.cat/{response.status}")
                     data = await response.json()
         except asyncio.TimeoutError:
@@ -55,7 +53,7 @@ class IPData(commands.Cog):
             icon_url=str(data.get("flag")),
         )
         if data.get("asn"):
-            embed.add_field(name="ASN (Carrier)", value=str(data["asn"].get("name")))
+            embed.add_field(name="ASN (ISP)", value="\u200b" + str(data["asn"].get("name")))
             embed.add_field(name="ASN Type", value=str(data["asn"].get("type").upper()))
             embed.add_field(name="ASN Domain", value=str(data["asn"].get("domain")))
             embed.add_field(name="ASN Route", value=str(data["asn"].get("route")))
@@ -66,25 +64,25 @@ class IPData(commands.Cog):
         embed.add_field(name="Calling Code", value="+" + str(data.get("calling_code")))
         lat_long_maps = (
             f"{data.get('latitude')}, {data.get('longitude')}\n"
-            "[See it on Google Maps](https://www.google.com/maps?q="
-            f"{data.get('latitude')},{data.get('longitude')})"
+            + "[See it on Google Maps](https://www.google.com/maps?q="
+            + f"{data.get('latitude')},{data.get('longitude')})"
         )
         embed.add_field(name="Latitude/Longitude", value=lat_long_maps)
         threat_info = ""
         if data.get("threat").get("is_anonymous"):
-            threat_info += "✅ : Is anonymous?"
+            threat_info += "✅ : Is anonymous!"
         if data.get("threat").get("is_bogon"):
             threat_info += "✅ : Is Bogon?"
         if data.get("threat").get("is_known_abuser"):
-            threat_info += "✅ : Is known abuser?"
+            threat_info += "✅ : Is known abuser!"
         if data.get("threat").get("is_known_attacker"):
-            threat_info += "✅ : Is attacker?"
+            threat_info += "✅ : Is attacker!"
         if data.get("threat").get("is_proxy"):
-            threat_info += "✅ : Is proxy?"
+            threat_info += "✅ : Is proxy!"
         if data.get("threat").get("is_threat"):
-            threat_info += "✅ : Is threat?"
+            threat_info += "✅ : Is threat!"
         if data.get("threat").get("is_tor"):
-            threat_info += "✅ : Is TOR?"
-        embed.description = threat_info
+            threat_info += "✅ : Is TOR!"
+        embed.description = "**Threat Info:**\n\n" + threat_info
 
         await ctx.send(embed=embed)
