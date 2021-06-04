@@ -8,6 +8,7 @@
     "disabled": false,
     "short": "Render mathematical animations with Manim.",
     "description": "Render mathematical animations with Manim animation engine.",
+    "end_user_data_statement": "This cog does not persistently store data about users.",
     "tags": [
         "manim",
         "manimate"

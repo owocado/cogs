@@ -25,7 +25,7 @@ class Manim(commands.Cog):
     """A cog for interacting with Manim python animation engine."""
 
     __author__ = "Manim Community Developers, siu3334"
-    __version__ = "0.0.3"
+    __version__ = "0.0.4"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -80,8 +80,7 @@ class Manim(commands.Cog):
         if not all([flag in allowed_flags for flag in cli_flags]):
             reply_args = {
                 "content": "You cannot pass CLI flags other than "
-                "`-i` (`--save_as_gif`), `-s` (`--save_last_frame`), "
-                "`-t` (`--transparent`)."
+                + "`-i` (`--save_as_gif`), `-s` (`--save_last_frame`), `-t` (`--transparent`)."
             }
             return reply_args
         else:
@@ -92,8 +91,8 @@ class Manim(commands.Cog):
         if body.count("```") != 2:
             reply_args = {
                 "content": "Your message is not properly formatted. "
-                "Your code has to be written in a code block, like so:\n"
-                "\\`\\`\\`py\nyour code here\n\\`\\`\\`"
+                + "Your code has to be written in a code block, like so:\n"
+                + "\\`\\`\\`py\nyour code here\n\\`\\`\\`"
             }
             return reply_args
 
@@ -120,7 +119,7 @@ class Manim(commands.Cog):
             try:
                 reply_args = None
                 container_stderr = dockerclient.containers.run(
-                    image="manimcommunity/manim:v0.6.0",
+                    image="manimcommunity/manim:stable",
                     volumes={tmpdirname: {"bind": "/manim/", "mode": "rw"}},
                     command=f"timeout 120 manim -qm --disable_caching --progress_bar=none -o scriptoutput {cli_flags} /manim/script.py",
                     user=os.getuid(),
@@ -131,9 +130,8 @@ class Manim(commands.Cog):
                 if container_stderr:
                     if len(container_stderr.decode("utf-8")) <= 2000:
                         reply_args = {
-                            "content": "Something went wrong, here is "
-                            "what Manim reports:\n"
-                            f"```\n{container_stderr.decode('utf-8')}\n```"
+                            "content": "Something went wrong, here is what Manim reports:\n"
+                            + f"```\n{container_stderr.decode('utf-8')}\n```"
                         }
                     else:
                         reply_args = {
