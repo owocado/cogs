@@ -1,19 +1,18 @@
-import aiohttp
 import asyncio
 import datetime
 import re
-
-from bs4 import BeautifulSoup
 from collections import OrderedDict
-from dateutil import relativedelta
 from io import BytesIO
 from typing import Pattern
 
+import aiohttp
 import discord
+from bs4 import BeautifulSoup as bsp
+from dateutil import relativedelta
 from redbot.core import commands
 from redbot.core.utils import AsyncIter
 from redbot.core.utils.chat_formatting import box, humanize_number, inline, pagify
-from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
+from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
 
 INVITE_URL_REGEX: Pattern = re.compile(
     r"((https:\/\/)?(discord|discordapp)\.(com|gg)\/(invite)?\/?[\w-]+)"
@@ -24,7 +23,7 @@ class Utilities(commands.Cog):
     """Some of my useful & fun utility commands, grouped in one cog."""
 
     __author__ = "siu3334"
-    __version__ = "0.0.7"
+    __version__ = "0.0.8"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -61,7 +60,11 @@ class Utilities(commands.Cog):
 
         diff = self._relative_timedelta(snowflake, snowflake2, 5)
         strftime1 = snowflake.strftime("%d %b, %Y at %H:%M:%S")
-        strftime2 = f"**Timestamp 2:** {snowflake2.strftime('%d %b, %Y at %H:%M:%S')} UTC\n" if snowflake2 != time_now else ""
+        strftime2 = (
+            f"**Timestamp 2:** {snowflake2.strftime('%d %b, %Y at %H:%M:%S')} UTC\n"
+            if snowflake2 != time_now
+            else ""
+        )
 
         final_message = f"**Timestamp  :** {strftime1} UTC\n{strftime2}**Difference  :** {diff}"
 
@@ -162,15 +165,14 @@ class Utilities(commands.Cog):
         ctx: commands.Context,
         web_url: str,
         full_page: bool = False,
+        retina: bool = False,
         width: int = 1680,
         height: int = 876,
-        fresh: bool = True,
+        fresh: str = "true",
         block_ads: bool = False,
-        no_cookie_banners: bool = False,
-        omit_background: bool = False,
-        dark_mode: bool = False,
-        lazy_load: bool = False,
-        destroy_screenshot: bool = True,
+        no_cookie_banners: str = "false",
+        dark_mode: bool = True,
+        destroy_screenshot: bool = False,
     ):
         """Get a screenshot of a publicly accessible webpage.
 
@@ -188,16 +190,12 @@ class Utilities(commands.Cog):
             return await ctx.send_help()
 
         web_url = web_url.lstrip("<").rstrip(">")
-        full_page = "true" if full_page else "false"
         width = 1920 if (width < 100 or width > 7680) else width
         height = 1080 if (width < 100 or height > 4320) else height
-        fresh = "true" if fresh else "false"
-        block_ads = "true" if block_ads else "false"
-        no_cookie_banners = "true" if no_cookie_banners else "false"
-        omit_background = "true" if omit_background else "false"
-        dark_mode = "true" if dark_mode else "false"
-        lazy_load = "true" if lazy_load else "false"
-        destroy_screenshot = "true" if destroy_screenshot else "false"
+        fresh = "true" if fresh not in ["true", "false"] else fresh
+        no_cookie_banners = (
+            "false" if no_cookie_banners not in ["true", "false"] else no_cookie_banners
+        )
 
         base_url = "https://shot.screenshotapi.net/screenshot"
         params = {
@@ -206,18 +204,19 @@ class Utilities(commands.Cog):
             "width": width,
             "height": height,
             "full_page": full_page,
+            "retina": retina,
             "fresh": fresh,
             "output": "image",
             "file_type": "png",
             "block_ads": block_ads,
             "no_cookie_banners": no_cookie_banners,
             "destroy_screenshot": destroy_screenshot,
-            "dark_mode": dark_mode
+            "dark_mode": dark_mode,
         }
 
         async with ctx.typing():
             try:
-                async with self.session.get(base_url, params=params) as response:
+                async with self.session.post(base_url, json=params) as response:
                     if response.status != 200:
                         return await ctx.send(f"https://http.cat/{response.status}")
                     data = BytesIO(await response.read())
@@ -225,21 +224,22 @@ class Utilities(commands.Cog):
             except asyncio.TimeoutError:
                 return await ctx.send("Operation timed out.")
 
-        await ctx.send(file=discord.File(data, "screenshot.png"))
+        await ctx.send(ctx.author.mention, file=discord.File(data, "screenshot.png"))
 
     @commands.command()
-    @commands.check(lambda ctx: ctx.cog.qualified_name == "Seen")
-    @commands.cooldown(1, 5, commands.BucketType.member)
+    @commands.mod_or_permissions(manage_guild=True)
     async def seenlist(self, ctx: commands.Context):
         """Fetch a list of last seen time of all the server members."""
         # I mainly made this for my own convenience and personal use some time ago,
         # making it public in case someone finds it useful.
 
         cog = self.bot.get_cog("Seen")
+        if not cog:
+            return await ctx.send("Please load `Seen` cog first for this command to work.")
 
         seen_list = ""
         data = await cog.config.all_members(ctx.guild)
-        sorted_data = OrderedDict(sorted(data.items(), key=lambda i: i[1]['seen']))
+        sorted_data = OrderedDict(sorted(data.items(), key=lambda i: i[1]["seen"]))
         async for user, seen in AsyncIter(sorted_data.items()):
             if ctx.guild.get_member(user):
                 now_dt = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
@@ -277,15 +277,16 @@ class Utilities(commands.Cog):
         except (discord.NotFound, discord.HTTPException):
             return await ctx.send("The invite is either invalid or has expired.")
 
-        verif_lvl = "**Server verification level:**  " + str(invite.guild.verification_level).title()
+        verif_lvl = (
+            "**Server verification level:**  " + str(invite.guild.verification_level).title()
+        )
         created_on = invite.guild.created_at
         now = ctx.message.created_at
         created_delta = self._relative_timedelta(now, created_on, 2) + " ago"
-        guild_info = (
-            f"Server ID: {invite.guild.id} • Server created ({created_delta}) on"
-        )
+        guild_info = f"Server ID: {invite.guild.id} • Server created ({created_delta}) on"
         embed = discord.Embed(
-            description=(f"{invite.guild.description}\n\n" if invite.guild.description else "\n") + verif_lvl,
+            description=(f"{invite.guild.description}\n\n" if invite.guild.description else "\n")
+            + verif_lvl,
             colour=await ctx.embed_colour(),
         )
         # attribution : https://github.com/Cog-Creators/Red-DiscordBot/blob/V3/develop/redbot/cogs/general/general.py#L412
@@ -320,14 +321,20 @@ class Utilities(commands.Cog):
         # embed.add_field(name="Verification Level", value=verif_lvl)
         assets_info = f"[Server Icon]({invite.guild.icon_url})"
         if invite.guild.banner:
-            assets_info += f" • [Server Banner]({invite.guild.banner_url_as(format='png', size=2048)})"
+            assets_info += (
+                f" • [Server Banner]({invite.guild.banner_url_as(format='png', size=2048)})"
+            )
         if invite.guild.splash:
-            assets_info += f" • [Invite Splash]({invite.guild.splash_url_as(format='png', size=2048)})"
+            assets_info += (
+                f" • [Invite Splash]({invite.guild.splash_url_as(format='png', size=2048)})"
+            )
         embed.add_field(name="Server Assets", value=assets_info)
         if invite.guild.features:
             embed.add_field(
                 name="Server features",
-                value="\n".join("• " + x.replace("_", " ").title() for x in sorted(invite.guild.features)),
+                value="\n".join(
+                    "• " + x.replace("_", " ").title() for x in sorted(invite.guild.features)
+                ),
                 inline=False,
             )
         if invite.guild.id in [x.id for x in self.bot.guilds]:
@@ -354,29 +361,31 @@ class Utilities(commands.Cog):
                 if response.status != 200:
                     await ctx.send(f"https://http.cat/{response.status}")
                     return
-                data = BeautifulSoup(await response.content.read(), "html.parser")
+                data = bsp(await response.content.read(), "html.parser")
         except asyncio.TimeoutError:
             await ctx.send("Operation timed out.")
             return
 
-        meme_endpoint = data.findAll("tbody")[0].tr.td.a["href"]
+        meme_endpoint = data.find_all("tbody")[0].tr.td.a["href"]
         meme_url = "https://knowyourmeme.com" + str(meme_endpoint)
 
         await ctx.send(meme_url)
 
     @commands.command(name="unredirect")
     async def unredirect_url(self, ctx: commands.Context, url: str):
-        """Find out where those pesky shady redirect URLs leads you to."""
+        """Find out where those pesky shady redirect URLs leads you to.
+
+        Doesn't quite work against temporary redirects. :(
+        """
         url = url.lstrip("<").rstrip(">")
 
         await ctx.trigger_typing()
         try:
             async with self.session.get(url, allow_redirects=False) as response:
                 if not response.status in [300, 301, 302, 303, 304, 305, 306, 307, 308]:
-                    await ctx.send("Provided URL is not a redirect URL. 🤔")
-                    return
+                    return await ctx.send("Provided URL is not a permanent redirect URL. 🤔")
                 # Code attribution and credits to original author : https://stackoverflow.com/a/49091337
-                url_meta = str(response).split("Location': \'")[1].split("\'")[0]
+                url_meta = str(response).split("Location': '")[1].split("'")[0]
         except aiohttp.InvalidURL:
             return await ctx.send("You provided an invalid URL. Trying to make me error huh? 😏")
         except (asyncio.TimeoutError, IndexError):
@@ -384,6 +393,51 @@ class Utilities(commands.Cog):
 
         to_send = f"**Given URL redirects to:**\n\n{url_meta}"
         await ctx.maybe_send_embed(to_send)
+
+    @commands.command()
+    @commands.bot_has_permissions(embed_links=True)
+    @commands.cooldown(1, 3.0, commands.BucketType.member)
+    async def phub(self, ctx: commands.Context, *, query: str):
+        """Search PornHub for your kinky query. Only works in NSFW channels."""
+        if not ctx.channel.is_nsfw():
+            return await ctx.send("This command is only allowed in NSFW channels.")
+
+        base_url = f"https://www.pornhub.com/video/search?search={query}"
+        async with self.session.get(base_url) as response:
+            if response.status != 200:
+                return await ctx.send(f"https://http.cat/{response.status}")
+            data = await response.text()
+
+        if '<div class="noResultsWrapper">' in data:
+            return await ctx.send("Could not find any results.")
+
+        parsed_data = bsp(data, "html.parser")
+        results = parsed_data.find_all("li", class_="pcVideoListItem js-pop videoblock videoBox")
+        pages = []
+        for i, css_soup in enumerate(results):
+            # css_soup = bsp(result, "html.parser")
+            video_key = css_soup["data-video-vkey"]
+            video_link = f"https://www.pornhub.com/view_video.php?viewkey={video_key}"
+            duration = f"**Duration:** {css_soup.find('var', class_='duration').text}\n"
+            views = f"**Total views:** {css_soup.find('span', class_='views').text}\n"
+            ratings = f"**Ratings/Likes:** {css_soup.find('div', class_='value').text}\n"
+            created = css_soup.find("var", class_="added").text
+            thumbnail = css_soup.find("img", class_="rotating")["data-path"]
+            video_title = css_soup.find("a", class_="")["title"]
+            embed = discord.Embed(colour=await ctx.embed_color())
+            embed.title = video_title
+            embed.url = str(video_link)
+
+            # TODO : figure out why tf it won't display embed thumbnail/image.
+            embed.set_image(url=thumbnail)
+            embed.set_footer(text=f"Page {i + 1} of {len(results)} | Uploaded: {created}")
+            embed.description = duration + views + ratings
+            pages.append(embed)
+
+        if len(pages) == 1:
+            return await ctx.send(pages[0])
+        else:
+            await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
 
     @staticmethod
     def _relative_timedelta(value1, value2, index: int):
@@ -396,6 +450,6 @@ class Utilities(commands.Cog):
         hrs, mins, secs = (diff.hours, diff.minutes, diff.seconds)
 
         pretty = f"{yrs}y {mths}mth {days}d {hrs}h {mins}m {secs}s"
-        to_join = " ".join([x for x in pretty.split() if x[0] != '0'][:index])
+        to_join = " ".join([x for x in pretty.split() if x[0] != "0"][:index])
 
         return to_join
