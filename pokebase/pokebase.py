@@ -24,7 +24,7 @@ class Pokebase(commands.Cog):
     """Search for various info about a Pokémon and related data."""
 
     __author__ = ["phalt", "siu3334"]
-    __version__ = "0.2.8"
+    __version__ = "0.2.9"
 
     def format_help_for_context(self, ctx: Context) -> str:
         """Thanks Sinbad!"""
@@ -100,9 +100,7 @@ class Pokebase(commands.Cog):
     @cached(ttl=86400, cache=SimpleMemoryCache)
     async def get_pokemon_data(self, pokemon: str):
         try:
-            async with self.session.get(
-                API_URL + f"/pokemon/{pokemon.lower()}"
-            ) as response:
+            async with self.session.get(API_URL + f"/pokemon/{pokemon.lower()}") as response:
                 if response.status != 200:
                     return None
                 pokemon_data = await response.json()
@@ -114,9 +112,7 @@ class Pokebase(commands.Cog):
     @cached(ttl=86400, cache=SimpleMemoryCache)
     async def get_species_data(self, pkmn_id: int):
         try:
-            async with self.session.get(
-                API_URL + f"/pokemon-species/{pkmn_id}"
-            ) as response:
+            async with self.session.get(API_URL + f"/pokemon-species/{pkmn_id}") as response:
                 if response.status != 200:
                     return None
                 species_data = await response.json()
@@ -179,9 +175,7 @@ class Pokebase(commands.Cog):
             embed.add_field(name="Weight", value=humanize_weight)
             embed.add_field(
                 name="Types",
-                value="/".join(
-                    x.get("type").get("name").title() for x in data.get("types")
-                ),
+                value="/".join(x.get("type").get("name").title() for x in data.get("types")),
             )
 
             species_data = await self.get_species_data(data.get("id"))
@@ -223,10 +217,7 @@ class Pokebase(commands.Cog):
                     if x.get("language").get("name") == "en"
                 ]
                 flavor_text = (
-                    choice(flavor_text)
-                    .replace("\n", " ")
-                    .replace("\f", " ")
-                    .replace("\r", " ")
+                    choice(flavor_text).replace("\n", " ").replace("\f", " ").replace("\r", " ")
                 )
                 flavor_text = flavor_text
                 embed.description = f"**{genus_text}**\n\n{flavor_text}"
@@ -244,10 +235,12 @@ class Pokebase(commands.Cog):
 
             abilities = ""
             for ability in data.get("abilities"):
-                abilities += "[{}](https://bulbapedia.bulbagarden.net/wiki/{}_%28Ability%29){}\n".format(
-                    ability.get("ability").get("name").replace("-", " ").title(),
-                    ability.get("ability").get("name").title().replace("-", "_"),
-                    " (Hidden Ability)" if ability.get("is_hidden") else "",
+                abilities += (
+                    "[{}](https://bulbapedia.bulbagarden.net/wiki/{}_%28Ability%29){}\n".format(
+                        ability.get("ability").get("name").replace("-", " ").title(),
+                        ability.get("ability").get("name").title().replace("-", "_"),
+                        " (Hidden Ability)" if ability.get("is_hidden") else "",
+                    )
                 )
 
             embed.add_field(name="Abilities", value=abilities)
@@ -274,9 +267,7 @@ class Pokebase(commands.Cog):
                 + f"`Total      : |{'█' * round((total_base_stats / 1125) * 10) * 2}"
                 + f"{' ' * (20 - round((total_base_stats / 1125) * 10) * 2)}|` **{total_base_stats}**\n"
             )
-            embed.add_field(
-                name="Base Stats (Base Form)", value=pretty_base_stats, inline=False
-            )
+            embed.add_field(name="Base Stats (Base Form)", value=pretty_base_stats, inline=False)
 
             evolves_to = ""
             evolves_to_2 = ""
@@ -286,12 +277,9 @@ class Pokebase(commands.Cog):
                 base_evo = evo_data.get("species").get("name").title()
                 if evo_data.get("evolves_to"):
                     evolves_to += " -> " + "/".join(
-                        x.get("species").get("name").title()
-                        for x in evo_data["evolves_to"]
+                        x.get("species").get("name").title() for x in evo_data["evolves_to"]
                     )
-                if evo_data.get("evolves_to") and evo_data.get("evolves_to")[0].get(
-                    "evolves_to"
-                ):
+                if evo_data.get("evolves_to") and evo_data.get("evolves_to")[0].get("evolves_to"):
                     evolves_to_2 += " -> " + "/".join(
                         x.get("species").get("name").title()
                         for x in evo_data.get("evolves_to")[0].get("evolves_to")
@@ -338,10 +326,8 @@ class Pokebase(commands.Cog):
 
             embed = discord.Embed(colour=discord.Color.random())
             embed.title = data.get("name").replace("-", " ").title()
-            embed.url = (
-                "https://bulbapedia.bulbagarden.net/wiki/{}_%28Ability%29".format(
-                    data.get("name").title().replace("-", "_")
-                )
+            embed.url = "https://bulbapedia.bulbagarden.net/wiki/{}_%28Ability%29".format(
+                data.get("name").title().replace("-", "_")
             )
             embed.description = [
                 x.get("effect")
@@ -353,9 +339,7 @@ class Pokebase(commands.Cog):
                 embed.add_field(
                     name="Introduced In",
                     value="Gen. "
-                    + bold(
-                        str(data.get("generation").get("name").split("-")[1].upper())
-                    ),
+                    + bold(str(data.get("generation").get("name").split("-")[1].upper())),
                 )
             short_effect = [
                 x.get("short_effect")
@@ -400,9 +384,7 @@ class Pokebase(commands.Cog):
             pages = []
             for page in pagify(moves_list, delims=["\n"], page_length=400):
                 embed = discord.Embed(colour=await ctx.embed_colour())
-                embed.title = (
-                    f"Moves for : {data['name'].title()} (#{str(data['id']).zfill(3)})"
-                )
+                embed.title = f"Moves for : {data['name'].title()} (#{str(data['id']).zfill(3)})"
                 embed.set_thumbnail(
                     url=f"https://assets.pokemon.com/assets/cms2/img/pokedex/full/{str(data['id']).zfill(3)}.png",
                 )
@@ -430,9 +412,7 @@ class Pokebase(commands.Cog):
         move_query = move.replace(",", " ").replace(" ", "-").replace("'", "").lower()
         async with ctx.typing():
             try:
-                async with self.session.get(
-                    API_URL + f"/move/{move_query}/"
-                ) as response:
+                async with self.session.get(API_URL + f"/move/{move_query}/") as response:
                     if response.status != 200:
                         await ctx.send(f"https://http.cat/{response.status}")
                         return
@@ -459,22 +439,16 @@ class Pokebase(commands.Cog):
                 embed.add_field(
                     name="Introduced In",
                     value="Gen. "
-                    + bold(
-                        str(data.get("generation").get("name").split("-")[1].upper())
-                    ),
+                    + bold(str(data.get("generation").get("name").split("-")[1].upper())),
                 )
             if data.get("accuracy"):
                 embed.add_field(name="Accuracy", value=f"{data.get('accuracy')}%")
             embed.add_field(name="Base Power", value=str(data.get("power")))
             if data.get("effect_chance"):
-                embed.add_field(
-                    name="Effect Chance", value=f"{data.get('effect_chance')}%"
-                )
+                embed.add_field(name="Effect Chance", value=f"{data.get('effect_chance')}%")
             embed.add_field(name="Power Points (PP)", value=str(data.get("pp")))
             if data.get("type"):
-                embed.add_field(
-                    name="Move Type", value=data.get("type").get("name").title()
-                )
+                embed.add_field(name="Move Type", value=data.get("type").get("name").title())
             if data.get("contest_type"):
                 embed.add_field(
                     name="Contest Type",
@@ -487,9 +461,7 @@ class Pokebase(commands.Cog):
                 )
             embed.add_field(name="\u200b", value="\u200b")
             if data.get("learned_by_pokemon"):
-                learned_by = [
-                    x.get("name").title() for x in data.get("learned_by_pokemon")
-                ]
+                learned_by = [x.get("name").title() for x in data.get("learned_by_pokemon")]
                 embed.add_field(
                     name=f"Learned by {str(len(learned_by))} Pokémons",
                     value=", ".join(learned_by)[:500] + "... and more.",
@@ -652,22 +624,16 @@ class Pokebase(commands.Cog):
             embed.add_field(
                 name="Category",
                 value=str(
-                    item_data.get("category")
-                    .get("name", "unknown")
-                    .title()
-                    .replace("-", " ")
+                    item_data.get("category").get("name", "unknown").title().replace("-", " ")
                 ),
             )
             if item_data.get("attributes"):
                 attributes = "\n".join(
-                    x.get("name").title().replace("-", " ")
-                    for x in item_data["attributes"]
+                    x.get("name").title().replace("-", " ") for x in item_data["attributes"]
                 )
                 embed.add_field(name="Attributes", value=attributes)
             if item_data.get("fling_power"):
-                embed.add_field(
-                    name="Fling Power", value=humanize_number(item_data["fling_power"])
-                )
+                embed.add_field(name="Fling Power", value=humanize_number(item_data["fling_power"]))
             if item_data.get("fling_effect"):
                 fling_data = await self.get_json(item_data["fling_effect"]["url"])
                 if fling_data:
@@ -676,13 +642,10 @@ class Pokebase(commands.Cog):
                         for x in fling_data.get("effect_entries")
                         if x.get("language").get("name") == "en"
                     ][0]
-                    embed.add_field(
-                        name="Fling Effect", value=fling_effect, inline=False
-                    )
+                    embed.add_field(name="Fling Effect", value=fling_effect, inline=False)
             if item_data.get("held_by_pokemon"):
                 held_by = ", ".join(
-                    x.get("pokemon").get("name").title()
-                    for x in item_data["held_by_pokemon"]
+                    x.get("pokemon").get("name").title() for x in item_data["held_by_pokemon"]
                 )
                 embed.add_field(name="Held by Pokémon(s)", value=held_by, inline=False)
             embed.set_footer(text="Powered by Poke API!")
@@ -709,9 +672,7 @@ class Pokebase(commands.Cog):
                     count + 1, item.get("name").title().replace("-", " ")
                 )
 
-            embed.description = (
-                "__**List of items in this category:**__\n\n" + items_list
-            )
+            embed.description = "__**List of items in this category:**__\n\n" + items_list
             embed.set_footer(text="Powered by Poke API!")
 
         await ctx.send(embed=embed)
@@ -740,9 +701,7 @@ class Pokebase(commands.Cog):
                 area_data = await self.get_json(loc["url"])
                 location_data = await self.get_json(area_data["location"]["url"])
                 location_names = ", ".join(
-                    x["name"]
-                    for x in location_data["names"]
-                    if x["language"]["name"] == "en"
+                    x["name"] for x in location_data["names"] if x["language"]["name"] == "en"
                 )
                 generations = "/".join(x.title().replace("-", " ") for x in loc["name"])
                 pretty_data += f"`[{str(i + 1).zfill(2)}]` {bold(location_names)} ({generations})\n"
@@ -788,12 +747,8 @@ class Pokebase(commands.Cog):
             embed.title = data["name"]
             embed.description = "**Rarity:** " + str(data.get("rarity"))
             embed.add_field(name="Artist:", value=str(data.get("artist")))
-            embed.add_field(
-                name="Belongs to Set:", value=str(data["set"]["name"]), inline=False
-            )
-            embed.add_field(
-                name="Set Release Date:", value=str(data["set"]["releaseDate"])
-            )
+            embed.add_field(name="Belongs to Set:", value=str(data["set"]["name"]), inline=False)
+            embed.add_field(name="Set Release Date:", value=str(data["set"]["releaseDate"]))
             embed.set_thumbnail(url=str(data["set"]["images"]["logo"]))
             embed.set_image(url=str(data["images"]["large"]))
             embed.set_footer(
