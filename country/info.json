@@ -1,9 +1,9 @@
 {
     "name": "Country",
-    "short": "Fetch various info about a country.",
-    "description": "Fetch various info about a country.",
+    "short": "Fetch some basic info about a country.",
+    "description": "Fetch some basic trivia & information about a country.",
     "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
-    "install_msg": "Thank you for installing this cog. Now tell me where do you live? :kappa:",
+    "install_msg": "Thank you for installing Country cog.",
     "author": [
         "siu3334"
     ],
