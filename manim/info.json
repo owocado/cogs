@@ -17,6 +17,6 @@
         "docker"
     ],
     "min_bot_version": "3.4.8",
-    "hidden": true,
+    "hidden": false,
     "type": "COG"
 }
