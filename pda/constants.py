@@ -850,11 +850,11 @@ CRY = [
     "https://cdn.weeb.sh/images/Sk5a01cyf.gif",
 ]
 CRY_STRINGS = [
-    "cries profusely... :confounded:",
-    "suddenly starts crying... :cry:",
-    "feels like they wanna cry their heart out! :sob:",
-    "is crying ... :c :crying_cat_face:",
-    "criiiiiiiiiiiiies nuuuuuuuuuuuu someone give them a warm hug pls! :sob:",
+    "cries profusely... 😖",
+    "suddenly starts crying... 😢",
+    "feels like they wanna cry their heart out! 😭",
+    "is crying ... :c 😿",
+    "criiiiiiiiiiiiies nuuuuuuuuuuuu someone give them a warm hug pls! 😭",
 ]
 PUNCH = [
     "https://media1.tenor.com/images/31686440e805309d34e94219e4bedac1/tenor.gif",
@@ -918,7 +918,7 @@ PUNCH = [
     "https://cdn.weeb.sh/images/BJg7wTbbM.gif",
     "https://i.imgur.com/WLihkm3.gif",
 ]
-PUNCH_MSG = [
+PUNCH_STRINGS = [
     "hurls a heavy punch at",
     "randomly punches",
     "(out of knowhere) punches",
