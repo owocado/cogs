@@ -12,7 +12,7 @@ class PDA(commands.Cog):
     """Do roleplay with your Discord friends or virtual strangers."""
 
     __author__ = "siu3334 (<@306810730055729152>)"
-    __version__ = "0.2.0"
+    __version__ = "0.3.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -22,6 +22,7 @@ class PDA(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, 123456789987654321, force_registration=True)
+        default_global = dict(schema_version=1)
         default_user = {
             "BAKA_TO": 0,
             "BAKA_FROM": 0,
@@ -52,11 +53,11 @@ class PDA(commands.Cog):
             "PUNCH_FROM": 0,
             "SLAP_TO": 0,
             "SLAP_FROM": 0,
-            "SMUG_TO": 0,
-            "SMUG_FROM": 0,
+            "SMUG_COUNT": 0,
             "TICKLE_TO": 0,
             "TICKLE_FROM": 0
         }
+        self.config.register_global(**default_global)
         self.config.register_member(**default_user)
         self.config.register_user(**default_user)
 
@@ -67,12 +68,12 @@ class PDA(commands.Cog):
     async def baka(self, ctx: Context, *, member: discord.Member):
         """Call someone a BAKA with a GIF reaction!"""
         if member.id == ctx.me.id:
-            message = "**Ｎ Ｏ   Ｕ**"
-            return await ctx.send(message)
+            return await ctx.send("**Ｎ Ｏ   Ｕ**")
 
         if member.id == ctx.author.id:
-            message = f"{bold(ctx.author.name)}, you really are BAKA. Stupid!! 💩"
-            return await ctx.send(message)
+            return await ctx.send(
+                f"{bold(ctx.author.name)}, you really are BAKA. Stupid!! 💩"
+            )
 
         async with ctx.typing():
             baka_to = await self.config.member(ctx.author).BAKA_TO()
@@ -101,12 +102,12 @@ class PDA(commands.Cog):
     async def bully(self, ctx: Context, *, member: discord.Member):
         """Bully someone in this server with a funny GIF!"""
         if member.id == ctx.me.id:
-            message = "**Ｎ Ｏ   Ｕ**"
-            return await ctx.send(message)
+            return await ctx.send("**Ｎ Ｏ   Ｕ**")
 
         if member.id == ctx.author.id:
-            message = f"{ctx.author.mention} Self bullying doesn't make sense. Stop it, get some help."
-            return await ctx.send(message)
+            return await ctx.send(
+                f"{ctx.author.mention} Self bullying doesn't make sense. Stop it, get some help."
+            )
 
         async with ctx.typing():
             bully_to = await self.config.member(ctx.author).BULLY_TO()
@@ -122,7 +123,7 @@ class PDA(commands.Cog):
             embed.set_image(url=choice(BULLY))
             footer = (
                 f"{ctx.author} bullied {bully_to} people, {member} "
-                + f"got bullied {bully_from} times so far in this server."
+                + f"got bullied {bully_from} times in this server so far."
             )
             embed.set_footer(text=footer)
 
@@ -141,7 +142,7 @@ class PDA(commands.Cog):
             embed = discord.Embed(colour=ctx.author.colour)
             embed.description = f"{ctx.author.mention} {choice(CRY_STRINGS)}"
             embed.set_image(url=choice(CRY))
-            footer = f"{ctx.author} has cried {cry_count} times so far in this server."
+            footer = f"{ctx.author} has cried {cry_count} times in this server so far."
             embed.set_footer(text=footer)
 
         await ctx.send(embed=embed)
@@ -152,15 +153,11 @@ class PDA(commands.Cog):
     @commands.cooldown(1, 20, commands.BucketType.member)
     async def cuddle(self, ctx: Context, *, member: discord.Member):
         """Cuddle with a server member!"""
-        if member.id == ctx.me.id:
-            return await ctx.send(f"Awww thanks, {bold(ctx.author.name)}! Very kind of you. 😳")
-
         if member.id == ctx.author.id:
-            message = (
+            return await ctx.send(
                 f"{ctx.author.mention} According to all known laws of roleplay, there is no way you "
                 + "can cuddle yourself! Go cuddle with someone... or a pillow, if you're lonely like me. 😔"
             )
-            return await ctx.send(message)
 
         async with ctx.typing():
             cuddle_to = await self.config.member(ctx.author).CUDDLE_TO()
@@ -171,12 +168,16 @@ class PDA(commands.Cog):
             await self.config.member(member).CUDDLE_FROM.set(cuddle_from + 1)
             await self.config.user(ctx.author).CUDDLE_TO.set(gcuddle_to + 1)
             await self.config.user(member).CUDDLE_FROM.set(gcuddle_from + 1)
+            if member.id == ctx.me.id:
+                return await ctx.send(
+                    f"Awww thanks for cuddles, {bold(ctx.author.name)}! Very kind of you. 😳"
+                )
             embed = discord.Embed(colour=member.colour)
             message = f"{bold(ctx.author.name)} cuddles {member.mention}"
             embed.set_image(url=str(choice(CUDDLE)))
             footer = (
-                f"{ctx.author} cuddled {cuddle_to} people, {member} "
-                + f"received {cuddle_from} cuddles so far in this server."
+                f"{ctx.author} sent {cuddle_to} cuddles, {member} "
+                + f"received {cuddle_from} cuddles in this server so far."
             )
             embed.set_footer(text=footer)
 
@@ -188,9 +189,10 @@ class PDA(commands.Cog):
     @commands.cooldown(1, 20, commands.BucketType.member)
     async def feed(self, ctx: Context, *, member: discord.Member):
         """Feed someone from this server virtually!"""
-        if member.id == ctx.me.id:
-            message = f"OWO! Yummy food... Thanks much, {bold(ctx.author.name)}! ❤️"
-            return await ctx.send(message)
+        if member.id == ctx.author.id:
+            return await ctx.send(
+                f"{ctx.author.mention} eats {bold(choice(RECIPES))}!"
+            )
 
         async with ctx.typing():
             feed_to = await self.config.member(ctx.author).FEED_TO()
@@ -201,12 +203,16 @@ class PDA(commands.Cog):
             await self.config.member(member).FEED_FROM.set(feed_from + 1)
             await self.config.user(ctx.author).FEED_TO.set(gfeed_to + 1)
             await self.config.user(member).FEED_FROM.set(gfeed_from + 1)
+            if member.id == ctx.me.id:
+                return await ctx.send(
+                    f"OWO! Thanks for yummy food..., {bold(ctx.author.name)}! ❤️"
+                )
             embed = discord.Embed(colour=member.colour)
             message = f"{bold(ctx.author.name)} feeds {member.mention} some delicious food!"
             embed.set_image(url=choice(FEED))
             footer = (
-                f"{ctx.author} have fed {feed_to} people, {member} was fed "
-                + f"some food from {feed_from} people so far in this server."
+                f"{ctx.author} have fed {feed_to} people, {member} was "
+                + f"fed some food {feed_from} times in this server so far."
             )
             embed.set_footer(text=footer)
 
@@ -219,8 +225,11 @@ class PDA(commands.Cog):
     async def highfive(self, ctx: Context, *, member: discord.Member):
         """High-fives a user!"""
         if member.id == ctx.author.id:
-            message = f"{ctx.author.mention} high-fives themselves in mirror, I guess?"
-            return await ctx.send(italics(message))
+            return await ctx.send(
+                italics(
+                    f"{ctx.author.mention} high-fives themselves in mirror, I guess?"
+                )
+            )
 
         async with ctx.typing():
             h5_to = await self.config.member(ctx.author).HIGHFIVE_TO()
@@ -232,11 +241,15 @@ class PDA(commands.Cog):
             await self.config.user(ctx.author).HIGHFIVE_TO.set(gh5_to + 1)
             await self.config.user(member).HIGHFIVE_FROM.set(gh5_from + 1)
             embed = discord.Embed(colour=member.colour)
-            message = f"{bold(ctx.author.name)} high fives {member.mention}"
-            embed.set_image(url=choice(HIGHFIVE))
+            if member.id == ctx.me.id:
+                message = f"high-fives back to {bold(ctx.author.name)} 👀"
+                embed.set_image(url="https://i.imgur.com/hQPCYUJ.gif")
+            else:
+                message = f"{bold(ctx.author.name)} high fives {member.mention}"
+                embed.set_image(url=choice(HIGHFIVE))
             footer = (
-                f"{ctx.author} high-five'd {h5_to} people, {member} "
-                + f"received {h5_from} high-fives so far in this server."
+                f"{ctx.author} sent {h5_to} high-fives, {'I' if member == ctx.me else member} "
+                + f"received {h5_from} high-fives in this server so far."
             )
             embed.set_footer(text=footer)
 
@@ -248,13 +261,10 @@ class PDA(commands.Cog):
     @commands.cooldown(1, 20, commands.BucketType.member)
     async def hugs(self, ctx: Context, *, member: discord.Member):
         """Hug a user virtually on Discord!"""
-        if member.id == ctx.me.id:
-            message = f"Awwww thanks! So nice of you! *hugs {bold(ctx.author.name)} back* 🤗"
-            return await ctx.send(message)
-
         if member.id == ctx.author.id:
-            message = f"{ctx.author.mention} One dOEs NOt SiMplY hUg THeIR oWn sELF!!!!!"
-            return await ctx.send(message)
+            return await ctx.send(
+                f"{ctx.author.mention} One dOEs NOt SiMplY hUg THeIR oWn sELF!!!!!"
+            )
 
         async with ctx.typing():
             hug_to = await self.config.member(ctx.author).HUG_TO()
@@ -266,11 +276,14 @@ class PDA(commands.Cog):
             await self.config.user(ctx.author).HUG_TO.set(ghug_to + 1)
             await self.config.user(member).HUG_FROM.set(ghug_from + 1)
             embed = discord.Embed(colour=member.colour)
-            message = f"{bold(ctx.author.name)} hugs {member.mention} 🤗"
+            if member.id == ctx.me.id:
+                message = f"Awwww thanks! So nice of you! *hugs {ctx.author.mention} back* 🤗"
+            else:
+                message = f"{bold(ctx.author.name)} hugs {member.mention} 🤗"
             embed.set_image(url=str(choice(HUG)))
             footer = (
-                f"{ctx.author} hugged {hug_to} people, {member} "
-                + f" received {hug_from} hugs so far in this server!"
+                f"{ctx.author} gave {hug_to} hugs, {'I' if member == ctx.me else member} "
+                + f"received {hug_from} hugs from others in this server so far!"
             )
             embed.set_footer(text=footer)
 
@@ -283,12 +296,12 @@ class PDA(commands.Cog):
     async def kill(self, ctx: Context, *, member: discord.Member):
         """Virtually attempt to kill a server member with a GIF reaction!"""
         if member.id == ctx.me.id:
-            message = "**Ｎ Ｏ   Ｕ**"
-            return await ctx.send(content=message)
+            return await ctx.send("**Ｎ Ｏ   Ｕ**")
 
         if member.id == ctx.author.id:
-            message = f"{ctx.author.mention} Seppukku is not allowed on my watch. 💀"
-            return await ctx.send(message)
+            return await ctx.send(
+                f"{ctx.author.mention} Seppukku is not allowed on my watch. 💀"
+            )
 
         async with ctx.typing():
             kill_to = await self.config.member(ctx.author).KILL_TO()
@@ -303,8 +316,8 @@ class PDA(commands.Cog):
             message = f"🇫 {bold(ctx.author.name)} tries to kill {member.mention}"
             embed.set_image(url=choice(KILL))
             footer = (
-                f"{ctx.author} tried to kill {kill_to} people, {member} "
-                + f"got killed {kill_from} times so far in this server!"
+                f"{ctx.author} attempted {kill_to} kills, {member} almost "
+                + f"got killed {kill_from} times in this server so far!"
             )
             embed.set_footer(text=footer)
 
@@ -319,13 +332,10 @@ class PDA(commands.Cog):
         if not ctx.channel.is_nsfw():
             return await ctx.send("NSFW command blocked in non NSFW channel.")
 
-        if member.id == ctx.me.id:
-            message = f"Awwww! *kisses {ctx.author.mention} back!* 😘 🥰"
-            return await ctx.send(message)
-
         if member.id == ctx.author.id:
-            message = f"Congratulations {bold(ctx.author.name)}, you just kissed yourself! LOL!!! 💋"
-            return await ctx.send(message)
+            return await ctx.send(
+                f"Poggers {bold(ctx.author.name)}, you just kissed yourself! LOL!!! 💋"
+            )
 
         async with ctx.typing():
             kiss_to = await self.config.member(ctx.author).KISS_TO()
@@ -336,12 +346,16 @@ class PDA(commands.Cog):
             await self.config.member(member).KISS_FROM.set(kiss_from + 1)
             await self.config.user(ctx.author).KISS_TO.set(gkiss_to + 1)
             await self.config.user(member).KISS_FROM.set(gkiss_from + 1)
+            if member.id == ctx.me.id:
+                return await ctx.send(
+                    f"Awwww so nice of you! *kisses {ctx.author.mention} back!* 😘 🥰"
+                )
             embed = discord.Embed(colour=member.colour)
             message = f"{bold(ctx.author.name)} kisses {member.mention} 😘 🥰"
             embed.set_image(url=str(choice(KISS)))
             footer = (
                 f"{ctx.author} have kissed {kiss_to} people, {member} "
-                + f"received {kiss_from} kisses so far in this server!"
+                + f"received {kiss_from} kisses in this server so far!"
             )
             embed.set_footer(text=footer)
 
@@ -357,8 +371,9 @@ class PDA(commands.Cog):
             return await ctx.send("NSFW command blocked in non NSFW channel.")
 
         if member.id == ctx.me.id:
-            message = f"{ctx.author.mention} You wanna lick a bot? Very horny!"
-            return await ctx.send(message)
+            return await ctx.send(
+                f"{ctx.author.mention} You wanna lick a bot? Very horny! 🍆"
+            )
 
         async with ctx.typing():
             lick_to = await self.config.member(ctx.author).LICK_TO()
@@ -372,13 +387,13 @@ class PDA(commands.Cog):
             embed = discord.Embed(colour=member.colour)
             message = (
                 f"{ctx.author.mention} Bravo, you just licked yourself. 👏"
-                if member.id == ctx.author.id
-                else f"{ctx.author.mention} licks {member.mention} 😳"
+                if member.id == ctx.author.id else
+                f"{bold(ctx.author.name)} licks {member.mention} 😳"
             )
             embed.set_image(url=choice(LICK))
             footer = (
-                f"{ctx.author} have licked {lick_to} people, {member} "
-                + f"got licked {lick_from} times so far in this server!"
+                f"{ctx.author} have licked others {lick_to} times, {member} "
+                + f"got licked {lick_from} times in this server so far!"
             )
             embed.set_footer(text=footer)
 
@@ -392,12 +407,29 @@ class PDA(commands.Cog):
         """Try to nom/bite a server member!"""
         if member.id == ctx.me.id:
             return await ctx.send(f"**OH NO!** _runs away_")
-        embed = discord.Embed(colour=member.colour)
-        if member.id != ctx.author:
-            message = f"{ctx.author.mention} casually noms {member.mention} 😈"
-        else:
-            message = f"Waaaaaa! {bold(ctx.author.name)}, You bit yourself! Whyyyy?? 😭"
-        embed.set_image(url=choice(BITE))
+
+        message = (
+            f"Waaaaaa! {bold(ctx.author.name)}, You bit yourself! Whyyyy?? 😭"
+            if member.id == ctx.author.id
+            else f"{bold(ctx.author.name)} casually noms {member.mention} 😈"
+        )
+        async with ctx.typing():
+            nom_to = await self.config.member(ctx.author).NOM_TO()
+            nom_from = await self.config.member(member).NOM_FROM()
+            gnom_to = await self.config.user(ctx.author).NOM_TO()
+            gnom_from = await self.config.user(member).NOM_FROM()
+            await self.config.member(ctx.author).NOM_TO.set(nom_to + 1)
+            await self.config.member(member).NOM_FROM.set(nom_from + 1)
+            await self.config.user(ctx.author).NOM_TO.set(gnom_to + 1)
+            await self.config.user(member).NOM_FROM.set(gnom_from + 1)
+            embed = discord.Embed(colour=member.colour)
+            embed.set_image(url=choice(BITE))
+            footer = (
+                f"{ctx.author} sent {nom_to} noms to others, {member} "
+                + f"got nom'd {nom_from} times in this server so far!"
+            )
+            embed.set_footer(text=footer)
+
         await ctx.send(content=quote(italics(message)), embed=embed)
 
     @commands.command()
@@ -405,14 +437,30 @@ class PDA(commands.Cog):
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 20, commands.BucketType.member)
     async def pat(self, ctx: Context, *, member: discord.Member):
-        """Pats a user!"""
+        """Pat a server member with wholesome GIF!"""
+        message = (
+            f"{ctx.author.mention} pats themselves, I guess? *yay*"
+            if member.id == ctx.author.id
+            else f"{bold(ctx.author.name)} pats {member.mention}"
+        )
 
-        embed = discord.Embed(colour=member.colour)
-        if member.id == ctx.me.id:
-            message = f"{ctx.author.mention} pats {member.mention}"
-        else:
-            message = f"{ctx.author.mention} pats themselves, I guess?"
-        embed.set_image(url=choice(PAT))
+        async with ctx.typing():
+            pat_to = await self.config.member(ctx.author).PAT_TO()
+            pat_from = await self.config.member(member).PAT_FROM()
+            gpat_to = await self.config.user(ctx.author).PAT_TO()
+            gpat_from = await self.config.user(member).PAT_FROM()
+            await self.config.member(ctx.author).PAT_TO.set(pat_to + 1)
+            await self.config.member(member).PAT_FROM.set(pat_from + 1)
+            await self.config.user(ctx.author).PAT_TO.set(gpat_to + 1)
+            await self.config.user(member).PAT_FROM.set(gpat_from + 1)
+            embed = discord.Embed(colour=member.colour)
+            embed.set_image(url=choice(PAT))
+            footer = (
+                f"{ctx.author} gave {pat_to} pats to others, {member} "
+                + f"received {pat_from} pats in this server so far!"
+            )
+            embed.set_footer(text=footer)
+
         await ctx.send(content=quote(italics(message)), embed=embed)
 
     @commands.command()
@@ -420,27 +468,43 @@ class PDA(commands.Cog):
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 20, commands.BucketType.member)
     async def poke(self, ctx: Context, *, member: discord.Member):
-        """Pokes a user!"""
-
+        """Poke your Discord friends or strangers!"""
         if member.id == ctx.me.id:
-            message = f"Awwww! Hey there. *pokes {ctx.author.mention} back! touchy touchy*"
-            return await ctx.send(message)
-        if member.id != ctx.author.id:
+            return await ctx.send(
+                f"Awwww! Hey there. *pokes {ctx.author.mention} back!*"
+            )
+        if member.id == ctx.author.id:
+            return  await ctx.send(
+                f"{bold(ctx.author.name)} wants to play self poke huh?!"
+            )
+
+        async with ctx.typing():
+            poke_to = await self.config.member(ctx.author).POKE_TO()
+            poke_from = await self.config.member(member).POKE_FROM()
+            gpoke_to = await self.config.user(ctx.author).POKE_TO()
+            gpoke_from = await self.config.user(member).POKE_FROM()
+            await self.config.member(ctx.author).POKE_TO.set(poke_to + 1)
+            await self.config.member(member).POKE_FROM.set(poke_from + 1)
+            await self.config.user(ctx.author).POKE_TO.set(gpoke_to + 1)
+            await self.config.user(member).POKE_FROM.set(gpoke_from + 1)
+            embed = discord.Embed(colour=member.colour)
             embed = discord.Embed(colour=member.colour)
             message = f"{ctx.author.mention} casually pokes {member.mention}"
             embed.set_image(url=choice(POKE))
-            return await ctx.send(content=quote(italics(message)), embed=embed)
-        else:
-            message = f"{ctx.author.mention} self-poking is widely regarded as a bad move!"
-            await ctx.send(message)
+            footer = (
+                f"{ctx.author} gave {poke_to} pokes to others, {member} "
+                + f"received {poke_from} pokes in this server so far!"
+            )
+            embed.set_footer(text=footer)
+
+        await ctx.send(content=quote(italics(message)), embed=embed)
 
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 30, commands.BucketType.member)
     async def punch(self, ctx: Context, *, member: discord.Member):
-        """Punch a user with a GIF reaction!"""
-
+        """Punch someone on Discord with a GIF reaction!"""
         if member.id == ctx.me.id:
             message = (
                 ctx.author.mention
@@ -449,49 +513,84 @@ class PDA(commands.Cog):
                 + " How disappointing LMFAO! 😂"
             )
             em = discord.Embed(colour=await ctx.embed_colour())
-            em.set_image(url="https://media1.tenor.com/images/c20ffecdd8cca7f0ce9c4a670d5f7ff0/tenor.gif")
+            em.set_image(url="https://i.imgur.com/iVgOijZ.gif")
             return await ctx.send(content=message, embed=em)
-        if member.id != ctx.author.id:
+
+        if member.id == ctx.author.id:
+            message = f"I uh ..... **{ctx.author.name}**, self harm doesn't sound so fun. Stop it, get some help."
+            return await ctx.send(message)
+
+        async with ctx.typing():
+            punch_to = await self.config.member(ctx.author).PUNCH_TO()
+            punch_from = await self.config.member(member).PUNCH_FROM()
+            gpunch_to = await self.config.user(ctx.author).PUNCH_TO()
+            gpunch_from = await self.config.user(member).PUNCH_FROM()
+            await self.config.member(ctx.author).PUNCH_TO.set(punch_to + 1)
+            await self.config.member(member).PUNCH_FROM.set(punch_from + 1)
+            await self.config.user(ctx.author).PUNCH_TO.set(gpunch_to + 1)
+            await self.config.user(member).PUNCH_FROM.set(gpunch_from + 1)
             embed = discord.Embed(colour=member.colour)
             message = f"{ctx.author.mention} {choice(PUNCH_STRINGS)} {member.mention}"
             embed.set_image(url=choice(PUNCH))
-            return await ctx.send(content=quote(italics(message)), embed=embed)
-        else:
-            message = f"I uh ..... **{ctx.author.name}**, self harm doesn't sound so fun. Stop it, get some help."
-            await ctx.send(message)
+            footer = (
+                f"{ctx.author} sent {punch_to} punches to others, {member} "
+                + f"received {punch_from} punches in this server so far!"
+            )
+            embed.set_footer(text=footer)
+
+        await ctx.send(content=quote(italics(message)), embed=embed)
 
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 20, commands.BucketType.member)
     async def slap(self, ctx: Context, *, member: discord.Member):
-        """Slaps a user!"""
-
+        """Slap a server member!"""
         if member.id == ctx.me.id:
-            message = "**Ｎ Ｏ   Ｕ**"
-            return await ctx.send(message)
-        if member.id != ctx.author.id:
+            return await ctx.send("**Ｎ Ｏ   Ｕ**")
+
+        if member.id == ctx.author.id:
+            return await ctx.send(
+                f"Don't slap yourself, you're precious! {ctx.author.mention}"
+            )
+
+        async with ctx.typing():
+            slap_to = await self.config.member(ctx.author).SLAP_TO()
+            slap_from = await self.config.member(member).SLAP_FROM()
+            gslap_to = await self.config.user(ctx.author).SLAP_TO()
+            gslap_from = await self.config.user(member).SLAP_FROM()
+            await self.config.member(ctx.author).SLAP_TO.set(slap_to + 1)
+            await self.config.member(member).SLAP_FROM.set(slap_from + 1)
+            await self.config.user(ctx.author).SLAP_TO.set(gslap_to + 1)
+            await self.config.user(member).SLAP_FROM.set(gslap_from + 1)
             embed = discord.Embed(colour=member.colour)
             message = f"{ctx.author.mention} slaps {member.mention}"
             embed.set_image(url=choice(SLAP))
-            return await ctx.send(content=quote(italics(message)), embed=embed)
-        else:
-            message = f"Don't slap yourself, you're precious! {ctx.author.mention}"
-            await ctx.send(message)
+            footer = (
+                f"{ctx.author} gave {slap_to} slaps to others, {member} "
+                + f"received {slap_from} slaps in this server so far!"
+            )
+            embed.set_footer(text=footer)
+
+        await ctx.send(content=quote(italics(message)), embed=embed)
 
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 20, commands.BucketType.member)
-    async def smug(self, ctx: Context, *, member: discord.Member = None):
-        """Be smug towards someone!"""
+    async def smug(self, ctx: Context):
+        """Show everyone your smug face!"""
+        message = f"{bold(ctx.author.name)} smugs at **@\u200bsomeone** 😏"
+        async with ctx.typing():
+            smug_count = await self.config.member(ctx.author).SMUG_COUNT()
+            gsmug_count = await self.config.user(ctx.author).SMUG_COUNT()
+            await self.config.member(ctx.author).SMUG_COUNT.set(smug_count + 1)
+            await self.config.user(ctx.author).SMUG_COUNT.set(gsmug_count + 1)
+            embed = discord.Embed(colour=ctx.author.colour)
+            embed.set_image(url=choice(SMUG))
+            footer = f"{ctx.author} has smugged {smug_count} times in this server so far."
+            embed.set_footer(text=footer)
 
-        embed = discord.Embed(colour=ctx.author.colour)
-        if not member:
-            message = f"{ctx.author.mention} smugs at **@\u200bsomeone** 😏"
-        else:
-            message = f"{ctx.author.mention} smugs at {member.mention} 😏"
-        embed.set_image(url=choice(SMUG))
         await ctx.send(content=quote(italics(message)), embed=embed)
 
     @commands.command()
@@ -499,19 +598,34 @@ class PDA(commands.Cog):
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 20, commands.BucketType.member)
     async def tickle(self, ctx: Context, *, member: discord.Member):
-        """Tickles a user!"""
-
+        """Try to tickle a server member!"""
         if member.id == ctx.me.id:
-            message = F"LOL. Tickling a bot now, are we? {ctx.author.mention} 🤣 🤡"
-            return await ctx.send(message)
-        if member.id != ctx.author.id:
-            embed = discord.Embed(colour=member.colour)
-            message = f"{ctx.author.mention} tickles {member.mention}"
-            embed.set_image(url=choice(TICKLE))
-            return await ctx.send(content=quote(italics(message)), embed=embed)
-        else:
-            message = (
+            return await ctx.send(
+                f"{bold(ctx.author.name)} 🤣 🤡"
+            )
+
+        if member.id == ctx.author.id:
+            return await ctx.send(
                 f"{ctx.author.mention} tickling yourself is boring!"
                 + " Tickling others is more fun though, right? 😏"
             )
-            await ctx.send(message)
+
+        async with ctx.typing():
+            tickle_to = await self.config.member(ctx.author).TICKLE_TO()
+            tickle_from = await self.config.member(member).TICKLE_FROM()
+            gtickle_to = await self.config.user(ctx.author).TICKLE_TO()
+            gtickle_from = await self.config.user(member).TICKLE_FROM()
+            await self.config.member(ctx.author).TICKLE_TO.set(tickle_to + 1)
+            await self.config.member(member).TICKLE_FROM.set(tickle_from + 1)
+            await self.config.user(ctx.author).TICKLE_TO.set(gtickle_to + 1)
+            await self.config.user(member).TICKLE_FROM.set(gtickle_from + 1)
+            embed = discord.Embed(colour=member.colour)
+            message = f"{ctx.author.mention} tickles {member.mention}"
+            embed.set_image(url=choice(TICKLE))
+            footer = (
+                f"{ctx.author} tickled other {tickle_to} times, {member} "
+                + f"received {tickle_from} tickles in this server so far!"
+            )
+            embed.set_footer(text=footer)
+
+        await ctx.send(content=quote(italics(message)), embed=embed)
