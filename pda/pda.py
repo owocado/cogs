@@ -91,7 +91,7 @@ class PDA(commands.Cog):
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message)), embed=embed)
+        await ctx.send(content=quote(italics(message, False)), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -126,7 +126,7 @@ class PDA(commands.Cog):
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message)), embed=embed)
+        await ctx.send(content=quote(italics(message, False)), embed=embed)
 
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
@@ -181,7 +181,7 @@ class PDA(commands.Cog):
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message)), embed=embed)
+        await ctx.send(content=quote(italics(message, False)), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -214,7 +214,7 @@ class PDA(commands.Cog):
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message)), embed=embed)
+        await ctx.send(content=quote(italics(message, False)), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -249,7 +249,7 @@ class PDA(commands.Cog):
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message)), embed=embed)
+        await ctx.send(content=quote(italics(message, False)), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -283,7 +283,7 @@ class PDA(commands.Cog):
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message)), embed=embed)
+        await ctx.send(content=quote(italics(message, False)), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -315,7 +315,7 @@ class PDA(commands.Cog):
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message)), embed=embed)
+        await ctx.send(content=quote(italics(message, False)), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -353,7 +353,7 @@ class PDA(commands.Cog):
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message)), embed=embed)
+        await ctx.send(content=quote(italics(message, False)), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -391,7 +391,7 @@ class PDA(commands.Cog):
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message)), embed=embed)
+        await ctx.send(content=quote(italics(message, False)), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -424,7 +424,7 @@ class PDA(commands.Cog):
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message)), embed=embed)
+        await ctx.send(content=quote(italics(message, False)), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -460,7 +460,7 @@ class PDA(commands.Cog):
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message)), embed=embed)
+        await ctx.send(content=quote(italics(message, False)), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -493,7 +493,7 @@ class PDA(commands.Cog):
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message)), embed=embed)
+        await ctx.send(content=quote(italics(message, False)), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -536,7 +536,7 @@ class PDA(commands.Cog):
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message)), embed=embed)
+        await ctx.send(content=quote(italics(message, False)), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -568,7 +568,7 @@ class PDA(commands.Cog):
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message)), embed=embed)
+        await ctx.send(content=quote(italics(message, False)), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -587,7 +587,7 @@ class PDA(commands.Cog):
         footer = f"{ctx.author} has smugged {smug_count} times in this server so far."
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message)), embed=embed)
+        await ctx.send(content=quote(italics(message, False)), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -624,4 +624,4 @@ class PDA(commands.Cog):
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message)), embed=embed)
+        await ctx.send(content=quote(italics(message, False)), embed=embed)
