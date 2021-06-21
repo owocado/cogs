@@ -55,7 +55,7 @@ class PDA(commands.Cog):
             "SLAP_FROM": 0,
             "SMUG_COUNT": 0,
             "TICKLE_TO": 0,
-            "TICKLE_FROM": 0
+            "TICKLE_FROM": 0,
         }
         self.config.register_global(**default_global)
         self.config.register_member(**default_user)
@@ -71,9 +71,7 @@ class PDA(commands.Cog):
             return await ctx.send("**Ｎ Ｏ   Ｕ**")
 
         if member.id == ctx.author.id:
-            return await ctx.send(
-                f"{bold(ctx.author.name)}, you really are BAKA. Stupid!! 💩"
-            )
+            return await ctx.send(f"{bold(ctx.author.name)}, you really are BAKA. Stupid!! 💩")
 
         async with ctx.typing():
             baka_to = await self.config.member(ctx.author).BAKA_TO()
@@ -155,8 +153,9 @@ class PDA(commands.Cog):
         """Cuddle with a server member!"""
         if member.id == ctx.author.id:
             return await ctx.send(
-                f"{ctx.author.mention} According to all known laws of roleplay, there is no way you "
-                + "can cuddle yourself! Go cuddle with someone... or a pillow, if you're lonely like me. 😔"
+                f"{ctx.author.mention} According to all known laws of roleplay, "
+                + "there is no way you can cuddle yourself! Go cuddle with "
+                + "someone... or a pillow, if you're lonely like me. 😔"
             )
 
         async with ctx.typing():
@@ -190,9 +189,7 @@ class PDA(commands.Cog):
     async def feed(self, ctx: Context, *, member: discord.Member):
         """Feed someone from this server virtually!"""
         if member.id == ctx.author.id:
-            return await ctx.send(
-                f"{ctx.author.mention} eats {bold(choice(RECIPES))}!"
-            )
+            return await ctx.send(f"{ctx.author.mention} eats {bold(choice(RECIPES))}!")
 
         async with ctx.typing():
             feed_to = await self.config.member(ctx.author).FEED_TO()
@@ -204,9 +201,7 @@ class PDA(commands.Cog):
             await self.config.user(ctx.author).FEED_TO.set(gfeed_to + 1)
             await self.config.user(member).FEED_FROM.set(gfeed_from + 1)
             if member.id == ctx.me.id:
-                return await ctx.send(
-                    f"OWO! Thanks for yummy food..., {bold(ctx.author.name)}! ❤️"
-                )
+                return await ctx.send(f"OWO! Thanks for yummy food..., {bold(ctx.author.name)}! ❤️")
             embed = discord.Embed(colour=member.colour)
             message = f"{bold(ctx.author.name)} feeds {member.mention} some delicious food!"
             embed.set_image(url=choice(FEED))
@@ -226,9 +221,7 @@ class PDA(commands.Cog):
         """High-fives a user!"""
         if member.id == ctx.author.id:
             return await ctx.send(
-                italics(
-                    f"{ctx.author.mention} high-fives themselves in mirror, I guess?"
-                )
+                italics(f"{ctx.author.mention} high-fives themselves in mirror, I guess?")
             )
 
         async with ctx.typing():
@@ -299,9 +292,7 @@ class PDA(commands.Cog):
             return await ctx.send("**Ｎ Ｏ   Ｕ**")
 
         if member.id == ctx.author.id:
-            return await ctx.send(
-                f"{ctx.author.mention} Seppukku is not allowed on my watch. 💀"
-            )
+            return await ctx.send(f"{ctx.author.mention} Seppukku is not allowed on my watch. 💀")
 
         async with ctx.typing():
             kill_to = await self.config.member(ctx.author).KILL_TO()
@@ -371,9 +362,7 @@ class PDA(commands.Cog):
             return await ctx.send("NSFW command blocked in non NSFW channel.")
 
         if member.id == ctx.me.id:
-            return await ctx.send(
-                f"{ctx.author.mention} You wanna lick a bot? Very horny! 🍆"
-            )
+            return await ctx.send(f"{ctx.author.mention} You wanna lick a bot? Very horny! 🍆")
 
         async with ctx.typing():
             lick_to = await self.config.member(ctx.author).LICK_TO()
@@ -387,8 +376,8 @@ class PDA(commands.Cog):
             embed = discord.Embed(colour=member.colour)
             message = (
                 f"{ctx.author.mention} Bravo, you just licked yourself. 👏"
-                if member.id == ctx.author.id else
-                f"{bold(ctx.author.name)} licks {member.mention} 😳"
+                if member.id == ctx.author.id
+                else f"{bold(ctx.author.name)} licks {member.mention} 😳"
             )
             embed.set_image(url=choice(LICK))
             footer = (
@@ -470,13 +459,9 @@ class PDA(commands.Cog):
     async def poke(self, ctx: Context, *, member: discord.Member):
         """Poke your Discord friends or strangers!"""
         if member.id == ctx.me.id:
-            return await ctx.send(
-                f"Awwww! Hey there. *pokes {ctx.author.mention} back!*"
-            )
+            return await ctx.send(f"Awwww! Hey there. *pokes {ctx.author.mention} back!*")
         if member.id == ctx.author.id:
-            return  await ctx.send(
-                f"{bold(ctx.author.name)} wants to play self poke huh?!"
-            )
+            return await ctx.send(f"{bold(ctx.author.name)} wants to play self poke huh?!")
 
         async with ctx.typing():
             poke_to = await self.config.member(ctx.author).POKE_TO()
@@ -550,9 +535,7 @@ class PDA(commands.Cog):
             return await ctx.send("**Ｎ Ｏ   Ｕ**")
 
         if member.id == ctx.author.id:
-            return await ctx.send(
-                f"Don't slap yourself, you're precious! {ctx.author.mention}"
-            )
+            return await ctx.send(f"Don't slap yourself, you're precious! {ctx.author.mention}")
 
         async with ctx.typing():
             slap_to = await self.config.member(ctx.author).SLAP_TO()
@@ -600,9 +583,7 @@ class PDA(commands.Cog):
     async def tickle(self, ctx: Context, *, member: discord.Member):
         """Try to tickle a server member!"""
         if member.id == ctx.me.id:
-            return await ctx.send(
-                f"{bold(ctx.author.name)} 🤣 🤡"
-            )
+            return await ctx.send(f"{bold(ctx.author.name)} 🤣 🤡")
 
         if member.id == ctx.author.id:
             return await ctx.send(
