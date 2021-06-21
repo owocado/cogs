@@ -120,8 +120,9 @@ class PDA(commands.Cog):
             message = f"{bold(ctx.author.name)} bullies {member.mention} 🤡"
             embed.set_image(url=choice(BULLY))
             footer = (
-                f"{ctx.author} bullied {bully_to} people, {member} "
-                + f"got bullied {bully_from} times in this server so far."
+                f"{ctx.author} bullied others {bully_to} times, {member} "
+                + f"got bullied {bully_from} times in this server so far.\n"
+                + f"Someone call police to get {ctx.author.name} arrested."
             )
             embed.set_footer(text=footer)
 
@@ -175,7 +176,7 @@ class PDA(commands.Cog):
             message = f"{bold(ctx.author.name)} cuddles {member.mention}"
             embed.set_image(url=str(choice(CUDDLE)))
             footer = (
-                f"{ctx.author} sent {cuddle_to} cuddles, {member} "
+                f"{ctx.author} sent {cuddle_to} cuddles, {'I' if member == ctx.me else member} "
                 + f"received {cuddle_from} cuddles in this server so far."
             )
             embed.set_footer(text=footer)
@@ -206,8 +207,8 @@ class PDA(commands.Cog):
             message = f"{bold(ctx.author.name)} feeds {member.mention} some delicious food!"
             embed.set_image(url=choice(FEED))
             footer = (
-                f"{ctx.author} have fed {feed_to} people, {member} was "
-                + f"fed some food {feed_from} times in this server so far."
+                f"{ctx.author} have fed {feed_to} people, {'I' if member == ctx.me else member} "
+                + f"was fed some food {feed_from} times in this server so far."
             )
             embed.set_footer(text=footer)
 
@@ -604,7 +605,7 @@ class PDA(commands.Cog):
             message = f"{ctx.author.mention} tickles {member.mention}"
             embed.set_image(url=choice(TICKLE))
             footer = (
-                f"{ctx.author} tickled other {tickle_to} times, {member} "
+                f"{ctx.author} tickled others {tickle_to} times, {member} "
                 + f"received {tickle_from} tickles in this server so far!"
             )
             embed.set_footer(text=footer)
