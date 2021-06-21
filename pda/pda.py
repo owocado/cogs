@@ -24,38 +24,38 @@ class PDA(commands.Cog):
         self.config = Config.get_conf(self, 123456789987654321, force_registration=True)
         default_global = dict(schema_version=1)
         default_user = {
-            "BAKA_TO": 0,
-            "BAKA_FROM": 0,
-            "BULLY_TO": 0,
-            "BULLY_FROM": 0,
-            "CUDDLE_TO": 0,
-            "CUDDLE_FROM": 0,
-            "CRY_COUNT": 0,
-            "FEED_TO": 0,
-            "FEED_FROM": 0,
-            "HIGHFIVE_TO": 0,
-            "HIGHFIVE_FROM": 0,
-            "HUG_TO": 0,
-            "HUG_FROM": 0,
-            "KILL_TO": 0,
-            "KILL_FROM": 0,
-            "KISS_TO": 0,
-            "KISS_FROM": 0,
-            "LICK_TO": 0,
-            "LICK_FROM": 0,
-            "NOM_TO": 0,
-            "NOM_FROM": 0,
-            "PAT_TO": 0,
-            "PAT_FROM": 0,
-            "POKE_TO": 0,
-            "POKE_FROM": 0,
-            "PUNCH_TO": 0,
-            "PUNCH_FROM": 0,
-            "SLAP_TO": 0,
-            "SLAP_FROM": 0,
-            "SMUG_COUNT": 0,
-            "TICKLE_TO": 0,
-            "TICKLE_FROM": 0,
+            "BAKA_TO": 1,
+            "BAKA_FROM": 1,
+            "BULLY_TO": 1,
+            "BULLY_FROM": 1,
+            "CUDDLE_TO": 1,
+            "CUDDLE_FROM": 1,
+            "CRY_COUNT": 1,
+            "FEED_TO": 1,
+            "FEED_FROM": 1,
+            "HIGHFIVE_TO": 1,
+            "HIGHFIVE_FROM": 1,
+            "HUG_TO": 1,
+            "HUG_FROM": 1,
+            "KILL_TO": 1,
+            "KILL_FROM": 1,
+            "KISS_TO": 1,
+            "KISS_FROM": 1,
+            "LICK_TO": 1,
+            "LICK_FROM": 1,
+            "NOM_TO": 1,
+            "NOM_FROM": 1,
+            "PAT_TO": 1,
+            "PAT_FROM": 1,
+            "POKE_TO": 1,
+            "POKE_FROM": 1,
+            "PUNCH_TO": 1,
+            "PUNCH_FROM": 1,
+            "SLAP_TO": 1,
+            "SLAP_FROM": 1,
+            "SMUG_COUNT": 1,
+            "TICKLE_TO": 1,
+            "TICKLE_FROM": 1,
         }
         self.config.register_global(**default_global)
         self.config.register_member(**default_user)
@@ -504,7 +504,7 @@ class PDA(commands.Cog):
         if member.id == ctx.me.id:
             message = (
                 ctx.author.mention
-                + " tried to punch a bot but failed miserably"
+                + " tried to punch a bot but failed miserably,\n"
                 + " and they actually punched themselves instead."
                 + " How disappointing LMFAO! 😂 😂 😂"
             )
