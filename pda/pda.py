@@ -86,8 +86,8 @@ class PDA(commands.Cog):
         message = f"_**{ctx.author.name}** calls {member.mention} a BAKA bahahahahaha!!!_"
         embed.set_image(url=choice(BAKA))
         footer = (
-            f"{ctx.author} called {baka_to} people a BAKA,\n{member} got called "
-            + f"a BAKA {baka_from} times by others in this server so far."
+            f"So far, {ctx.author} called {baka_to} people a BAKA,\n{member} "
+            + f"got called a BAKA {baka_from} times by others in this server."
         )
         embed.set_footer(text=footer)
 
@@ -120,8 +120,8 @@ class PDA(commands.Cog):
         message = f"_**{ctx.author.name}** bullies {member.mention}_ 🤡"
         embed.set_image(url=choice(BULLY))
         footer = (
-            f"{ctx.author} bullied others {bully_to} times,\n{member} "
-            + f"got bullied {bully_from} times in this server so far.\n"
+            f"So far, {ctx.author} bullied others {bully_to} times,\n{member} "
+            + f"got bullied {bully_from} times in this server.\n"
             + f"Someone call police to get {ctx.author.name} arrested."
         )
         embed.set_footer(text=footer)
@@ -177,9 +177,9 @@ class PDA(commands.Cog):
             message = f"_**{ctx.author.name}** cuddles_ {member.mention}"
         embed.set_image(url=str(choice(CUDDLE)))
         footer = (
-            f"{ctx.author} sent {cuddle_to} cuddles,\n"
+            f"So far, {ctx.author} sent {cuddle_to} cuddles,\n"
             + f"{'I' if member == ctx.me else member} received"
-            + f" {cuddle_from} cuddles in this server so far."
+            + f" {cuddle_from} cuddles in this server."
         )
         embed.set_footer(text=footer)
 
@@ -210,9 +210,9 @@ class PDA(commands.Cog):
             message = f"_**{ctx.author.name}** feeds {member.mention} some delicious food!_"
         embed.set_image(url=choice(FEED))
         footer = (
-            f"{ctx.author} have fed {feed_to} people,\n"
+            f"So far, {ctx.author} have fed {feed_to} people,\n"
             + f"{'I' if member == ctx.me else member} was fed "
-            + f"some food {feed_from} times in this server so far."
+            + f"some food {feed_from} times in this server."
         )
         embed.set_footer(text=footer)
 
@@ -246,9 +246,9 @@ class PDA(commands.Cog):
             message = f"_**{ctx.author.name}** high fives_ {member.mention}"
             embed.set_image(url=choice(HIGHFIVE))
         footer = (
-            f"{ctx.author} sent {h5_to} high-fives,\n"
+            f"So far, {ctx.author} sent {h5_to} high-fives,\n"
             + f"{'I' if member == ctx.me else member} received "
-            + f"{h5_from} high-fives in this server so far."
+            + f"{h5_from} high-fives in this server."
         )
         embed.set_footer(text=footer)
 
@@ -281,9 +281,9 @@ class PDA(commands.Cog):
             message = f"_**{ctx.author.name}** hugs_ {member.mention} 🤗"
         embed.set_image(url=str(choice(HUG)))
         footer = (
-            f"{ctx.author} gave {hug_to} hugs,\n"
+            f"So far, {ctx.author} gave {hug_to} hugs,\n"
             + f"{'I' if member == ctx.me else member} received "
-            + f"{hug_from} hugs from others in this server so far!"
+            + f"{hug_from} hugs from others in this server!"
         )
         embed.set_footer(text=footer)
 
@@ -314,8 +314,8 @@ class PDA(commands.Cog):
         message = f"_**{ctx.author.name}** tries to kill {member.mention}!_ 🇫"
         embed.set_image(url=choice(KILL))
         footer = (
-            f"{ctx.author} attempted {kill_to} kills,\n{member} almost "
-            + f"got killed {kill_from} times in this server so far!"
+            f"So far, {ctx.author} attempted {kill_to} kills,\n{member} "
+            + f"almost got killed {kill_from} times in this server!"
         )
         embed.set_footer(text=footer)
 
@@ -351,8 +351,8 @@ class PDA(commands.Cog):
             message = f"_**{ctx.author.name}** kisses_ {member.mention} 😘 🥰"
         embed.set_image(url=str(choice(KISS)))
         footer = (
-            f"{ctx.author} have kissed {kiss_to} people,\n{member} "
-            + f"received {kiss_from} kisses in this server so far!"
+            f"So far, {ctx.author} have kissed {kiss_to} people,\n"
+            + f"{member} received {kiss_from} kisses in this server!"
         )
         embed.set_footer(text=footer)
 
@@ -389,8 +389,8 @@ class PDA(commands.Cog):
         )
         embed.set_image(url=choice(LICK))
         footer = (
-            f"{ctx.author} have licked others {lick_to} times,\n{member} "
-            + f"got licked {lick_from} times in this server so far!"
+            f"So far, {ctx.author} have licked others {lick_to} times,\n"
+            + f"{member} got licked {lick_from} times in this server!"
         )
         embed.set_footer(text=footer)
 
@@ -422,8 +422,8 @@ class PDA(commands.Cog):
         embed = discord.Embed(colour=member.colour)
         embed.set_image(url=choice(BITE))
         footer = (
-            f"{ctx.author} sent {nom_to} noms to others,\n{member} "
-            + f"got nom'd {nom_from} times in this server so far!"
+            f"So far, {ctx.author} sent {nom_to} noms to others,\n"
+            + f"{member} got nom'd {nom_from} times in this server!"
         )
         embed.set_footer(text=footer)
 
@@ -457,9 +457,9 @@ class PDA(commands.Cog):
         embed = discord.Embed(colour=member.colour)
         embed.set_image(url=choice(PAT))
         footer = (
-            f"{ctx.author} gave {pat_to} pats to others,\n"
-            + f"{'I' if member == ctx.me else member} received "
-            + f"{pat_from} pats in this server so far!"
+            f"So far, {ctx.author} gave {pat_to} pats to others,\n"
+            + f"{'I' if member == ctx.me else member} "
+            + f"received {pat_from} pats in this server!"
         )
         embed.set_footer(text=footer)
 
@@ -491,9 +491,8 @@ class PDA(commands.Cog):
             message = f"_**{ctx.author.name}** casually pokes_ {member.mention}"
         embed.set_image(url=choice(POKE))
         footer = (
-            f"{ctx.author} gave {poke_to} pokes to others,\n"
-            + f"{'I' if member == ctx.me else member} received "
-            + f"{poke_from} pokes in this server so far!"
+            f"So far, {ctx.author} gave {poke_to} pokes to others,\n"
+            + f"{'I' if member == ctx.me else member} received {poke_from} pokes in this server!"
         )
         embed.set_footer(text=footer)
 
@@ -534,8 +533,8 @@ class PDA(commands.Cog):
         message = f"_**{ctx.author.name}** {choice(PUNCH_STRINGS)}_ {member.mention}"
         embed.set_image(url=choice(PUNCH))
         footer = (
-            f"{ctx.author} sent {punch_to} punches to others,\n{member} "
-            + f"received {punch_from} punches in this server so far!"
+            f"So far, {ctx.author} sent {punch_to} punches to others,\n"
+            + f"{member} received {punch_from} punches in this server!"
         )
         embed.set_footer(text=footer)
 
@@ -566,8 +565,8 @@ class PDA(commands.Cog):
         message = f"_**{ctx.author.name}** slaps_ {member.mention}"
         embed.set_image(url=choice(SLAP))
         footer = (
-            f"{ctx.author} gave {slap_to} slaps to others,\n{member} "
-            + f"received {slap_from} slaps in this server so far!"
+            f"So far, {ctx.author} gave {slap_to} slaps to others,\n"
+            + f"{member} received {slap_from} slaps in this server!"
         )
         embed.set_footer(text=footer)
 
@@ -621,9 +620,9 @@ class PDA(commands.Cog):
             message = f"_**{ctx.author.name}** tickles_ {member.mention}"
             embed.set_image(url=choice(TICKLE))
         footer = (
-            f"{ctx.author} tickled others {tickle_to} times,\n"
-            + f"{'I' if member == ctx.me else member} received "
-            + f"{tickle_from} tickles in this server so far!"
+            f"So far, {ctx.author} tickled others {tickle_to} times,\n"
+            + f"{'I' if member == ctx.me else member} "
+            + f"received {tickle_from} tickles in this server!"
         )
         embed.set_footer(text=footer)
 
