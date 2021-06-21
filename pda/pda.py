@@ -22,7 +22,7 @@ class PDA(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, 123456789987654321, force_registration=True)
-        default_global = dict(schema_version=1)
+        default_global = {"schema_version": 1}
         default_user = {
             "BAKA_TO": 1,
             "BAKA_FROM": 1,
