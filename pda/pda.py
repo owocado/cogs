@@ -3,7 +3,7 @@ from random import choice
 import discord
 from redbot.core import Config, commands
 from redbot.core.commands import Context
-from redbot.core.utils.chat_formatting import bold, italics, quote
+from redbot.core.utils.chat_formatting import bold, quote
 
 from .constants import *
 
@@ -83,15 +83,15 @@ class PDA(commands.Cog):
         await self.config.user(ctx.author).BAKA_TO.set(gbaka_to + 1)
         await self.config.user(member).BAKA_FROM.set(gbaka_from + 1)
         embed = discord.Embed(colour=member.colour)
-        message = f"{bold(ctx.author.name)} calls {member.mention} a BAKA bahahahahaha!!!"
+        message = f"_**{ctx.author.name}** calls {member.mention} a BAKA bahahahahaha!!!_"
         embed.set_image(url=choice(BAKA))
         footer = (
-            f"{ctx.author} called {baka_to} people a BAKA, {member} got called "
+            f"{ctx.author} called {baka_to} people a BAKA,\n{member} got called "
             + f"a BAKA {baka_from} times by others in this server so far."
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message, False)), embed=embed)
+        await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -117,16 +117,16 @@ class PDA(commands.Cog):
         await self.config.user(ctx.author).BULLY_TO.set(gbully_to + 1)
         await self.config.user(member).BULLY_FROM.set(gbully_from + 1)
         embed = discord.Embed(colour=member.colour)
-        message = f"{bold(ctx.author.name)} bullies {member.mention} 🤡"
+        message = f"_**{ctx.author.name}** bullies {member.mention}_ 🤡"
         embed.set_image(url=choice(BULLY))
         footer = (
-            f"{ctx.author} bullied others {bully_to} times, {member} "
+            f"{ctx.author} bullied others {bully_to} times,\n{member} "
             + f"got bullied {bully_from} times in this server so far.\n"
             + f"Someone call police to get {ctx.author.name} arrested."
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message, False)), embed=embed)
+        await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
@@ -168,20 +168,22 @@ class PDA(commands.Cog):
         await self.config.member(member).CUDDLE_FROM.set(cuddle_from + 1)
         await self.config.user(ctx.author).CUDDLE_TO.set(gcuddle_to + 1)
         await self.config.user(member).CUDDLE_FROM.set(gcuddle_from + 1)
+        embed = discord.Embed(colour=member.colour)
         if member.id == ctx.me.id:
-            return await ctx.send(
+            message = (
                 f"Awww thanks for cuddles, {bold(ctx.author.name)}! Very kind of you. 😳"
             )
-        embed = discord.Embed(colour=member.colour)
-        message = f"{bold(ctx.author.name)} cuddles {member.mention}"
+        else:
+            message = f"_**{ctx.author.name}** cuddles_ {member.mention}"
         embed.set_image(url=str(choice(CUDDLE)))
         footer = (
-            f"{ctx.author} sent {cuddle_to} cuddles, {'I' if member == ctx.me else member}"
-            + f" received {cuddle_from} cuddles in this server so far."
+            f"{ctx.author} sent {cuddle_to} cuddles,\n"
+            + f"{'I' if member == ctx.me else member} received"
+            + f" {cuddle_from} cuddles in this server so far."
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message, False)), embed=embed)
+        await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -190,7 +192,7 @@ class PDA(commands.Cog):
     async def feed(self, ctx: Context, *, member: discord.Member):
         """Feed someone from this server virtually!"""
         if member.id == ctx.author.id:
-            return await ctx.send(f"{ctx.author.mention} eats {bold(choice(RECIPES))}!")
+            return await ctx.send(f"_{ctx.author.mention} eats {bold(choice(RECIPES))}!_")
 
         await ctx.trigger_typing()
         feed_to = await self.config.member(ctx.author).FEED_TO()
@@ -201,20 +203,20 @@ class PDA(commands.Cog):
         await self.config.member(member).FEED_FROM.set(feed_from + 1)
         await self.config.user(ctx.author).FEED_TO.set(gfeed_to + 1)
         await self.config.user(member).FEED_FROM.set(gfeed_from + 1)
-        if member.id == ctx.me.id:
-            return await ctx.send(
-                f"OWO! Thanks for yummy food..., {bold(ctx.author.name)}! ❤️"
-            )
         embed = discord.Embed(colour=member.colour)
-        message = f"{bold(ctx.author.name)} feeds {member.mention} some delicious food!"
+        if member.id == ctx.me.id:
+            message = f"OWO! Thanks for yummy food..., {bold(ctx.author.name)}! ❤️"
+        else:
+            message = f"_**{ctx.author.name}** feeds {member.mention} some delicious food!_"
         embed.set_image(url=choice(FEED))
         footer = (
-            f"{ctx.author} have fed {feed_to} people, {'I' if member == ctx.me else member}"
-            + f" was fed some food {feed_from} times in this server so far."
+            f"{ctx.author} have fed {feed_to} people,\n"
+            + f"{'I' if member == ctx.me else member} was fed "
+            + f"some food {feed_from} times in this server so far."
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message, False)), embed=embed)
+        await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -224,7 +226,7 @@ class PDA(commands.Cog):
         """High-fives a user!"""
         if member.id == ctx.author.id:
             return await ctx.send(
-                italics(f"{ctx.author.mention} high-fives themselves in mirror, I guess?")
+                f"_{ctx.author.mention} high-fives themselves in mirror, I guess?_"
             )
 
         await ctx.trigger_typing()
@@ -238,18 +240,19 @@ class PDA(commands.Cog):
         await self.config.user(member).HIGHFIVE_FROM.set(gh5_from + 1)
         embed = discord.Embed(colour=member.colour)
         if member.id == ctx.me.id:
-            message = f"high-fives back to {bold(ctx.author.name)} 👀"
+            message = f"_high-fives back to {bold(ctx.author.name)}_ 👀"
             embed.set_image(url="https://i.imgur.com/hQPCYUJ.gif")
         else:
-            message = f"{bold(ctx.author.name)} high fives {member.mention}"
+            message = f"_**{ctx.author.name}** high fives_ {member.mention}"
             embed.set_image(url=choice(HIGHFIVE))
         footer = (
-            f"{ctx.author} sent {h5_to} high-fives, {'I' if member == ctx.me else member}"
-            + f" received {h5_from} high-fives in this server so far."
+            f"{ctx.author} sent {h5_to} high-fives,\n"
+            + f"{'I' if member == ctx.me else member} received "
+            + f"{h5_from} high-fives in this server so far."
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message, False)), embed=embed)
+        await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -273,17 +276,18 @@ class PDA(commands.Cog):
         await self.config.user(member).HUG_FROM.set(ghug_from + 1)
         embed = discord.Embed(colour=member.colour)
         if member.id == ctx.me.id:
-            message = f"*Awwww thanks! So nice of you!* hugs {ctx.author.mention} back 🤗"
+            message = f"Awwww thanks! So nice of you! _hugs **{ctx.author.name}** back_ 🤗"
         else:
-            message = f"{bold(ctx.author.name)} hugs {member.mention} 🤗"
+            message = f"_**{ctx.author.name}** hugs_ {member.mention} 🤗"
         embed.set_image(url=str(choice(HUG)))
         footer = (
-            f"{ctx.author} gave {hug_to} hugs, {'I' if member == ctx.me else member} "
-            + f"received {hug_from} hugs from others in this server so far!"
+            f"{ctx.author} gave {hug_to} hugs,\n"
+            + f"{'I' if member == ctx.me else member} received "
+            + f"{hug_from} hugs from others in this server so far!"
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message, False)), embed=embed)
+        await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -307,15 +311,15 @@ class PDA(commands.Cog):
         await self.config.user(ctx.author).KILL_TO.set(gkill_to + 1)
         await self.config.user(member).KILL_FROM.set(gkill_from + 1)
         embed = discord.Embed(colour=member.colour)
-        message = f"{bold(ctx.author.name)} tries to kill {member.mention}! 🇫"
+        message = f"_**{ctx.author.name}** tries to kill {member.mention}!_ 🇫"
         embed.set_image(url=choice(KILL))
         footer = (
-            f"{ctx.author} attempted {kill_to} kills, {member} almost "
+            f"{ctx.author} attempted {kill_to} kills,\n{member} almost "
             + f"got killed {kill_from} times in this server so far!"
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message, False)), embed=embed)
+        await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -340,20 +344,19 @@ class PDA(commands.Cog):
         await self.config.member(member).KISS_FROM.set(kiss_from + 1)
         await self.config.user(ctx.author).KISS_TO.set(gkiss_to + 1)
         await self.config.user(member).KISS_FROM.set(gkiss_from + 1)
-        if member.id == ctx.me.id:
-            return await ctx.send(
-                f"Awwww so nice of you! *kisses {ctx.author.mention} back!* 😘 🥰"
-            )
         embed = discord.Embed(colour=member.colour)
-        message = f"{bold(ctx.author.name)} kisses {member.mention} 😘 🥰"
+        if member.id == ctx.me.id:
+            message = f"Awwww so nice of you! _kisses **{ctx.author.name}** back!_ 😘 🥰"
+        else:
+            message = f"_**{ctx.author.name}** kisses_ {member.mention} 😘 🥰"
         embed.set_image(url=str(choice(KISS)))
         footer = (
-            f"{ctx.author} have kissed {kiss_to} people, {member} "
+            f"{ctx.author} have kissed {kiss_to} people,\n{member} "
             + f"received {kiss_from} kisses in this server so far!"
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message, False)), embed=embed)
+        await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -382,16 +385,16 @@ class PDA(commands.Cog):
         message = (
             f"{ctx.author.mention} Poggers, you just licked yourself. 👏"
             if member.id == ctx.author.id
-            else f"{bold(ctx.author.name)} licks {member.mention} 😳"
+            else f"_**{ctx.author.name}** licks_ {member.mention} 😳"
         )
         embed.set_image(url=choice(LICK))
         footer = (
-            f"{ctx.author} have licked others {lick_to} times, {member} "
+            f"{ctx.author} have licked others {lick_to} times,\n{member} "
             + f"got licked {lick_from} times in this server so far!"
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message, False)), embed=embed)
+        await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -405,7 +408,7 @@ class PDA(commands.Cog):
         message = (
             f"Waaaaaa! {bold(ctx.author.name)}, You bit yourself! Whyyyy?? 😭"
             if member.id == ctx.author.id
-            else f"{bold(ctx.author.name)} casually noms {member.mention} 😈"
+            else f"_**{ctx.author.name}** casually noms_ {member.mention} 😈"
         )
         await ctx.trigger_typing()
         nom_to = await self.config.member(ctx.author).NOM_TO()
@@ -419,12 +422,12 @@ class PDA(commands.Cog):
         embed = discord.Embed(colour=member.colour)
         embed.set_image(url=choice(BITE))
         footer = (
-            f"{ctx.author} sent {nom_to} noms to others, {member} "
+            f"{ctx.author} sent {nom_to} noms to others,\n{member} "
             + f"got nom'd {nom_from} times in this server so far!"
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message, False)), embed=embed)
+        await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -434,7 +437,7 @@ class PDA(commands.Cog):
         """Pat a server member with wholesome GIF!"""
         if member.id == ctx.author.id:
             return await ctx.send(
-                f"{ctx.author.mention} pats themselves, I guess? ***yay*** 🎉"
+                f"{ctx.author.mention} _pats themselves, I guess? **yay**_ 🎉"
             )
 
         await ctx.trigger_typing()
@@ -449,18 +452,18 @@ class PDA(commands.Cog):
         message = (
             f"Wowie! Thanks {bold(ctx.author.name)} for giving me pats. 😳 😘"
             if member.id == ctx.me.id
-            else f"{bold(ctx.author.name)} pats {member.mention}"
+            else f"_**{ctx.author.name}** pats_ {member.mention}"
         )
         embed = discord.Embed(colour=member.colour)
         embed.set_image(url=choice(PAT))
         footer = (
-            f"{ctx.author} gave {pat_to} pats to others, "
+            f"{ctx.author} gave {pat_to} pats to others,\n"
             + f"{'I' if member == ctx.me else member} received "
             + f"{pat_from} pats in this server so far!"
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message, False)), embed=embed)
+        await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -480,20 +483,21 @@ class PDA(commands.Cog):
         await self.config.member(member).POKE_FROM.set(poke_from + 1)
         await self.config.user(ctx.author).POKE_TO.set(gpoke_to + 1)
         await self.config.user(member).POKE_FROM.set(gpoke_from + 1)
+        embed = discord.Embed(colour=member.colour)
+        embed = discord.Embed(colour=member.colour)
         if member.id == ctx.me.id:
-            return await ctx.send(f"Awwww! Hey there. *pokes {ctx.author.mention} back!*")
-        embed = discord.Embed(colour=member.colour)
-        embed = discord.Embed(colour=member.colour)
-        message = f"{ctx.author.mention} casually pokes {member.mention}"
+            message = f"Awwww! Hey there. _pokes **{ctx.author.name}** back!_"
+        else:
+            message = f"_**{ctx.author.name}** casually pokes_ {member.mention}"
         embed.set_image(url=choice(POKE))
         footer = (
-            f"{ctx.author} gave {poke_to} pokes to others, "
+            f"{ctx.author} gave {poke_to} pokes to others,\n"
             + f"{'I' if member == ctx.me else member} received "
             + f"{poke_from} pokes in this server so far!"
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message, False)), embed=embed)
+        await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -503,10 +507,9 @@ class PDA(commands.Cog):
         """Punch someone on Discord with a GIF reaction!"""
         if member.id == ctx.me.id:
             message = (
-                ctx.author.mention
-                + " tried to punch a bot but failed miserably,\n"
-                + " and they actually punched themselves instead."
-                + " How disappointing LMFAO! 😂 😂 😂"
+                f"{ctx.author.mention} tried to punch a bot but failed miserably,\n"
+                + "and they actually punched themselves instead.\n"
+                + "How disappointing LMFAO! 😂 😂 😂"
             )
             em = discord.Embed(colour=await ctx.embed_colour())
             em.set_image(url="https://i.imgur.com/iVgOijZ.gif")
@@ -528,15 +531,15 @@ class PDA(commands.Cog):
         await self.config.user(ctx.author).PUNCH_TO.set(gpunch_to + 1)
         await self.config.user(member).PUNCH_FROM.set(gpunch_from + 1)
         embed = discord.Embed(colour=member.colour)
-        message = f"{ctx.author.mention} {choice(PUNCH_STRINGS)} {member.mention}"
+        message = f"_**{ctx.author.name}** {choice(PUNCH_STRINGS)}_ {member.mention}"
         embed.set_image(url=choice(PUNCH))
         footer = (
-            f"{ctx.author} sent {punch_to} punches to others, {member} "
+            f"{ctx.author} sent {punch_to} punches to others,\n{member} "
             + f"received {punch_from} punches in this server so far!"
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message, False)), embed=embed)
+        await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -548,7 +551,7 @@ class PDA(commands.Cog):
             return await ctx.send("**Ｎ Ｏ   Ｕ**")
 
         if member.id == ctx.author.id:
-            return await ctx.send(f"Don't slap yourself, you're precious! {ctx.author.mention}")
+            return await ctx.send(f"{ctx.author.mention} Don't slap yourself, you're precious!")
 
         await ctx.trigger_typing()
         slap_to = await self.config.member(ctx.author).SLAP_TO()
@@ -560,15 +563,15 @@ class PDA(commands.Cog):
         await self.config.user(ctx.author).SLAP_TO.set(gslap_to + 1)
         await self.config.user(member).SLAP_FROM.set(gslap_from + 1)
         embed = discord.Embed(colour=member.colour)
-        message = f"{ctx.author.mention} slaps {member.mention}"
+        message = f"_**{ctx.author.name}** slaps_ {member.mention}"
         embed.set_image(url=choice(SLAP))
         footer = (
-            f"{ctx.author} gave {slap_to} slaps to others, {member} "
+            f"{ctx.author} gave {slap_to} slaps to others,\n{member} "
             + f"received {slap_from} slaps in this server so far!"
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message, False)), embed=embed)
+        await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -576,7 +579,7 @@ class PDA(commands.Cog):
     @commands.cooldown(1, 20, commands.BucketType.member)
     async def smug(self, ctx: Context):
         """Show everyone your smug face!"""
-        message = f"{bold(ctx.author.name)} smugs at **@\u200bsomeone** 😏"
+        message = f"_**{ctx.author.name}** smugs at **@\u200bsomeone**_ 😏"
         await ctx.trigger_typing()
         smug_count = await self.config.member(ctx.author).SMUG_COUNT()
         gsmug_count = await self.config.user(ctx.author).SMUG_COUNT()
@@ -587,7 +590,7 @@ class PDA(commands.Cog):
         footer = f"{ctx.author} has smugged {smug_count} times in this server so far."
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message, False)), embed=embed)
+        await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
     @commands.guild_only()
@@ -612,16 +615,16 @@ class PDA(commands.Cog):
         await self.config.user(member).TICKLE_FROM.set(gtickle_from + 1)
         embed = discord.Embed(colour=member.colour)
         if member.id == ctx.me.id:
-            message = f"Wow, nice tickling skills, {bold(ctx.author.name)}. I LOL'd. 🤣 🤡"
+            message = f"_Wow, nice tickling skills, {bold(ctx.author.name)}. I LOL'd._ 🤣 🤡"
             embed.set_image(url="https://i.imgur.com/6jr50Fp.gif")
         else:
-            message = f"{ctx.author.mention} tickles {member.mention}"
+            message = f"_**{ctx.author.name}** tickles_ {member.mention}"
             embed.set_image(url=choice(TICKLE))
         footer = (
-            f"{ctx.author} tickled others {tickle_to} times, "
+            f"{ctx.author} tickled others {tickle_to} times,\n"
             + f"{'I' if member == ctx.me else member} received "
             + f"{tickle_from} tickles in this server so far!"
         )
         embed.set_footer(text=footer)
 
-        await ctx.send(content=quote(italics(message, False)), embed=embed)
+        await ctx.send(content=quote(message), embed=embed)
