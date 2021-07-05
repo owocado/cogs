@@ -8,11 +8,11 @@ from redbot.core.utils.chat_formatting import bold, quote
 from .constants import *
 
 
-class PDA(commands.Cog):
+class Roleplay(commands.Cog):
     """Do roleplay with your Discord friends or virtual strangers."""
 
-    __author__ = "siu3334 (<@306810730055729152>)"
-    __version__ = "0.4.0"
+    __author__ = "ow0x (<@306810730055729152>)"
+    __version__ = "1.0.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -86,8 +86,8 @@ class PDA(commands.Cog):
         message = f"_**{ctx.author.name}** calls {member.mention} a BAKA bahahahahaha!!!_"
         embed.set_image(url=choice(BAKA))
         footer = (
-            f"So far, {ctx.author} called {baka_to + 1} people a BAKA,\n{member} "
-            + f"got called a BAKA {baka_from + 1} times by others in this server."
+            f"{ctx.author.name} used baka: {baka_to + 1} times.\n"
+            + f"{member.name} got called a BAKA: {baka_from + 1} times."
         )
         embed.set_footer(text=footer)
 
@@ -120,8 +120,8 @@ class PDA(commands.Cog):
         message = f"_**{ctx.author.name}** bullies {member.mention}_ 🤡"
         embed.set_image(url=choice(BULLY))
         footer = (
-            f"So far, {ctx.author} bullied others {bully_to + 1} times,\n{member} "
-            + f"got bullied {bully_from + 1} times in this server.\n"
+            f"{ctx.author.name} bullied: {bully_to + 1} times.\n{member.name} "
+            + f"got bullied: {bully_from + 1} times.\n"
             + f"Someone call police to get {ctx.author.name} arrested."
         )
         embed.set_footer(text=footer)
@@ -141,7 +141,7 @@ class PDA(commands.Cog):
         embed = discord.Embed(colour=ctx.author.colour)
         embed.description = f"{ctx.author.mention} {choice(CRY_STRINGS)}"
         embed.set_image(url=choice(CRY))
-        footer = f"{ctx.author} has cried {cry_count + 1} times in this server so far."
+        footer = f"{ctx.author.name} has cried {cry_count + 1} times in this server so far."
         embed.set_footer(text=footer)
 
         await ctx.send(embed=embed)
@@ -177,9 +177,9 @@ class PDA(commands.Cog):
             message = f"_**{ctx.author.name}** cuddles_ {member.mention}"
         embed.set_image(url=str(choice(CUDDLE)))
         footer = (
-            f"So far, {ctx.author} sent {cuddle_to + 1} cuddles,\n"
-            + f"{'I' if member == ctx.me else member} received"
-            + f" {cuddle_from + 1} cuddles in this server."
+            f"{ctx.author.name} sent: {cuddle_to + 1} cuddles.\n"
+            + f"{'I' if member == ctx.me else member.name} "
+            + f"received: {cuddle_from + 1} cuddles."
         )
         embed.set_footer(text=footer)
 
@@ -210,9 +210,9 @@ class PDA(commands.Cog):
             message = f"_**{ctx.author.name}** feeds {member.mention} some delicious food!_"
         embed.set_image(url=choice(FEED))
         footer = (
-            f"So far, {ctx.author} have fed {feed_to + 1} people,\n"
-            + f"{'I' if member == ctx.me else member} was fed "
-            + f"some food {feed_from + 1} times in this server."
+            f"{ctx.author.name} have fed: {feed_to + 1} people.\n"
+            + f"{'I' if member == ctx.me else member.name} "
+            + f"received some food: {feed_from + 1} times."
         )
         embed.set_footer(text=footer)
 
@@ -246,9 +246,9 @@ class PDA(commands.Cog):
             message = f"_**{ctx.author.name}** high fives_ {member.mention}"
             embed.set_image(url=choice(HIGHFIVE))
         footer = (
-            f"So far, {ctx.author} sent {h5_to + 1} high-fives,\n"
-            + f"{'I' if member == ctx.me else member} received "
-            + f"{h5_from + 1} high-fives in this server."
+            f"{ctx.author.name} sent: {h5_to + 1} high-fives.\n"
+            + f"{'I' if member == ctx.me else member.name} "
+            + f"received: {h5_from + 1} high-fives."
         )
         embed.set_footer(text=footer)
 
@@ -281,9 +281,9 @@ class PDA(commands.Cog):
             message = f"_**{ctx.author.name}** hugs_ {member.mention} 🤗"
         embed.set_image(url=str(choice(HUG)))
         footer = (
-            f"So far, {ctx.author} gave {hug_to + 1} hugs,\n"
-            + f"{'I' if member == ctx.me else member} received "
-            + f"{hug_from + 1} hugs from others in this server!"
+            f"{ctx.author.name} gave: {hug_to + 1} hugs.\n"
+            + f"{'I' if member == ctx.me else member.name} "
+            + f"received: {hug_from + 1} hugs!"
         )
         embed.set_footer(text=footer)
 
@@ -316,8 +316,8 @@ class PDA(commands.Cog):
         message = f"_**{ctx.author.name}** tries to kill {member.mention}!_ 🇫"
         embed.set_image(url=choice(KILL))
         footer = (
-            f"So far, {ctx.author} attempted {kill_to + 1} kills,\n{member} "
-            + f"almost got killed {kill_from + 1} times in this server!"
+            f"{ctx.author.name} attempted: {kill_to + 1} kills.\n"
+            + f"{member.name} got killed: {kill_from + 1} times!"
         )
         embed.set_footer(text=footer)
 
@@ -353,8 +353,8 @@ class PDA(commands.Cog):
             message = f"_**{ctx.author.name}** kisses_ {member.mention} 😘 🥰"
         embed.set_image(url=str(choice(KISS)))
         footer = (
-            f"So far, {ctx.author} have kissed {kiss_to + 1} people,\n"
-            + f"{member} received {kiss_from + 1} kisses in this server!"
+            f"{ctx.author.name} sent: {kiss_to + 1} kisses.\n"
+            + f"{member.name} received: {kiss_from + 1} kisses!"
         )
         embed.set_footer(text=footer)
 
@@ -391,8 +391,8 @@ class PDA(commands.Cog):
         )
         embed.set_image(url=choice(LICK))
         footer = (
-            f"So far, {ctx.author} have licked others {lick_to + 1} times,\n"
-            + f"{member} got licked {lick_from + 1} times in this server!"
+            f"{ctx.author.name} have licked others: {lick_to + 1} times.\n"
+            + f"{member.name} got licked: {lick_from + 1} times!"
         )
         embed.set_footer(text=footer)
 
@@ -424,8 +424,8 @@ class PDA(commands.Cog):
         embed = discord.Embed(colour=member.colour)
         embed.set_image(url=choice(BITE))
         footer = (
-            f"So far, {ctx.author} sent {nom_to + 1} noms to others,\n"
-            + f"{member} got nom'd {nom_from + 1} times in this server!"
+            f"{ctx.author.name} nom'd: {nom_to + 1} times.\n"
+            + f"{member.name} received: {nom_from + 1} noms!"
         )
         embed.set_footer(text=footer)
 
@@ -459,9 +459,9 @@ class PDA(commands.Cog):
         embed = discord.Embed(colour=member.colour)
         embed.set_image(url=choice(PAT))
         footer = (
-            f"So far, {ctx.author} gave {pat_to + 1} pats to others,\n"
-            + f"{'I' if member == ctx.me else member} "
-            + f"received {pat_from + 1} pats in this server!"
+            f"{ctx.author.name} gave: {pat_to + 1} pats.\n"
+            + f"{'I' if member == ctx.me else member.name} "
+            + f"received: {pat_from + 1} pats!"
         )
         embed.set_footer(text=footer)
 
@@ -493,9 +493,9 @@ class PDA(commands.Cog):
             message = f"_**{ctx.author.name}** casually pokes_ {member.mention}"
         embed.set_image(url=choice(POKE))
         footer = (
-            f"So far, {ctx.author} gave {poke_to + 1} pokes to others,"
-            + f"\n{'I' if member == ctx.me else member} received"
-            + f" {poke_from + 1} pokes in this server!"
+            f"{ctx.author.name} gave: {poke_to + 1} pokes.\n"
+            + f"{'I' if member == ctx.me else member.name} "
+            + f"received: {poke_from + 1} pokes!"
         )
         embed.set_footer(text=footer)
 
@@ -536,8 +536,8 @@ class PDA(commands.Cog):
         message = f"_**{ctx.author.name}** {choice(PUNCH_STRINGS)}_ {member.mention}"
         embed.set_image(url=choice(PUNCH))
         footer = (
-            f"So far, {ctx.author} sent {punch_to + 1} punches to others,\n"
-            + f"{member} received {punch_from + 1} punches in this server!"
+            f"{ctx.author.name} sent: {punch_to + 1} punches.\n"
+            + f"{member.name} received: {punch_from + 1} punches!"
         )
         embed.set_footer(text=footer)
 
@@ -568,8 +568,8 @@ class PDA(commands.Cog):
         message = f"_**{ctx.author.name}** slaps_ {member.mention}"
         embed.set_image(url=choice(SLAP))
         footer = (
-            f"So far, {ctx.author} gave {slap_to + 1} slaps to others,\n"
-            + f"{member} received {slap_from + 1} slaps in this server!"
+            f"{ctx.author.name} gave: {slap_to + 1} slaps.\n"
+            + f"{member.name} received: {slap_from + 1} slaps!"
         )
         embed.set_footer(text=footer)
 
@@ -589,7 +589,7 @@ class PDA(commands.Cog):
         await self.config.user(ctx.author).SMUG_COUNT.set(gsmug_count + 1)
         embed = discord.Embed(colour=ctx.author.colour)
         embed.set_image(url=choice(SMUG))
-        footer = f"{ctx.author} has smugged {smug_count + 1} times in this server so far."
+        footer = f"{ctx.author.name} has smugged {smug_count + 1} times in this server so far."
         embed.set_footer(text=footer)
 
         await ctx.send(content=quote(message), embed=embed)
@@ -623,9 +623,9 @@ class PDA(commands.Cog):
             message = f"_**{ctx.author.name}** tickles_ {member.mention}"
             embed.set_image(url=choice(TICKLE))
         footer = (
-            f"So far, {ctx.author} tickled others {tickle_to + 1} times,\n"
-            + f"{'I' if member == ctx.me else member} "
-            + f"received {tickle_from + 1} tickles in this server!"
+            f"{ctx.author.name} tickled others: {tickle_to + 1} times.\n"
+            + f"{'I' if member == ctx.me else member.name} "
+            + f"received: {tickle_from + 1} tickles!"
         )
         embed.set_footer(text=footer)
 

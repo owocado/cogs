@@ -1,12 +1,10 @@
 {
-    "name": "Roleplay (PDA)",
+    "name": "Roleplay",
     "short": "Do roleplay with your Discord friends.",
     "description": "Do roleplay with your Discord friends with cuddles, hugs, pats, poke, punch and more.",
     "end_user_data_statement": "This cog does not persistently store any PII data or metadata about users.",
-    "install_msg": "I hope you will enjoy this PDA Roleplay cog, or not.",
-    "author": [
-        "siu3334"
-    ],
+    "install_msg": "I hope you will enjoy this Roleplay cog, or not.",
+    "author": ["ow0x"],
     "required_cogs": {},
     "requirements": [],
     "tags": [
@@ -27,9 +25,7 @@
         "slap",
         "smug",
         "tickle",
-        "roleplay",
-        "pda",
-        "public display of affection"
+        "roleplay"
     ],
     "min_bot_version": "3.4.8",
     "hidden": false,
