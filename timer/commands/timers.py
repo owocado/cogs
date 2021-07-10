@@ -12,7 +12,7 @@ from redbot.core.utils.chat_formatting import humanize_timedelta
 from redbot.core.utils.predicates import MessagePredicate
 
 from ..abc import CompositeMetaClass, MixinMeta
-from ..pcx_lib import delete, embed_splitter
+from ..pcx_lib import delete, embed_splitter, reply
 
 
 class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
@@ -77,7 +77,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
         `added` for ordering by when the timer was added,
         `id` for ordering by ID
         """
-        author = ctx.message.author
+        author = ctx.author
         channel = ctx.channel
         to_send = await self.get_user_timers(author.id)
         if sort == "time":
@@ -87,15 +87,13 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
         elif sort == "id":
             to_send.sort(key=lambda timer_info: timer_info["USER_TIMER_ID"])
         else:
-            await self._send_message(
+            return await reply(
                 ctx,
                 "That is not a valid sorting option. Choose from `time` (default), `added`, or `id`.",
             )
-            return
 
         if not to_send:
-            await self._send_message(ctx, "You don't have any upcoming timers.")
-            return
+            return await reply(ctx, "You don't have any upcoming timers.")
 
         embed = discord.Embed(color=await ctx.embed_color())
         embed.set_author(
@@ -116,7 +114,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
             )
             if "REPEAT" in timer and timer["REPEAT"]:
                 timer_text = (
-                    f"{timer_text.rstrip('!')}, "
+                    f"{timer_text.rstrip('!')}, " +
                     f"repeating every {humanize_timedelta(seconds=timer['REPEAT'])}"
                 )
             embed.add_field(
@@ -134,19 +132,17 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
     @modify.command()
     async def time(self, ctx: commands.Context, timer_id: int, *, time: str):
         """Modify the time of an existing timer."""
-        users_timers = await self.get_user_timers(ctx.message.author.id)
+        users_timers = await self.get_user_timers(ctx.author.id)
         old_timer = self._get_timer(users_timers, timer_id)
         if not old_timer:
-            await self._send_non_existant_msg(ctx, timer_id)
-            return
+            return await self._send_non_existent_msg(ctx, timer_id)
+
         try:
             time_delta = parse_timedelta(time, maximum=timedelta(hours=24), minimum=timedelta(minutes=1))
             if not time_delta:
-                await ctx.send_help()
-                return
+                return await ctx.send_help()
         except commands.BadArgument as ba:
-            await self._send_message(ctx, str(ba))
-            return
+            return await reply(ctx, str(ba))
         future = int(current_time.time() + time_delta.total_seconds())
         future_text = humanize_timedelta(timedelta=time_delta)
 
@@ -162,26 +158,26 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
             message += f", repeating every {humanize_timedelta(seconds=new_timer['REPEAT'])} thereafter."
         else:
             message += "."
-        await self._send_message(ctx, message)
+        await reply(ctx, message)
 
     @modify.command()
     async def repeat(self, ctx: commands.Context, timer_id: int, *, time: str):
         """Modify the repeating time of an existing timer. Pass "0" to <time> in order to disable repeating."""
-        users_timers = await self.get_user_timers(ctx.message.author.id)
+        users_timers = await self.get_user_timers(ctx.author.id)
         old_timer = self._get_timer(users_timers, timer_id)
         if not old_timer:
-            await self._send_non_existant_msg(ctx, timer_id)
-            return
+            return await self._send_non_existent_msg(ctx, timer_id)
+
         if time.lower() in ["0", "stop", "none", "false", "no", "cancel", "n"]:
             new_timer = old_timer.copy()
             new_timer.update(REPEAT=None)
             async with self.config.timers() as current_timers:
                 current_timers.remove(old_timer)
                 current_timers.append(new_timer)
-            await self._send_message(
+            await reply(
                 ctx,
                 f"Timer with ID# **{timer_id}** will not repeat anymore. The final timer will be sent "
-                f"in {humanize_timedelta(seconds=int(new_timer['FUTURE'] - current_time.time()))}.",
+                + f"in {humanize_timedelta(seconds=int(new_timer['FUTURE'] - current_time.time()))}.",
             )
         else:
             try:
@@ -192,42 +188,41 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
                     allowed_units=["hours", "minutes"]
                 )
                 if not time_delta:
-                    await ctx.send_help()
-                    return
+                    return await ctx.send_help()
             except commands.BadArgument as ba:
-                await self._send_message(ctx, str(ba))
-                return
+                return await reply(ctx, str(ba))
+
             new_timer = old_timer.copy()
             new_timer.update(REPEAT=int(time_delta.total_seconds()))
             async with self.config.timers() as current_timers:
                 current_timers.remove(old_timer)
                 current_timers.append(new_timer)
-            await self._send_message(
+            await reply(
                 ctx,
-                f"Timer with ID# **{timer_id}** will now remind you "
+                f"Timer with ID# **{timer_id}** will now remind you " +
                 f"every {humanize_timedelta(timedelta=time_delta)}, with the first timer being sent "
-                f"in {humanize_timedelta(seconds=int(new_timer['FUTURE'] - current_time.time()))}.",
+                + f"in {humanize_timedelta(seconds=int(new_timer['FUTURE'] - current_time.time()))}.",
             )
 
     @modify.command()
     async def text(self, ctx: commands.Context, timer_id: int, *, text: str):
         """Modify the text of an existing timer."""
-        users_timers = await self.get_user_timers(ctx.message.author.id)
+        users_timers = await self.get_user_timers(ctx.author.id)
         old_timer = self._get_timer(users_timers, timer_id)
         if not old_timer:
-            await self._send_non_existant_msg(ctx, timer_id)
-            return
+            return await self._send_non_existent_msg(ctx, timer_id)
+
         text = text.strip()
-        if len(text) > 250:
-            await self._send_message(ctx, "Your timer text is too long.")
-            return
+        if len(text) > 900:
+            return await reply(ctx, "Your timer text is too long.")
+
 
         new_timer = old_timer.copy()
         new_timer.update(TIMER=text)
         async with self.config.timers() as current_timers:
             current_timers.remove(old_timer)
             current_timers.append(new_timer)
-        await self._send_message(
+        await reply(
             ctx,
             f"Timer with ID# **{timer_id}** has been edited successfully.",
         )
@@ -252,17 +247,19 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
         self, ctx: commands.Context, time_and_optional_text: str
     ):
         """Logic to create a timer."""
-        author = ctx.message.author
+        author = ctx.author
         maximum = await self.config.max_user_timers()
         users_timers = await self.get_user_timers(author.id)
         if len(users_timers) > maximum - 1:
             plural = "timer" if maximum == 1 else "timers"
-            await self._send_message(
+            return await reply(
                 ctx,
-                "You have too many timers! "
+                "You have too many timers! " +
                 f"I can only keep track of {maximum} {plural} for you at a time.",
             )
-            return
+
+        if ctx.message.reference:
+            time_and_optional_text = ctx.message.reference.resolved.content.rstrip("*_.!")
 
         try:
             (
@@ -271,11 +268,11 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
                 timer_text,
             ) = self._process_timer_text(time_and_optional_text.strip())
         except commands.BadArgument as ba:
-            await self._send_message(ctx, str(ba))
-            return
+            return await reply(ctx, str(ba))
         if not timer_time:
-            await ctx.send_help()
-            return
+            return await ctx.send_help()
+        if len(timer_text) > 900:
+            return await reply(ctx, "Your timer text is too long.")
 
         next_timer_id = self.get_next_user_timer_id(users_timers)
         repeat = (
@@ -291,7 +288,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
             "REPEAT": repeat,
             "FUTURE": future,
             "FUTURE_TEXT": future_text,
-            "JUMP_LINK": ctx.message.channel.id,
+            "JUMP_LINK": ctx.channel.id,
         }
         async with self.config.timers() as current_timers:
             current_timers.append(timer)
@@ -304,7 +301,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
             message += f", with the first timer in {future_text}."
         else:
             message += "."
-        await self._send_message(ctx, message)
+        await reply(ctx, message)
 
         if (
             ctx.guild
@@ -312,8 +309,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
             and ctx.channel.permissions_for(ctx.me).add_reactions
         ):
             query: discord.Message = await ctx.send(
-                f"If anyone else want this timer as well, "
-                "click the alarm reaction below!"
+                f"If anyone else want this timer as well, click the alarm reaction below!"
             )
             self.me_too_timers[query.id] = timer
             await query.add_reaction(self.timer_emoji)
@@ -416,17 +412,16 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
         """Logic to delete timers."""
         if not index:
             return
-        author = ctx.message.author
+        author = ctx.author
         users_timers = await self.get_user_timers(author.id)
 
         if not users_timers:
-            await self._send_message(ctx, "You don't have any upcoming timers.")
-            return
+            return await reply(ctx, "You don't have any upcoming timers.")
 
         if index == "all":
             # Ask if the user really wants to do this
             pred = MessagePredicate.yes_or_no(ctx)
-            await self._send_message(
+            await reply(
                 ctx,
                 "Are you **sure** you want to remove all of your timers? (yes/no)",
             )
@@ -437,37 +432,31 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
             if pred.result:
                 pass
             else:
-                await self._send_message(ctx, "I have left your timers alone.")
-                return
+                return await reply(ctx, "I have left your timers alone.")
             await self._do_timer_delete(users_timers)
-            await self._send_message(ctx, "All of your timers have been removed.")
-            return
+            return await reply(ctx, "All of your timers have been removed.")
 
         if index == "last":
             timer_to_delete = users_timers[len(users_timers) - 1]
             await self._do_timer_delete(timer_to_delete)
-            await self._send_message(
+            return await reply(
                 ctx,
                 "Your most recently created timer (ID# **{}**) has been removed.".format(
                     timer_to_delete["USER_TIMER_ID"]
                 ),
             )
-            return
 
         try:
             int_index = int(index)
         except ValueError:
-            await ctx.send_help()
-            return
+            return await ctx.send_help()
 
         timer_to_delete = self._get_timer(users_timers, int_index)
         if timer_to_delete:
             await self._do_timer_delete(timer_to_delete)
-            await self._send_message(
-                ctx, f"Timer with ID# **{int_index}** has been removed."
-            )
+            await reply(ctx, f"Timer with ID# **{int_index}** has been removed.")
         else:
-            await self._send_non_existant_msg(ctx, int_index)
+            await self._send_non_existent_msg(ctx, int_index)
 
     async def _do_timer_delete(self, timers):
         """Actually delete a timer."""
@@ -479,11 +468,12 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
             for timer in timers:
                 current_timers.remove(timer)
 
-    async def _send_non_existant_msg(self, ctx: commands.Context, timer_id: int):
+    @staticmethod
+    async def _send_non_existent_msg(ctx: commands.Context, timer_id: int):
         """Send a message telling the user the timer ID does not exist."""
-        await self._send_message(
+        await reply(
             ctx,
-            f"Timer with ID# **{timer_id}** does not exist! "
+            f"Timer with ID# **{timer_id}** does not exist! " +
             "Check the timer list and verify you typed the correct ID#.",
         )
 
@@ -494,17 +484,3 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
             if timer["USER_TIMER_ID"] == timer_id:
                 return timer
         return None
-
-    @staticmethod
-    async def _send_message(ctx: commands.Context, message: str):
-        """Send a message.
-
-        This will append the users name if we are sending to a channel,
-        or leave it as-is if we are in a DM
-        """
-        if ctx.guild is not None:
-            if message[:2].lower() != "i " and message[:2].lower() != "i'":
-                message = message[0].lower() + message[1:]
-            message = ctx.message.author.display_name + ", " + message
-
-        await ctx.send(message)

@@ -5,7 +5,7 @@ import time as current_time
 
 import discord
 from redbot.core import Config, commands
-from redbot.core.utils.chat_formatting import humanize_timedelta
+from redbot.core.utils.chat_formatting import humanize_timedelta as htd
 
 from .abc import CompositeMetaClass
 from .commands import Commands
@@ -15,7 +15,7 @@ log = logging.getLogger("red.pcxcogs.timer")
 
 
 class Timer(Commands, commands.Cog, metaclass=CompositeMetaClass):
-    """Set a timer of short duration to remind you of something in a channel instead of in DMs."""
+    """Set a timer to remind you of something in a channel instead of in DMs."""
 
     default_global_settings = {
         "schema_version": 0,
@@ -85,8 +85,8 @@ class Timer(Commands, commands.Cog, metaclass=CompositeMetaClass):
                 asyncio.create_task(
                     self.bot.send_to_owners(
                         "An unexpected exception occurred in the background loop of Timer.\n"
-                        "Timers will not be sent out until the cog is reloaded.\n"
-                        "Check your console or logs for details, and consider opening a bug report for this."
+                        + "Timers will not be sent out until the cog is reloaded.\n" +
+                        "Check your console or logs for details or any errors."
                     )
                 )
 
@@ -137,7 +137,7 @@ class Timer(Commands, commands.Cog, metaclass=CompositeMetaClass):
                 current_timers.append(timer)
             message = "Hello! I will also send you that timer"
             if timer["REPEAT"]:
-                human_repeat = humanize_timedelta(seconds=timer["REPEAT"])
+                human_repeat = htd(seconds=timer["REPEAT"])
                 message += f" every {human_repeat}"
                 if human_repeat != timer["FUTURE_TEXT"]:
                     message += (
@@ -206,21 +206,20 @@ class Timer(Commands, commands.Cog, metaclass=CompositeMetaClass):
                     continue
 
                 delay = current_time_seconds - timer["FUTURE"]
-                if timer["TIMER"] == "":
-                    reason = ""
-                else:
-                    reason = f"(for: **{timer['TIMER']}**)"
-                dummy = f"⏰ Hey {user.mention}, your {timer['FUTURE_TEXT']} of timer is up! {reason}\n\n"
+                reason = f"(for: **{timer['TIMER']}**)" if timer["TIMER"] != "" else ""
+                if len(reason) > 900:
+                    reason = reason[:896] + " ..."
+                message = f"⏰ Hey {user.mention}, your {timer['FUTURE_TEXT']} of timer is up! {reason}"
                 if delay > self.SEND_DELAY_SECONDS:
-                    dummy += (
-                        "⚠️ Due to issues with Discord, this timer was delayed"
-                        f" by {humanize_timedelta(seconds=delay)}. Sorry about that!\n"
+                    message += (
+                        "\n\n⚠️ Due to issues with Discord, this timer was delayed"
+                        + f" by {htd(seconds=delay)}. Sorry about that!\n"
                     )
                 if "REPEAT" in timer and timer["REPEAT"]:
-                    dummy += f"ℹ This is a repeating timer every {humanize_timedelta(seconds=max(timer['REPEAT'], 120))}."
+                    message += f"\nℹ This is a repeating timer every {htd(seconds=max(timer['REPEAT'], 120))}."
 
                 try:
-                    await channel.send(dummy)
+                    await channel.send(message)
                 except (discord.Forbidden, discord.NotFound):
                     # Can't send DM's to user: delete timer
                     to_remove.append(timer)
@@ -242,9 +241,7 @@ class Timer(Commands, commands.Cog, metaclass=CompositeMetaClass):
                                 new_timer["REPEAT"] = 120
                             while new_timer["FUTURE"] <= int(current_time.time()):
                                 new_timer["FUTURE"] += new_timer["REPEAT"]
-                            new_timer["FUTURE_TEXT"] = humanize_timedelta(
-                                seconds=new_timer["REPEAT"]
-                            )
+                            new_timer["FUTURE_TEXT"] = htd(seconds=new_timer["REPEAT"])
                         current_timers.remove(timer)
                         if new_timer:
                             current_timers.append(new_timer)
