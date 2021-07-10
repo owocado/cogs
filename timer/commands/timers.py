@@ -8,7 +8,7 @@ import discord
 from discord.ext.commands import BadArgument
 from redbot.core import commands
 from redbot.core.commands import parse_timedelta
-from redbot.core.utils.chat_formatting import humanize_timedelta
+from redbot.core.utils.chat_formatting import humanize_timedelta as htd
 from redbot.core.utils.predicates import MessagePredicate
 
 from ..abc import CompositeMetaClass, MixinMeta
@@ -68,7 +68,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
         """
         await self._create_timer(ctx, time_and_optional_text)
 
-    @timer.command(aliases=["get"])
+    @timer.command(aliases=["ls"])
     async def list(self, ctx: commands.Context, sort: str = "time"):
         """Show a list of all of your timers.
 
@@ -78,7 +78,6 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
         `id` for ordering by ID
         """
         author = ctx.author
-        channel = ctx.channel
         to_send = await self.get_user_timers(author.id)
         if sort == "time":
             to_send.sort(key=lambda timer_info: timer_info["FUTURE"])
@@ -89,7 +88,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
         else:
             return await reply(
                 ctx,
-                "That is not a valid sorting option. Choose from `time` (default), `added`, or `id`.",
+                "Valid sorting options are: `time` (default), `added`, or `id`.",
             )
 
         if not to_send:
@@ -97,32 +96,26 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
 
         embed = discord.Embed(color=await ctx.embed_color())
         embed.set_author(
-            name=f"Timers for {author.display_name}",
+            name=f"{author.name}'s pending timers:",
             icon_url=str(author.avatar_url),
         )
         current_time_seconds = int(current_time.time())
         for timer in to_send:
             delta = timer["FUTURE"] - current_time_seconds
-            timer_title = "ID# {} | {}".format(
+            timer_title = "[`{}`] **{}**".format(
                 timer["USER_TIMER_ID"],
                 timer["TIMER"],
             )
-            timer_text = "In {}".format(
-                humanize_timedelta(seconds=delta)
-                if delta > 0
-                else "Now!"
-            )
+            timer_text = "╰⇢ In {}\n\n".format(htd(seconds=delta) if delta > 1 else "Now!")
             if "REPEAT" in timer and timer["REPEAT"]:
-                timer_text = (
-                    f"{timer_text.rstrip('!')}, " +
-                    f"repeating every {humanize_timedelta(seconds=timer['REPEAT'])}"
-                )
+                timer_text += f"ℹ *repeating every `{htd(seconds=timer['REPEAT'])}`*"
+
             embed.add_field(
                 name=timer_title,
                 value=timer_text,
                 inline=False,
             )
-        await embed_splitter(embed, channel)
+        await embed_splitter(embed, ctx.channel)
 
     @timer.group(aliases=["edit"])
     async def modify(self, ctx: commands.Context):
@@ -144,7 +137,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
         except commands.BadArgument as ba:
             return await reply(ctx, str(ba))
         future = int(current_time.time() + time_delta.total_seconds())
-        future_text = humanize_timedelta(timedelta=time_delta)
+        future_text = htd(timedelta=time_delta)
 
         new_timer = old_timer.copy()
         new_timer.update(FUTURE=future, FUTURE_TEXT=future_text)
@@ -155,7 +148,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
             f"Timer with ID# **{timer_id}** will now remind you in {future_text}"
         )
         if "REPEAT" in new_timer and new_timer["REPEAT"]:
-            message += f", repeating every {humanize_timedelta(seconds=new_timer['REPEAT'])} thereafter."
+            message += f", repeating every {htd(seconds=new_timer['REPEAT'])} thereafter."
         else:
             message += "."
         await reply(ctx, message)
@@ -177,7 +170,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
             await reply(
                 ctx,
                 f"Timer with ID# **{timer_id}** will not repeat anymore. The final timer will be sent "
-                + f"in {humanize_timedelta(seconds=int(new_timer['FUTURE'] - current_time.time()))}.",
+                + f"in {htd(seconds=int(new_timer['FUTURE'] - current_time.time()))}.",
             )
         else:
             try:
@@ -200,8 +193,8 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
             await reply(
                 ctx,
                 f"Timer with ID# **{timer_id}** will now remind you " +
-                f"every {humanize_timedelta(timedelta=time_delta)}, with the first timer being sent "
-                + f"in {humanize_timedelta(seconds=int(new_timer['FUTURE'] - current_time.time()))}.",
+                f"every {htd(timedelta=time_delta)}, with the first timer being sent "
+                + f"in {htd(seconds=int(new_timer['FUTURE'] - current_time.time()))}.",
             )
 
     @modify.command()
@@ -279,7 +272,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
             int(timer_time_repeat.total_seconds()) if timer_time_repeat else None
         )
         future = int(current_time.time() + timer_time.total_seconds())
-        future_text = humanize_timedelta(timedelta=timer_time)
+        future_text = htd(timedelta=timer_time)
 
         timer = {
             "USER_TIMER_ID": next_timer_id,
@@ -294,7 +287,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
             current_timers.append(timer)
         message = f"Timer is set! I will ping you "
         if repeat:
-            message += f"every {humanize_timedelta(timedelta=timer_time_repeat)}"
+            message += f"every {htd(timedelta=timer_time_repeat)}"
         else:
             message += f"in {future_text}"
         if repeat and timer_time_repeat != timer_time:
