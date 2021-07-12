@@ -24,38 +24,38 @@ class Roleplay(commands.Cog):
         self.config = Config.get_conf(self, 123456789987654321, force_registration=True)
         default_global = {"schema_version": 1}
         default_user = {
-            "BAKA_SENT": 0,
-            "BAKA_RECEIVED": 0,
+            "BAKAS_SENT": 0,
+            "BAKAS_RECEIVED": 0,
             "BULLY_SENT": 0,
             "BULLY_RECEIVED": 0,
-            "CUDDLE_SENT": 0,
-            "CUDDLE_RECEIVED": 0,
+            "CUDDLES_SENT": 0,
+            "CUDDLES_RECEIVED": 0,
             "CRY_COUNT": 0,
-            "FEED_SENT": 0,
-            "FEED_RECEIVED": 0,
-            "HIGHFIVE_SENT": 0,
-            "HIGHFIVE_RECEIVED": 0,
-            "HUG_SENT": 0,
-            "HUG_RECEIVED": 0,
-            "KILL_SENT": 0,
-            "KILL_RECEIVED": 0,
-            "KISS_SENT": 0,
-            "KISS_RECEIVED": 0,
-            "LICK_SENT": 0,
-            "LICK_RECEIVED": 0,
-            "NOM_SENT": 0,
-            "NOM_RECEIVED": 0,
-            "PAT_SENT": 0,
-            "PAT_RECEIVED": 0,
-            "POKE_SENT": 0,
-            "POKE_RECEIVED": 0,
-            "PUNCH_SENT": 0,
-            "PUNCH_RECEIVED": 0,
-            "SLAP_SENT": 0,
-            "SLAP_RECEIVED": 0,
+            "FEEDS_SENT": 0,
+            "FEEDS_RECEIVED": 0,
+            "HIGHFIVES_SENT": 0,
+            "HIGHFIVES_RECEIVED": 0,
+            "HUGS_SENT": 0,
+            "HUGS_RECEIVED": 0,
+            "KILLS_SENT": 0,
+            "KILLS_RECEIVED": 0,
+            "KISSES_SENT": 0,
+            "KISSES_RECEIVED": 0,
+            "LICKS_SENT": 0,
+            "LICKS_RECEIVED": 0,
+            "NOMS_SENT": 0,
+            "NOMS_RECEIVED": 0,
+            "PATS_SENT": 0,
+            "PATS_RECEIVED": 0,
+            "POKES_SENT": 0,
+            "POKES_RECEIVED": 0,
+            "PUNCHES_SENT": 0,
+            "PUNCHES_RECEIVED": 0,
+            "SLAPS_SENT": 0,
+            "SLAPS_RECEIVED": 0,
             "SMUG_COUNT": 0,
-            "TICKLE_SENT": 0,
-            "TICKLE_RECEIVED": 0,
+            "TICKLES_SENT": 0,
+            "TICKLES_RECEIVED": 0,
         }
         self.config.register_global(**default_global)
         self.config.register_member(**default_user)
@@ -74,14 +74,14 @@ class Roleplay(commands.Cog):
             return await ctx.send(f"{bold(ctx.author.name)}, you really are BAKA. Stupid!! 💩")
 
         await ctx.trigger_typing()
-        baka_to = await self.config.member(ctx.author).BAKA_SENT()
-        baka_from = await self.config.member(member).BAKA_RECEIVED()
-        gbaka_to = await self.config.user(ctx.author).BAKA_SENT()
-        gbaka_from = await self.config.user(member).BAKA_RECEIVED()
-        await self.config.member(ctx.author).BAKA_SENT.set(baka_to + 1)
-        await self.config.member(member).BAKA_RECEIVED.set(baka_from + 1)
-        await self.config.user(ctx.author).BAKA_SENT.set(gbaka_to + 1)
-        await self.config.user(member).BAKA_RECEIVED.set(gbaka_from + 1)
+        baka_to = await self.config.member(ctx.author).BAKAS_SENT()
+        baka_from = await self.config.member(member).BAKAS_RECEIVED()
+        gbaka_to = await self.config.user(ctx.author).BAKAS_SENT()
+        gbaka_from = await self.config.user(member).BAKAS_RECEIVED()
+        await self.config.member(ctx.author).BAKAS_SENT.set(baka_to + 1)
+        await self.config.member(member).BAKAS_RECEIVED.set(baka_from + 1)
+        await self.config.user(ctx.author).BAKAS_SENT.set(gbaka_to + 1)
+        await self.config.user(member).BAKAS_RECEIVED.set(gbaka_from + 1)
         embed = discord.Embed(colour=member.colour)
         message = f"_**{ctx.author.name}** calls {member.mention} a BAKA bahahahahaha!!!_"
         embed.set_image(url=choice(BAKA))
@@ -160,14 +160,14 @@ class Roleplay(commands.Cog):
             )
 
         await ctx.trigger_typing()
-        cuddle_to = await self.config.member(ctx.author).CUDDLE_SENT()
-        cuddle_from = await self.config.member(member).CUDDLE_RECEIVED()
-        gcuddle_to = await self.config.user(ctx.author).CUDDLE_SENT()
-        gcuddle_from = await self.config.user(member).CUDDLE_RECEIVED()
-        await self.config.member(ctx.author).CUDDLE_SENT.set(cuddle_to + 1)
-        await self.config.member(member).CUDDLE_RECEIVED.set(cuddle_from + 1)
-        await self.config.user(ctx.author).CUDDLE_SENT.set(gcuddle_to + 1)
-        await self.config.user(member).CUDDLE_RECEIVED.set(gcuddle_from + 1)
+        cuddle_to = await self.config.member(ctx.author).CUDDLES_SENT()
+        cuddle_from = await self.config.member(member).CUDDLES_RECEIVED()
+        gcuddle_to = await self.config.user(ctx.author).CUDDLES_SENT()
+        gcuddle_from = await self.config.user(member).CUDDLES_RECEIVED()
+        await self.config.member(ctx.author).CUDDLES_SENT.set(cuddle_to + 1)
+        await self.config.member(member).CUDDLES_RECEIVED.set(cuddle_from + 1)
+        await self.config.user(ctx.author).CUDDLES_SENT.set(gcuddle_to + 1)
+        await self.config.user(member).CUDDLES_RECEIVED.set(gcuddle_from + 1)
         embed = discord.Embed(colour=member.colour)
         if member.id == ctx.me.id:
             message = (
@@ -195,14 +195,14 @@ class Roleplay(commands.Cog):
             return await ctx.send(f"_{ctx.author.mention} eats {bold(choice(RECIPES))}!_")
 
         await ctx.trigger_typing()
-        feed_to = await self.config.member(ctx.author).FEED_SENT()
-        feed_from = await self.config.member(member).FEED_RECEIVED()
-        gfeed_to = await self.config.user(ctx.author).FEED_SENT()
-        gfeed_from = await self.config.user(member).FEED_RECEIVED()
-        await self.config.member(ctx.author).FEED_SENT.set(feed_to + 1)
-        await self.config.member(member).FEED_RECEIVED.set(feed_from + 1)
-        await self.config.user(ctx.author).FEED_SENT.set(gfeed_to + 1)
-        await self.config.user(member).FEED_RECEIVED.set(gfeed_from + 1)
+        feed_to = await self.config.member(ctx.author).FEEDS_SENT()
+        feed_from = await self.config.member(member).FEEDS_RECEIVED()
+        gfeed_to = await self.config.user(ctx.author).FEEDS_SENT()
+        gfeed_from = await self.config.user(member).FEEDS_RECEIVED()
+        await self.config.member(ctx.author).FEEDS_SENT.set(feed_to + 1)
+        await self.config.member(member).FEEDS_RECEIVED.set(feed_from + 1)
+        await self.config.user(ctx.author).FEEDS_SENT.set(gfeed_to + 1)
+        await self.config.user(member).FEEDS_RECEIVED.set(gfeed_from + 1)
         embed = discord.Embed(colour=member.colour)
         if member.id == ctx.me.id:
             message = f"OWO! Thanks for yummy food..., {bold(ctx.author.name)}! ❤️"
@@ -230,14 +230,14 @@ class Roleplay(commands.Cog):
             )
 
         await ctx.trigger_typing()
-        h5_to = await self.config.member(ctx.author).HIGHFIVE_SENT()
-        h5_from = await self.config.member(member).HIGHFIVE_RECEIVED()
-        gh5_to = await self.config.user(ctx.author).HIGHFIVE_SENT()
-        gh5_from = await self.config.user(member).HIGHFIVE_RECEIVED()
-        await self.config.member(ctx.author).HIGHFIVE_SENT.set(h5_to + 1)
-        await self.config.member(member).HIGHFIVE_RECEIVED.set(h5_from + 1)
-        await self.config.user(ctx.author).HIGHFIVE_SENT.set(gh5_to + 1)
-        await self.config.user(member).HIGHFIVE_RECEIVED.set(gh5_from + 1)
+        h5_to = await self.config.member(ctx.author).HIGHFIVES_SENT()
+        h5_from = await self.config.member(member).HIGHFIVES_RECEIVED()
+        gh5_to = await self.config.user(ctx.author).HIGHFIVES_SENT()
+        gh5_from = await self.config.user(member).HIGHFIVES_RECEIVED()
+        await self.config.member(ctx.author).HIGHFIVES_SENT.set(h5_to + 1)
+        await self.config.member(member).HIGHFIVES_RECEIVED.set(h5_from + 1)
+        await self.config.user(ctx.author).HIGHFIVES_SENT.set(gh5_to + 1)
+        await self.config.user(member).HIGHFIVES_RECEIVED.set(gh5_from + 1)
         embed = discord.Embed(colour=member.colour)
         if member.id == ctx.me.id:
             message = f"_high-fives back to {bold(ctx.author.name)}_ 👀"
@@ -266,14 +266,14 @@ class Roleplay(commands.Cog):
             )
 
         await ctx.trigger_typing()
-        hug_to = await self.config.member(ctx.author).HUG_SENT()
-        hug_from = await self.config.member(member).HUG_RECEIVED()
-        ghug_to = await self.config.user(ctx.author).HUG_SENT()
-        ghug_from = await self.config.user(member).HUG_RECEIVED()
-        await self.config.member(ctx.author).HUG_SENT.set(hug_to + 1)
-        await self.config.member(member).HUG_RECEIVED.set(hug_from + 1)
-        await self.config.user(ctx.author).HUG_SENT.set(ghug_to + 1)
-        await self.config.user(member).HUG_RECEIVED.set(ghug_from + 1)
+        hug_to = await self.config.member(ctx.author).HUGS_SENT()
+        hug_from = await self.config.member(member).HUGS_RECEIVED()
+        ghug_to = await self.config.user(ctx.author).HUGS_SENT()
+        ghug_from = await self.config.user(member).HUGS_RECEIVED()
+        await self.config.member(ctx.author).HUGS_SENT.set(hug_to + 1)
+        await self.config.member(member).HUGS_RECEIVED.set(hug_from + 1)
+        await self.config.user(ctx.author).HUGS_SENT.set(ghug_to + 1)
+        await self.config.user(member).HUGS_RECEIVED.set(ghug_from + 1)
         embed = discord.Embed(colour=member.colour)
         if member.id == ctx.me.id:
             message = f"Awwww thanks! So nice of you! _hugs **{ctx.author.name}** back_ 🤗"
@@ -304,14 +304,14 @@ class Roleplay(commands.Cog):
             )
 
         await ctx.trigger_typing()
-        kill_to = await self.config.member(ctx.author).KILL_SENT()
-        kill_from = await self.config.member(member).KILL_RECEIVED()
-        gkill_to = await self.config.user(ctx.author).KILL_SENT()
-        gkill_from = await self.config.user(member).KILL_RECEIVED()
-        await self.config.member(ctx.author).KILL_SENT.set(kill_to + 1)
-        await self.config.member(member).KILL_RECEIVED.set(kill_from + 1)
-        await self.config.user(ctx.author).KILL_SENT.set(gkill_to + 1)
-        await self.config.user(member).KILL_RECEIVED.set(gkill_from + 1)
+        kill_to = await self.config.member(ctx.author).KILLS_SENT()
+        kill_from = await self.config.member(member).KILLS_RECEIVED()
+        gkill_to = await self.config.user(ctx.author).KILLS_SENT()
+        gkill_from = await self.config.user(member).KILLS_RECEIVED()
+        await self.config.member(ctx.author).KILLS_SENT.set(kill_to + 1)
+        await self.config.member(member).KILLS_RECEIVED.set(kill_from + 1)
+        await self.config.user(ctx.author).KILLS_SENT.set(gkill_to + 1)
+        await self.config.user(member).KILLS_RECEIVED.set(gkill_from + 1)
         embed = discord.Embed(colour=member.colour)
         message = f"_**{ctx.author.name}** tries to kill {member.mention}!_ 🇫"
         embed.set_image(url=choice(KILL))
@@ -338,14 +338,14 @@ class Roleplay(commands.Cog):
             )
 
         await ctx.trigger_typing()
-        kiss_to = await self.config.member(ctx.author).KISS_SENT()
-        kiss_from = await self.config.member(member).KISS_RECEIVED()
-        gkiss_to = await self.config.user(ctx.author).KISS_SENT()
-        gkiss_from = await self.config.user(member).KISS_RECEIVED()
-        await self.config.member(ctx.author).KISS_SENT.set(kiss_to + 1)
-        await self.config.member(member).KISS_RECEIVED.set(kiss_from + 1)
-        await self.config.user(ctx.author).KISS_SENT.set(gkiss_to + 1)
-        await self.config.user(member).KISS_RECEIVED.set(gkiss_from + 1)
+        kiss_to = await self.config.member(ctx.author).KISSES_SENT()
+        kiss_from = await self.config.member(member).KISSES_RECEIVED()
+        gkiss_to = await self.config.user(ctx.author).KISSES_SENT()
+        gkiss_from = await self.config.user(member).KISSES_RECEIVED()
+        await self.config.member(ctx.author).KISSES_SENT.set(kiss_to + 1)
+        await self.config.member(member).KISSES_RECEIVED.set(kiss_from + 1)
+        await self.config.user(ctx.author).KISSES_SENT.set(gkiss_to + 1)
+        await self.config.user(member).KISSES_RECEIVED.set(gkiss_from + 1)
         embed = discord.Embed(colour=member.colour)
         if member.id == ctx.me.id:
             message = f"Awwww so nice of you! _kisses **{ctx.author.name}** back!_ 😘 🥰"
@@ -375,14 +375,14 @@ class Roleplay(commands.Cog):
             )
 
         await ctx.trigger_typing()
-        lick_to = await self.config.member(ctx.author).LICK_SENT()
-        lick_from = await self.config.member(member).LICK_RECEIVED()
-        glick_to = await self.config.user(ctx.author).LICK_SENT()
-        glick_from = await self.config.user(member).LICK_RECEIVED()
-        await self.config.member(ctx.author).LICK_SENT.set(lick_to + 1)
-        await self.config.member(member).LICK_RECEIVED.set(lick_from + 1)
-        await self.config.user(ctx.author).LICK_SENT.set(glick_to + 1)
-        await self.config.user(member).LICK_RECEIVED.set(glick_from + 1)
+        lick_to = await self.config.member(ctx.author).LICKS_SENT()
+        lick_from = await self.config.member(member).LICKS_RECEIVED()
+        glick_to = await self.config.user(ctx.author).LICKS_SENT()
+        glick_from = await self.config.user(member).LICKS_RECEIVED()
+        await self.config.member(ctx.author).LICKS_SENT.set(lick_to + 1)
+        await self.config.member(member).LICKS_RECEIVED.set(lick_from + 1)
+        await self.config.user(ctx.author).LICKS_SENT.set(glick_to + 1)
+        await self.config.user(member).LICKS_RECEIVED.set(glick_from + 1)
         embed = discord.Embed(colour=member.colour)
         message = (
             f"{ctx.author.mention} Poggers, you just licked yourself. 👏"
@@ -413,14 +413,14 @@ class Roleplay(commands.Cog):
             else f"_**{ctx.author.name}** casually noms_ {member.mention} 😈"
         )
         await ctx.trigger_typing()
-        nom_to = await self.config.member(ctx.author).NOM_SENT()
-        nom_from = await self.config.member(member).NOM_RECEIVED()
-        gnom_to = await self.config.user(ctx.author).NOM_SENT()
-        gnom_from = await self.config.user(member).NOM_RECEIVED()
-        await self.config.member(ctx.author).NOM_SENT.set(nom_to + 1)
-        await self.config.member(member).NOM_RECEIVED.set(nom_from + 1)
-        await self.config.user(ctx.author).NOM_SENT.set(gnom_to + 1)
-        await self.config.user(member).NOM_RECEIVED.set(gnom_from + 1)
+        nom_to = await self.config.member(ctx.author).NOMS_SENT()
+        nom_from = await self.config.member(member).NOMS_RECEIVED()
+        gnom_to = await self.config.user(ctx.author).NOMS_SENT()
+        gnom_from = await self.config.user(member).NOMS_RECEIVED()
+        await self.config.member(ctx.author).NOMS_SENT.set(nom_to + 1)
+        await self.config.member(member).NOMS_RECEIVED.set(nom_from + 1)
+        await self.config.user(ctx.author).NOMS_SENT.set(gnom_to + 1)
+        await self.config.user(member).NOMS_RECEIVED.set(gnom_from + 1)
         embed = discord.Embed(colour=member.colour)
         embed.set_image(url=choice(BITE))
         footer = (
@@ -443,14 +443,14 @@ class Roleplay(commands.Cog):
             )
 
         await ctx.trigger_typing()
-        pat_to = await self.config.member(ctx.author).PAT_SENT()
-        pat_from = await self.config.member(member).PAT_RECEIVED()
-        gpat_to = await self.config.user(ctx.author).PAT_SENT()
-        gpat_from = await self.config.user(member).PAT_RECEIVED()
-        await self.config.member(ctx.author).PAT_SENT.set(pat_to + 1)
-        await self.config.member(member).PAT_RECEIVED.set(pat_from + 1)
-        await self.config.user(ctx.author).PAT_SENT.set(gpat_to + 1)
-        await self.config.user(member).PAT_RECEIVED.set(gpat_from + 1)
+        pat_to = await self.config.member(ctx.author).PATS_SENT()
+        pat_from = await self.config.member(member).PATS_RECEIVED()
+        gpat_to = await self.config.user(ctx.author).PATS_SENT()
+        gpat_from = await self.config.user(member).PATS_RECEIVED()
+        await self.config.member(ctx.author).PATS_SENT.set(pat_to + 1)
+        await self.config.member(member).PATS_RECEIVED.set(pat_from + 1)
+        await self.config.user(ctx.author).PATS_SENT.set(gpat_to + 1)
+        await self.config.user(member).PATS_RECEIVED.set(gpat_from + 1)
         message = (
             f"Wowie! Thanks {bold(ctx.author.name)} for giving me pats. 😳 😘"
             if member.id == ctx.me.id
@@ -477,14 +477,14 @@ class Roleplay(commands.Cog):
             return await ctx.send(f"{bold(ctx.author.name)} wants to play self poke huh?!")
 
         await ctx.trigger_typing()
-        poke_to = await self.config.member(ctx.author).POKE_SENT()
-        poke_from = await self.config.member(member).POKE_RECEIVED()
-        gpoke_to = await self.config.user(ctx.author).POKE_SENT()
-        gpoke_from = await self.config.user(member).POKE_RECEIVED()
-        await self.config.member(ctx.author).POKE_SENT.set(poke_to + 1)
-        await self.config.member(member).POKE_RECEIVED.set(poke_from + 1)
-        await self.config.user(ctx.author).POKE_SENT.set(gpoke_to + 1)
-        await self.config.user(member).POKE_RECEIVED.set(gpoke_from + 1)
+        poke_to = await self.config.member(ctx.author).POKES_SENT()
+        poke_from = await self.config.member(member).POKES_RECEIVED()
+        gpoke_to = await self.config.user(ctx.author).POKES_SENT()
+        gpoke_from = await self.config.user(member).POKES_RECEIVED()
+        await self.config.member(ctx.author).POKES_SENT.set(poke_to + 1)
+        await self.config.member(member).POKES_RECEIVED.set(poke_from + 1)
+        await self.config.user(ctx.author).POKES_SENT.set(gpoke_to + 1)
+        await self.config.user(member).POKES_RECEIVED.set(gpoke_from + 1)
         embed = discord.Embed(colour=member.colour)
         embed = discord.Embed(colour=member.colour)
         if member.id == ctx.me.id:
@@ -524,14 +524,14 @@ class Roleplay(commands.Cog):
             )
 
         await ctx.trigger_typing()
-        punch_to = await self.config.member(ctx.author).PUNCH_SENT()
-        punch_from = await self.config.member(member).PUNCH_RECEIVED()
-        gpunch_to = await self.config.user(ctx.author).PUNCH_SENT()
-        gpunch_from = await self.config.user(member).PUNCH_RECEIVED()
-        await self.config.member(ctx.author).PUNCH_SENT.set(punch_to + 1)
-        await self.config.member(member).PUNCH_RECEIVED.set(punch_from + 1)
-        await self.config.user(ctx.author).PUNCH_SENT.set(gpunch_to + 1)
-        await self.config.user(member).PUNCH_RECEIVED.set(gpunch_from + 1)
+        punch_to = await self.config.member(ctx.author).PUNCHES_SENT()
+        punch_from = await self.config.member(member).PUNCHES_RECEIVED()
+        gpunch_to = await self.config.user(ctx.author).PUNCHES_SENT()
+        gpunch_from = await self.config.user(member).PUNCHES_RECEIVED()
+        await self.config.member(ctx.author).PUNCHES_SENT.set(punch_to + 1)
+        await self.config.member(member).PUNCHES_RECEIVED.set(punch_from + 1)
+        await self.config.user(ctx.author).PUNCHES_SENT.set(gpunch_to + 1)
+        await self.config.user(member).PUNCHES_RECEIVED.set(gpunch_from + 1)
         embed = discord.Embed(colour=member.colour)
         message = f"_**{ctx.author.name}** {choice(PUNCH_STRINGS)}_ {member.mention}"
         embed.set_image(url=choice(PUNCH))
@@ -556,14 +556,14 @@ class Roleplay(commands.Cog):
             return await ctx.send(f"{ctx.author.mention} Don't slap yourself, you're precious!")
 
         await ctx.trigger_typing()
-        slap_to = await self.config.member(ctx.author).SLAP_SENT()
-        slap_from = await self.config.member(member).SLAP_RECEIVED()
-        gslap_to = await self.config.user(ctx.author).SLAP_SENT()
-        gslap_from = await self.config.user(member).SLAP_RECEIVED()
-        await self.config.member(ctx.author).SLAP_SENT.set(slap_to + 1)
-        await self.config.member(member).SLAP_RECEIVED.set(slap_from + 1)
-        await self.config.user(ctx.author).SLAP_SENT.set(gslap_to + 1)
-        await self.config.user(member).SLAP_RECEIVED.set(gslap_from + 1)
+        slap_to = await self.config.member(ctx.author).SLAPS_SENT()
+        slap_from = await self.config.member(member).SLAPS_RECEIVED()
+        gslap_to = await self.config.user(ctx.author).SLAPS_SENT()
+        gslap_from = await self.config.user(member).SLAPS_RECEIVED()
+        await self.config.member(ctx.author).SLAPS_SENT.set(slap_to + 1)
+        await self.config.member(member).SLAPS_RECEIVED.set(slap_from + 1)
+        await self.config.user(ctx.author).SLAPS_SENT.set(gslap_to + 1)
+        await self.config.user(member).SLAPS_RECEIVED.set(gslap_from + 1)
         embed = discord.Embed(colour=member.colour)
         message = f"_**{ctx.author.name}** slaps_ {member.mention}"
         embed.set_image(url=choice(SLAP))
@@ -607,14 +607,14 @@ class Roleplay(commands.Cog):
             )
 
         await ctx.trigger_typing()
-        tickle_to = await self.config.member(ctx.author).TICKLE_SENT()
-        tickle_from = await self.config.member(member).TICKLE_RECEIVED()
-        gtickle_to = await self.config.user(ctx.author).TICKLE_SENT()
-        gtickle_from = await self.config.user(member).TICKLE_RECEIVED()
-        await self.config.member(ctx.author).TICKLE_SENT.set(tickle_to + 1)
-        await self.config.member(member).TICKLE_RECEIVED.set(tickle_from + 1)
-        await self.config.user(ctx.author).TICKLE_SENT.set(gtickle_to + 1)
-        await self.config.user(member).TICKLE_RECEIVED.set(gtickle_from + 1)
+        tickle_to = await self.config.member(ctx.author).TICKLES_SENT()
+        tickle_from = await self.config.member(member).TICKLES_RECEIVED()
+        gtickle_to = await self.config.user(ctx.author).TICKLES_SENT()
+        gtickle_from = await self.config.user(member).TICKLES_RECEIVED()
+        await self.config.member(ctx.author).TICKLES_SENT.set(tickle_to + 1)
+        await self.config.member(member).TICKLES_RECEIVED.set(tickle_from + 1)
+        await self.config.user(ctx.author).TICKLES_SENT.set(gtickle_to + 1)
+        await self.config.user(member).TICKLES_RECEIVED.set(gtickle_from + 1)
         embed = discord.Embed(colour=member.colour)
         if member.id == ctx.me.id:
             message = f"_Wow, nice tickling skills, {bold(ctx.author.name)}. I LOL'd._ 🤣 🤡"
