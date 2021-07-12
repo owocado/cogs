@@ -24,38 +24,38 @@ class Roleplay(commands.Cog):
         self.config = Config.get_conf(self, 123456789987654321, force_registration=True)
         default_global = {"schema_version": 1}
         default_user = {
-            "BAKA_TO": 0,
-            "BAKA_FROM": 0,
-            "BULLY_TO": 0,
-            "BULLY_FROM": 0,
-            "CUDDLE_TO": 0,
-            "CUDDLE_FROM": 0,
+            "BAKA_SENT": 0,
+            "BAKA_RECEIVED": 0,
+            "BULLY_SENT": 0,
+            "BULLY_RECEIVED": 0,
+            "CUDDLE_SENT": 0,
+            "CUDDLE_RECEIVED": 0,
             "CRY_COUNT": 0,
-            "FEED_TO": 0,
-            "FEED_FROM": 0,
-            "HIGHFIVE_TO": 0,
-            "HIGHFIVE_FROM": 0,
-            "HUG_TO": 0,
-            "HUG_FROM": 0,
-            "KILL_TO": 0,
-            "KILL_FROM": 0,
-            "KISS_TO": 0,
-            "KISS_FROM": 0,
-            "LICK_TO": 0,
-            "LICK_FROM": 0,
-            "NOM_TO": 0,
-            "NOM_FROM": 0,
-            "PAT_TO": 0,
-            "PAT_FROM": 0,
-            "POKE_TO": 0,
-            "POKE_FROM": 0,
-            "PUNCH_TO": 0,
-            "PUNCH_FROM": 0,
-            "SLAP_TO": 0,
-            "SLAP_FROM": 0,
+            "FEED_SENT": 0,
+            "FEED_RECEIVED": 0,
+            "HIGHFIVE_SENT": 0,
+            "HIGHFIVE_RECEIVED": 0,
+            "HUG_SENT": 0,
+            "HUG_RECEIVED": 0,
+            "KILL_SENT": 0,
+            "KILL_RECEIVED": 0,
+            "KISS_SENT": 0,
+            "KISS_RECEIVED": 0,
+            "LICK_SENT": 0,
+            "LICK_RECEIVED": 0,
+            "NOM_SENT": 0,
+            "NOM_RECEIVED": 0,
+            "PAT_SENT": 0,
+            "PAT_RECEIVED": 0,
+            "POKE_SENT": 0,
+            "POKE_RECEIVED": 0,
+            "PUNCH_SENT": 0,
+            "PUNCH_RECEIVED": 0,
+            "SLAP_SENT": 0,
+            "SLAP_RECEIVED": 0,
             "SMUG_COUNT": 0,
-            "TICKLE_TO": 0,
-            "TICKLE_FROM": 0,
+            "TICKLE_SENT": 0,
+            "TICKLE_RECEIVED": 0,
         }
         self.config.register_global(**default_global)
         self.config.register_member(**default_user)
@@ -64,7 +64,7 @@ class Roleplay(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 20, commands.BucketType.member)
+    @commands.cooldown(1, 10, commands.BucketType.member)
     async def baka(self, ctx: Context, *, member: discord.Member):
         """Call someone a BAKA with a GIF reaction!"""
         if member.id == ctx.me.id:
@@ -74,20 +74,20 @@ class Roleplay(commands.Cog):
             return await ctx.send(f"{bold(ctx.author.name)}, you really are BAKA. Stupid!! 💩")
 
         await ctx.trigger_typing()
-        baka_to = await self.config.member(ctx.author).BAKA_TO()
-        baka_from = await self.config.member(member).BAKA_FROM()
-        gbaka_to = await self.config.user(ctx.author).BAKA_TO()
-        gbaka_from = await self.config.user(member).BAKA_FROM()
-        await self.config.member(ctx.author).BAKA_TO.set(baka_to + 1)
-        await self.config.member(member).BAKA_FROM.set(baka_from + 1)
-        await self.config.user(ctx.author).BAKA_TO.set(gbaka_to + 1)
-        await self.config.user(member).BAKA_FROM.set(gbaka_from + 1)
+        baka_to = await self.config.member(ctx.author).BAKA_SENT()
+        baka_from = await self.config.member(member).BAKA_RECEIVED()
+        gbaka_to = await self.config.user(ctx.author).BAKA_SENT()
+        gbaka_from = await self.config.user(member).BAKA_RECEIVED()
+        await self.config.member(ctx.author).BAKA_SENT.set(baka_to + 1)
+        await self.config.member(member).BAKA_RECEIVED.set(baka_from + 1)
+        await self.config.user(ctx.author).BAKA_SENT.set(gbaka_to + 1)
+        await self.config.user(member).BAKA_RECEIVED.set(gbaka_from + 1)
         embed = discord.Embed(colour=member.colour)
         message = f"_**{ctx.author.name}** calls {member.mention} a BAKA bahahahahaha!!!_"
         embed.set_image(url=choice(BAKA))
         footer = (
-            f"{ctx.author.name} used baka: {baka_to + 1} times.\n"
-            + f"{member.name} got called a BAKA: {baka_from + 1} times."
+            f"{ctx.author.name} used baka: {baka_to + 1} times so far.\n"
+            + f"{member.name} got called a BAKA: {baka_from + 1} times  so far."
         )
         embed.set_footer(text=footer)
 
@@ -96,7 +96,7 @@ class Roleplay(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 90, commands.BucketType.member)
+    @commands.cooldown(1, 60, commands.BucketType.member)
     async def bully(self, ctx: Context, *, member: discord.Member):
         """Bully someone in this server with a funny GIF!"""
         if member.id == ctx.me.id:
@@ -108,20 +108,20 @@ class Roleplay(commands.Cog):
             )
 
         await ctx.trigger_typing()
-        bully_to = await self.config.member(ctx.author).BULLY_TO()
-        bully_from = await self.config.member(member).BULLY_FROM()
-        gbully_to = await self.config.user(ctx.author).BULLY_TO()
-        gbully_from = await self.config.user(member).BULLY_FROM()
-        await self.config.member(ctx.author).BULLY_TO.set(bully_to + 1)
-        await self.config.member(member).BULLY_FROM.set(bully_from + 1)
-        await self.config.user(ctx.author).BULLY_TO.set(gbully_to + 1)
-        await self.config.user(member).BULLY_FROM.set(gbully_from + 1)
+        bully_to = await self.config.member(ctx.author).BULLY_SENT()
+        bully_from = await self.config.member(member).BULLY_RECEIVED()
+        gbully_to = await self.config.user(ctx.author).BULLY_SENT()
+        gbully_from = await self.config.user(member).BULLY_RECEIVED()
+        await self.config.member(ctx.author).BULLY_SENT.set(bully_to + 1)
+        await self.config.member(member).BULLY_RECEIVED.set(bully_from + 1)
+        await self.config.user(ctx.author).BULLY_SENT.set(gbully_to + 1)
+        await self.config.user(member).BULLY_RECEIVED.set(gbully_from + 1)
         embed = discord.Embed(colour=member.colour)
         message = f"_**{ctx.author.name}** bullies {member.mention}_ 🤡"
         embed.set_image(url=choice(BULLY))
         footer = (
-            f"{ctx.author.name} bullied: {bully_to + 1} times.\n{member.name} "
-            + f"got bullied: {bully_from + 1} times.\n"
+            f"{ctx.author.name} bullied: {bully_to + 1} times so far.\n{member.name} "
+            + f"got bullied: {bully_from + 1} times so far.\n"
             + f"Someone call police to get {ctx.author.name} arrested."
         )
         embed.set_footer(text=footer)
@@ -130,7 +130,7 @@ class Roleplay(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 20, commands.BucketType.member)
+    @commands.cooldown(1, 10, commands.BucketType.member)
     async def cry(self, ctx: Context):
         """Let others know that you feel like crying or just wanna cry."""
         await ctx.trigger_typing()
@@ -149,7 +149,7 @@ class Roleplay(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 20, commands.BucketType.member)
+    @commands.cooldown(1, 10, commands.BucketType.member)
     async def cuddle(self, ctx: Context, *, member: discord.Member):
         """Cuddle with a server member!"""
         if member.id == ctx.author.id:
@@ -160,14 +160,14 @@ class Roleplay(commands.Cog):
             )
 
         await ctx.trigger_typing()
-        cuddle_to = await self.config.member(ctx.author).CUDDLE_TO()
-        cuddle_from = await self.config.member(member).CUDDLE_FROM()
-        gcuddle_to = await self.config.user(ctx.author).CUDDLE_TO()
-        gcuddle_from = await self.config.user(member).CUDDLE_FROM()
-        await self.config.member(ctx.author).CUDDLE_TO.set(cuddle_to + 1)
-        await self.config.member(member).CUDDLE_FROM.set(cuddle_from + 1)
-        await self.config.user(ctx.author).CUDDLE_TO.set(gcuddle_to + 1)
-        await self.config.user(member).CUDDLE_FROM.set(gcuddle_from + 1)
+        cuddle_to = await self.config.member(ctx.author).CUDDLE_SENT()
+        cuddle_from = await self.config.member(member).CUDDLE_RECEIVED()
+        gcuddle_to = await self.config.user(ctx.author).CUDDLE_SENT()
+        gcuddle_from = await self.config.user(member).CUDDLE_RECEIVED()
+        await self.config.member(ctx.author).CUDDLE_SENT.set(cuddle_to + 1)
+        await self.config.member(member).CUDDLE_RECEIVED.set(cuddle_from + 1)
+        await self.config.user(ctx.author).CUDDLE_SENT.set(gcuddle_to + 1)
+        await self.config.user(member).CUDDLE_RECEIVED.set(gcuddle_from + 1)
         embed = discord.Embed(colour=member.colour)
         if member.id == ctx.me.id:
             message = (
@@ -177,9 +177,9 @@ class Roleplay(commands.Cog):
             message = f"_**{ctx.author.name}** cuddles_ {member.mention}"
         embed.set_image(url=str(choice(CUDDLE)))
         footer = (
-            f"{ctx.author.name} sent: {cuddle_to + 1} cuddles.\n"
+            f"{ctx.author.name} sent: {cuddle_to + 1} cuddles so far.\n"
             + f"{'I' if member == ctx.me else member.name} "
-            + f"received: {cuddle_from + 1} cuddles."
+            + f"received: {cuddle_from + 1} cuddles so far."
         )
         embed.set_footer(text=footer)
 
@@ -188,21 +188,21 @@ class Roleplay(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 20, commands.BucketType.member)
+    @commands.cooldown(1, 10, commands.BucketType.member)
     async def feed(self, ctx: Context, *, member: discord.Member):
         """Feed someone from this server virtually!"""
         if member.id == ctx.author.id:
             return await ctx.send(f"_{ctx.author.mention} eats {bold(choice(RECIPES))}!_")
 
         await ctx.trigger_typing()
-        feed_to = await self.config.member(ctx.author).FEED_TO()
-        feed_from = await self.config.member(member).FEED_FROM()
-        gfeed_to = await self.config.user(ctx.author).FEED_TO()
-        gfeed_from = await self.config.user(member).FEED_FROM()
-        await self.config.member(ctx.author).FEED_TO.set(feed_to + 1)
-        await self.config.member(member).FEED_FROM.set(feed_from + 1)
-        await self.config.user(ctx.author).FEED_TO.set(gfeed_to + 1)
-        await self.config.user(member).FEED_FROM.set(gfeed_from + 1)
+        feed_to = await self.config.member(ctx.author).FEED_SENT()
+        feed_from = await self.config.member(member).FEED_RECEIVED()
+        gfeed_to = await self.config.user(ctx.author).FEED_SENT()
+        gfeed_from = await self.config.user(member).FEED_RECEIVED()
+        await self.config.member(ctx.author).FEED_SENT.set(feed_to + 1)
+        await self.config.member(member).FEED_RECEIVED.set(feed_from + 1)
+        await self.config.user(ctx.author).FEED_SENT.set(gfeed_to + 1)
+        await self.config.user(member).FEED_RECEIVED.set(gfeed_from + 1)
         embed = discord.Embed(colour=member.colour)
         if member.id == ctx.me.id:
             message = f"OWO! Thanks for yummy food..., {bold(ctx.author.name)}! ❤️"
@@ -210,9 +210,9 @@ class Roleplay(commands.Cog):
             message = f"_**{ctx.author.name}** feeds {member.mention} some delicious food!_"
         embed.set_image(url=choice(FEED))
         footer = (
-            f"{ctx.author.name} have fed: {feed_to + 1} people.\n"
+            f"{ctx.author.name} have fed others: {feed_to + 1} times so far.\n"
             + f"{'I' if member == ctx.me else member.name} "
-            + f"received some food: {feed_from + 1} times."
+            + f"received some food: {feed_from + 1} times so far."
         )
         embed.set_footer(text=footer)
 
@@ -221,7 +221,7 @@ class Roleplay(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 120, commands.BucketType.member)
+    @commands.cooldown(1, 10, commands.BucketType.member)
     async def highfive(self, ctx: Context, *, member: discord.Member):
         """High-fives a user!"""
         if member.id == ctx.author.id:
@@ -230,14 +230,14 @@ class Roleplay(commands.Cog):
             )
 
         await ctx.trigger_typing()
-        h5_to = await self.config.member(ctx.author).HIGHFIVE_TO()
-        h5_from = await self.config.member(member).HIGHFIVE_FROM()
-        gh5_to = await self.config.user(ctx.author).HIGHFIVE_TO()
-        gh5_from = await self.config.user(member).HIGHFIVE_FROM()
-        await self.config.member(ctx.author).HIGHFIVE_TO.set(h5_to + 1)
-        await self.config.member(member).HIGHFIVE_FROM.set(h5_from + 1)
-        await self.config.user(ctx.author).HIGHFIVE_TO.set(gh5_to + 1)
-        await self.config.user(member).HIGHFIVE_FROM.set(gh5_from + 1)
+        h5_to = await self.config.member(ctx.author).HIGHFIVE_SENT()
+        h5_from = await self.config.member(member).HIGHFIVE_RECEIVED()
+        gh5_to = await self.config.user(ctx.author).HIGHFIVE_SENT()
+        gh5_from = await self.config.user(member).HIGHFIVE_RECEIVED()
+        await self.config.member(ctx.author).HIGHFIVE_SENT.set(h5_to + 1)
+        await self.config.member(member).HIGHFIVE_RECEIVED.set(h5_from + 1)
+        await self.config.user(ctx.author).HIGHFIVE_SENT.set(gh5_to + 1)
+        await self.config.user(member).HIGHFIVE_RECEIVED.set(gh5_from + 1)
         embed = discord.Embed(colour=member.colour)
         if member.id == ctx.me.id:
             message = f"_high-fives back to {bold(ctx.author.name)}_ 👀"
@@ -246,9 +246,9 @@ class Roleplay(commands.Cog):
             message = f"_**{ctx.author.name}** high fives_ {member.mention}"
             embed.set_image(url=choice(HIGHFIVE))
         footer = (
-            f"{ctx.author.name} sent: {h5_to + 1} high-fives.\n"
+            f"{ctx.author.name} sent: {h5_to + 1} high-fives so far.\n"
             + f"{'I' if member == ctx.me else member.name} "
-            + f"received: {h5_from + 1} high-fives."
+            + f"received: {h5_from + 1} high-fives so far."
         )
         embed.set_footer(text=footer)
 
@@ -257,7 +257,7 @@ class Roleplay(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 20, commands.BucketType.member)
+    @commands.cooldown(1, 10, commands.BucketType.member)
     async def hugs(self, ctx: Context, *, member: discord.Member):
         """Hug a user virtually on Discord!"""
         if member.id == ctx.author.id:
@@ -266,14 +266,14 @@ class Roleplay(commands.Cog):
             )
 
         await ctx.trigger_typing()
-        hug_to = await self.config.member(ctx.author).HUG_TO()
-        hug_from = await self.config.member(member).HUG_FROM()
-        ghug_to = await self.config.user(ctx.author).HUG_TO()
-        ghug_from = await self.config.user(member).HUG_FROM()
-        await self.config.member(ctx.author).HUG_TO.set(hug_to + 1)
-        await self.config.member(member).HUG_FROM.set(hug_from + 1)
-        await self.config.user(ctx.author).HUG_TO.set(ghug_to + 1)
-        await self.config.user(member).HUG_FROM.set(ghug_from + 1)
+        hug_to = await self.config.member(ctx.author).HUG_SENT()
+        hug_from = await self.config.member(member).HUG_RECEIVED()
+        ghug_to = await self.config.user(ctx.author).HUG_SENT()
+        ghug_from = await self.config.user(member).HUG_RECEIVED()
+        await self.config.member(ctx.author).HUG_SENT.set(hug_to + 1)
+        await self.config.member(member).HUG_RECEIVED.set(hug_from + 1)
+        await self.config.user(ctx.author).HUG_SENT.set(ghug_to + 1)
+        await self.config.user(member).HUG_RECEIVED.set(ghug_from + 1)
         embed = discord.Embed(colour=member.colour)
         if member.id == ctx.me.id:
             message = f"Awwww thanks! So nice of you! _hugs **{ctx.author.name}** back_ 🤗"
@@ -281,9 +281,9 @@ class Roleplay(commands.Cog):
             message = f"_**{ctx.author.name}** hugs_ {member.mention} 🤗"
         embed.set_image(url=str(choice(HUG)))
         footer = (
-            f"{ctx.author.name} gave: {hug_to + 1} hugs.\n"
+            f"{ctx.author.name} gave: {hug_to + 1} hugs so far.\n"
             + f"{'I' if member == ctx.me else member.name} "
-            + f"received: {hug_from + 1} hugs!"
+            + f"received: {hug_from + 1} hugs so far!"
         )
         embed.set_footer(text=footer)
 
@@ -292,7 +292,7 @@ class Roleplay(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 90, commands.BucketType.member)
+    @commands.cooldown(1, 60, commands.BucketType.member)
     async def kill(self, ctx: Context, *, member: discord.Member):
         """Virtually attempt to kill a server member with a GIF reaction!"""
         if member.id == ctx.me.id:
@@ -304,20 +304,20 @@ class Roleplay(commands.Cog):
             )
 
         await ctx.trigger_typing()
-        kill_to = await self.config.member(ctx.author).KILL_TO()
-        kill_from = await self.config.member(member).KILL_FROM()
-        gkill_to = await self.config.user(ctx.author).KILL_TO()
-        gkill_from = await self.config.user(member).KILL_FROM()
-        await self.config.member(ctx.author).KILL_TO.set(kill_to + 1)
-        await self.config.member(member).KILL_FROM.set(kill_from + 1)
-        await self.config.user(ctx.author).KILL_TO.set(gkill_to + 1)
-        await self.config.user(member).KILL_FROM.set(gkill_from + 1)
+        kill_to = await self.config.member(ctx.author).KILL_SENT()
+        kill_from = await self.config.member(member).KILL_RECEIVED()
+        gkill_to = await self.config.user(ctx.author).KILL_SENT()
+        gkill_from = await self.config.user(member).KILL_RECEIVED()
+        await self.config.member(ctx.author).KILL_SENT.set(kill_to + 1)
+        await self.config.member(member).KILL_RECEIVED.set(kill_from + 1)
+        await self.config.user(ctx.author).KILL_SENT.set(gkill_to + 1)
+        await self.config.user(member).KILL_RECEIVED.set(gkill_from + 1)
         embed = discord.Embed(colour=member.colour)
         message = f"_**{ctx.author.name}** tries to kill {member.mention}!_ 🇫"
         embed.set_image(url=choice(KILL))
         footer = (
-            f"{ctx.author.name} attempted: {kill_to + 1} kills.\n"
-            + f"{member.name} got killed: {kill_from + 1} times!"
+            f"{ctx.author.name} attempted: {kill_to + 1} kills so far.\n"
+            + f"{member.name} got killed: {kill_from + 1} times so far!"
         )
         embed.set_footer(text=footer)
 
@@ -326,7 +326,7 @@ class Roleplay(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 20, commands.BucketType.member)
+    @commands.cooldown(1, 10, commands.BucketType.member)
     async def kiss(self, ctx: Context, *, member: discord.Member):
         """[NSFW] Kiss a user! Only allowed in NSFW channel."""
         if not ctx.channel.is_nsfw():
@@ -338,14 +338,14 @@ class Roleplay(commands.Cog):
             )
 
         await ctx.trigger_typing()
-        kiss_to = await self.config.member(ctx.author).KISS_TO()
-        kiss_from = await self.config.member(member).KISS_FROM()
-        gkiss_to = await self.config.user(ctx.author).KISS_TO()
-        gkiss_from = await self.config.user(member).KISS_FROM()
-        await self.config.member(ctx.author).KISS_TO.set(kiss_to + 1)
-        await self.config.member(member).KISS_FROM.set(kiss_from + 1)
-        await self.config.user(ctx.author).KISS_TO.set(gkiss_to + 1)
-        await self.config.user(member).KISS_FROM.set(gkiss_from + 1)
+        kiss_to = await self.config.member(ctx.author).KISS_SENT()
+        kiss_from = await self.config.member(member).KISS_RECEIVED()
+        gkiss_to = await self.config.user(ctx.author).KISS_SENT()
+        gkiss_from = await self.config.user(member).KISS_RECEIVED()
+        await self.config.member(ctx.author).KISS_SENT.set(kiss_to + 1)
+        await self.config.member(member).KISS_RECEIVED.set(kiss_from + 1)
+        await self.config.user(ctx.author).KISS_SENT.set(gkiss_to + 1)
+        await self.config.user(member).KISS_RECEIVED.set(gkiss_from + 1)
         embed = discord.Embed(colour=member.colour)
         if member.id == ctx.me.id:
             message = f"Awwww so nice of you! _kisses **{ctx.author.name}** back!_ 😘 🥰"
@@ -353,8 +353,8 @@ class Roleplay(commands.Cog):
             message = f"_**{ctx.author.name}** kisses_ {member.mention} 😘 🥰"
         embed.set_image(url=str(choice(KISS)))
         footer = (
-            f"{ctx.author.name} sent: {kiss_to + 1} kisses.\n"
-            + f"{member.name} received: {kiss_from + 1} kisses!"
+            f"{ctx.author.name} sent: {kiss_to + 1} kisses so far.\n"
+            + f"{member.name} received: {kiss_from + 1} kisses so far!"
         )
         embed.set_footer(text=footer)
 
@@ -363,7 +363,7 @@ class Roleplay(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 60, commands.BucketType.member)
+    @commands.cooldown(1, 10, commands.BucketType.member)
     async def lick(self, ctx: Context, *, member: discord.Member):
         """[NSFW] Lick a user! Only allowed in NSFW channel."""
         if not ctx.channel.is_nsfw():
@@ -375,14 +375,14 @@ class Roleplay(commands.Cog):
             )
 
         await ctx.trigger_typing()
-        lick_to = await self.config.member(ctx.author).LICK_TO()
-        lick_from = await self.config.member(member).LICK_FROM()
-        glick_to = await self.config.user(ctx.author).LICK_TO()
-        glick_from = await self.config.user(member).LICK_FROM()
-        await self.config.member(ctx.author).LICK_TO.set(lick_to + 1)
-        await self.config.member(member).LICK_FROM.set(lick_from + 1)
-        await self.config.user(ctx.author).LICK_TO.set(glick_to + 1)
-        await self.config.user(member).LICK_FROM.set(glick_from + 1)
+        lick_to = await self.config.member(ctx.author).LICK_SENT()
+        lick_from = await self.config.member(member).LICK_RECEIVED()
+        glick_to = await self.config.user(ctx.author).LICK_SENT()
+        glick_from = await self.config.user(member).LICK_RECEIVED()
+        await self.config.member(ctx.author).LICK_SENT.set(lick_to + 1)
+        await self.config.member(member).LICK_RECEIVED.set(lick_from + 1)
+        await self.config.user(ctx.author).LICK_SENT.set(glick_to + 1)
+        await self.config.user(member).LICK_RECEIVED.set(glick_from + 1)
         embed = discord.Embed(colour=member.colour)
         message = (
             f"{ctx.author.mention} Poggers, you just licked yourself. 👏"
@@ -391,8 +391,8 @@ class Roleplay(commands.Cog):
         )
         embed.set_image(url=choice(LICK))
         footer = (
-            f"{ctx.author.name} have licked others: {lick_to + 1} times.\n"
-            + f"{member.name} got licked: {lick_from + 1} times!"
+            f"{ctx.author.name} have licked others: {lick_to + 1} times so far.\n"
+            + f"{member.name} got licked: {lick_from + 1} times so far!"
         )
         embed.set_footer(text=footer)
 
@@ -401,7 +401,7 @@ class Roleplay(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 20, commands.BucketType.member)
+    @commands.cooldown(1, 10, commands.BucketType.member)
     async def nom(self, ctx: Context, *, member: discord.Member):
         """Try to nom/bite a server member!"""
         if member.id == ctx.me.id:
@@ -413,19 +413,19 @@ class Roleplay(commands.Cog):
             else f"_**{ctx.author.name}** casually noms_ {member.mention} 😈"
         )
         await ctx.trigger_typing()
-        nom_to = await self.config.member(ctx.author).NOM_TO()
-        nom_from = await self.config.member(member).NOM_FROM()
-        gnom_to = await self.config.user(ctx.author).NOM_TO()
-        gnom_from = await self.config.user(member).NOM_FROM()
-        await self.config.member(ctx.author).NOM_TO.set(nom_to + 1)
-        await self.config.member(member).NOM_FROM.set(nom_from + 1)
-        await self.config.user(ctx.author).NOM_TO.set(gnom_to + 1)
-        await self.config.user(member).NOM_FROM.set(gnom_from + 1)
+        nom_to = await self.config.member(ctx.author).NOM_SENT()
+        nom_from = await self.config.member(member).NOM_RECEIVED()
+        gnom_to = await self.config.user(ctx.author).NOM_SENT()
+        gnom_from = await self.config.user(member).NOM_RECEIVED()
+        await self.config.member(ctx.author).NOM_SENT.set(nom_to + 1)
+        await self.config.member(member).NOM_RECEIVED.set(nom_from + 1)
+        await self.config.user(ctx.author).NOM_SENT.set(gnom_to + 1)
+        await self.config.user(member).NOM_RECEIVED.set(gnom_from + 1)
         embed = discord.Embed(colour=member.colour)
         embed.set_image(url=choice(BITE))
         footer = (
-            f"{ctx.author.name} nom'd: {nom_to + 1} times.\n"
-            + f"{member.name} received: {nom_from + 1} noms!"
+            f"{ctx.author.name} nom'd: {nom_to + 1} times so far.\n"
+            + f"{member.name} received: {nom_from + 1} noms so far!"
         )
         embed.set_footer(text=footer)
 
@@ -434,7 +434,7 @@ class Roleplay(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 20, commands.BucketType.member)
+    @commands.cooldown(1, 10, commands.BucketType.member)
     async def pat(self, ctx: Context, *, member: discord.Member):
         """Pat a server member with wholesome GIF!"""
         if member.id == ctx.author.id:
@@ -443,14 +443,14 @@ class Roleplay(commands.Cog):
             )
 
         await ctx.trigger_typing()
-        pat_to = await self.config.member(ctx.author).PAT_TO()
-        pat_from = await self.config.member(member).PAT_FROM()
-        gpat_to = await self.config.user(ctx.author).PAT_TO()
-        gpat_from = await self.config.user(member).PAT_FROM()
-        await self.config.member(ctx.author).PAT_TO.set(pat_to + 1)
-        await self.config.member(member).PAT_FROM.set(pat_from + 1)
-        await self.config.user(ctx.author).PAT_TO.set(gpat_to + 1)
-        await self.config.user(member).PAT_FROM.set(gpat_from + 1)
+        pat_to = await self.config.member(ctx.author).PAT_SENT()
+        pat_from = await self.config.member(member).PAT_RECEIVED()
+        gpat_to = await self.config.user(ctx.author).PAT_SENT()
+        gpat_from = await self.config.user(member).PAT_RECEIVED()
+        await self.config.member(ctx.author).PAT_SENT.set(pat_to + 1)
+        await self.config.member(member).PAT_RECEIVED.set(pat_from + 1)
+        await self.config.user(ctx.author).PAT_SENT.set(gpat_to + 1)
+        await self.config.user(member).PAT_RECEIVED.set(gpat_from + 1)
         message = (
             f"Wowie! Thanks {bold(ctx.author.name)} for giving me pats. 😳 😘"
             if member.id == ctx.me.id
@@ -459,9 +459,9 @@ class Roleplay(commands.Cog):
         embed = discord.Embed(colour=member.colour)
         embed.set_image(url=choice(PAT))
         footer = (
-            f"{ctx.author.name} gave: {pat_to + 1} pats.\n"
+            f"{ctx.author.name} gave: {pat_to + 1} pats so far.\n"
             + f"{'I' if member == ctx.me else member.name} "
-            + f"received: {pat_from + 1} pats!"
+            + f"received: {pat_from + 1} pats so far!"
         )
         embed.set_footer(text=footer)
 
@@ -470,21 +470,21 @@ class Roleplay(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 20, commands.BucketType.member)
+    @commands.cooldown(1, 10, commands.BucketType.member)
     async def poke(self, ctx: Context, *, member: discord.Member):
         """Poke your Discord friends or strangers!"""
         if member.id == ctx.author.id:
             return await ctx.send(f"{bold(ctx.author.name)} wants to play self poke huh?!")
 
         await ctx.trigger_typing()
-        poke_to = await self.config.member(ctx.author).POKE_TO()
-        poke_from = await self.config.member(member).POKE_FROM()
-        gpoke_to = await self.config.user(ctx.author).POKE_TO()
-        gpoke_from = await self.config.user(member).POKE_FROM()
-        await self.config.member(ctx.author).POKE_TO.set(poke_to + 1)
-        await self.config.member(member).POKE_FROM.set(poke_from + 1)
-        await self.config.user(ctx.author).POKE_TO.set(gpoke_to + 1)
-        await self.config.user(member).POKE_FROM.set(gpoke_from + 1)
+        poke_to = await self.config.member(ctx.author).POKE_SENT()
+        poke_from = await self.config.member(member).POKE_RECEIVED()
+        gpoke_to = await self.config.user(ctx.author).POKE_SENT()
+        gpoke_from = await self.config.user(member).POKE_RECEIVED()
+        await self.config.member(ctx.author).POKE_SENT.set(poke_to + 1)
+        await self.config.member(member).POKE_RECEIVED.set(poke_from + 1)
+        await self.config.user(ctx.author).POKE_SENT.set(gpoke_to + 1)
+        await self.config.user(member).POKE_RECEIVED.set(gpoke_from + 1)
         embed = discord.Embed(colour=member.colour)
         embed = discord.Embed(colour=member.colour)
         if member.id == ctx.me.id:
@@ -493,9 +493,9 @@ class Roleplay(commands.Cog):
             message = f"_**{ctx.author.name}** casually pokes_ {member.mention}"
         embed.set_image(url=choice(POKE))
         footer = (
-            f"{ctx.author.name} gave: {poke_to + 1} pokes.\n"
+            f"{ctx.author.name} gave: {poke_to + 1} pokes so far.\n"
             + f"{'I' if member == ctx.me else member.name} "
-            + f"received: {poke_from + 1} pokes!"
+            + f"received: {poke_from + 1} pokes so far!"
         )
         embed.set_footer(text=footer)
 
@@ -504,7 +504,7 @@ class Roleplay(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 30, commands.BucketType.member)
+    @commands.cooldown(1, 10, commands.BucketType.member)
     async def punch(self, ctx: Context, *, member: discord.Member):
         """Punch someone on Discord with a GIF reaction!"""
         if member.id == ctx.me.id:
@@ -524,20 +524,20 @@ class Roleplay(commands.Cog):
             )
 
         await ctx.trigger_typing()
-        punch_to = await self.config.member(ctx.author).PUNCH_TO()
-        punch_from = await self.config.member(member).PUNCH_FROM()
-        gpunch_to = await self.config.user(ctx.author).PUNCH_TO()
-        gpunch_from = await self.config.user(member).PUNCH_FROM()
-        await self.config.member(ctx.author).PUNCH_TO.set(punch_to + 1)
-        await self.config.member(member).PUNCH_FROM.set(punch_from + 1)
-        await self.config.user(ctx.author).PUNCH_TO.set(gpunch_to + 1)
-        await self.config.user(member).PUNCH_FROM.set(gpunch_from + 1)
+        punch_to = await self.config.member(ctx.author).PUNCH_SENT()
+        punch_from = await self.config.member(member).PUNCH_RECEIVED()
+        gpunch_to = await self.config.user(ctx.author).PUNCH_SENT()
+        gpunch_from = await self.config.user(member).PUNCH_RECEIVED()
+        await self.config.member(ctx.author).PUNCH_SENT.set(punch_to + 1)
+        await self.config.member(member).PUNCH_RECEIVED.set(punch_from + 1)
+        await self.config.user(ctx.author).PUNCH_SENT.set(gpunch_to + 1)
+        await self.config.user(member).PUNCH_RECEIVED.set(gpunch_from + 1)
         embed = discord.Embed(colour=member.colour)
         message = f"_**{ctx.author.name}** {choice(PUNCH_STRINGS)}_ {member.mention}"
         embed.set_image(url=choice(PUNCH))
         footer = (
-            f"{ctx.author.name} sent: {punch_to + 1} punches.\n"
-            + f"{member.name} received: {punch_from + 1} punches!"
+            f"{ctx.author.name} sent: {punch_to + 1} punches so far.\n"
+            + f"{member.name} received: {punch_from + 1} punches so far!"
         )
         embed.set_footer(text=footer)
 
@@ -546,7 +546,7 @@ class Roleplay(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 20, commands.BucketType.member)
+    @commands.cooldown(1, 10, commands.BucketType.member)
     async def slap(self, ctx: Context, *, member: discord.Member):
         """Slap a server member!"""
         if member.id == ctx.me.id:
@@ -556,20 +556,20 @@ class Roleplay(commands.Cog):
             return await ctx.send(f"{ctx.author.mention} Don't slap yourself, you're precious!")
 
         await ctx.trigger_typing()
-        slap_to = await self.config.member(ctx.author).SLAP_TO()
-        slap_from = await self.config.member(member).SLAP_FROM()
-        gslap_to = await self.config.user(ctx.author).SLAP_TO()
-        gslap_from = await self.config.user(member).SLAP_FROM()
-        await self.config.member(ctx.author).SLAP_TO.set(slap_to + 1)
-        await self.config.member(member).SLAP_FROM.set(slap_from + 1)
-        await self.config.user(ctx.author).SLAP_TO.set(gslap_to + 1)
-        await self.config.user(member).SLAP_FROM.set(gslap_from + 1)
+        slap_to = await self.config.member(ctx.author).SLAP_SENT()
+        slap_from = await self.config.member(member).SLAP_RECEIVED()
+        gslap_to = await self.config.user(ctx.author).SLAP_SENT()
+        gslap_from = await self.config.user(member).SLAP_RECEIVED()
+        await self.config.member(ctx.author).SLAP_SENT.set(slap_to + 1)
+        await self.config.member(member).SLAP_RECEIVED.set(slap_from + 1)
+        await self.config.user(ctx.author).SLAP_SENT.set(gslap_to + 1)
+        await self.config.user(member).SLAP_RECEIVED.set(gslap_from + 1)
         embed = discord.Embed(colour=member.colour)
         message = f"_**{ctx.author.name}** slaps_ {member.mention}"
         embed.set_image(url=choice(SLAP))
         footer = (
-            f"{ctx.author.name} gave: {slap_to + 1} slaps.\n"
-            + f"{member.name} received: {slap_from + 1} slaps!"
+            f"{ctx.author.name} gave: {slap_to + 1} slaps so far.\n"
+            + f"{member.name} received: {slap_from + 1} slaps so far!"
         )
         embed.set_footer(text=footer)
 
@@ -578,7 +578,7 @@ class Roleplay(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 20, commands.BucketType.member)
+    @commands.cooldown(1, 10, commands.BucketType.member)
     async def smug(self, ctx: Context):
         """Show everyone your smug face!"""
         message = f"_**{ctx.author.name}** smugs at **@\u200bsomeone**_ 😏"
@@ -597,7 +597,7 @@ class Roleplay(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 20, commands.BucketType.member)
+    @commands.cooldown(1, 10, commands.BucketType.member)
     async def tickle(self, ctx: Context, *, member: discord.Member):
         """Try to tickle a server member!"""
         if member.id == ctx.author.id:
@@ -607,14 +607,14 @@ class Roleplay(commands.Cog):
             )
 
         await ctx.trigger_typing()
-        tickle_to = await self.config.member(ctx.author).TICKLE_TO()
-        tickle_from = await self.config.member(member).TICKLE_FROM()
-        gtickle_to = await self.config.user(ctx.author).TICKLE_TO()
-        gtickle_from = await self.config.user(member).TICKLE_FROM()
-        await self.config.member(ctx.author).TICKLE_TO.set(tickle_to + 1)
-        await self.config.member(member).TICKLE_FROM.set(tickle_from + 1)
-        await self.config.user(ctx.author).TICKLE_TO.set(gtickle_to + 1)
-        await self.config.user(member).TICKLE_FROM.set(gtickle_from + 1)
+        tickle_to = await self.config.member(ctx.author).TICKLE_SENT()
+        tickle_from = await self.config.member(member).TICKLE_RECEIVED()
+        gtickle_to = await self.config.user(ctx.author).TICKLE_SENT()
+        gtickle_from = await self.config.user(member).TICKLE_RECEIVED()
+        await self.config.member(ctx.author).TICKLE_SENT.set(tickle_to + 1)
+        await self.config.member(member).TICKLE_RECEIVED.set(tickle_from + 1)
+        await self.config.user(ctx.author).TICKLE_SENT.set(gtickle_to + 1)
+        await self.config.user(member).TICKLE_RECEIVED.set(gtickle_from + 1)
         embed = discord.Embed(colour=member.colour)
         if member.id == ctx.me.id:
             message = f"_Wow, nice tickling skills, {bold(ctx.author.name)}. I LOL'd._ 🤣 🤡"
@@ -623,9 +623,9 @@ class Roleplay(commands.Cog):
             message = f"_**{ctx.author.name}** tickles_ {member.mention}"
             embed.set_image(url=choice(TICKLE))
         footer = (
-            f"{ctx.author.name} tickled others: {tickle_to + 1} times.\n"
+            f"{ctx.author.name} tickled others: {tickle_to + 1} times so far.\n"
             + f"{'I' if member == ctx.me else member.name} "
-            + f"received: {tickle_from + 1} tickles!"
+            + f"received: {tickle_from + 1} tickles so far!"
         )
         embed.set_footer(text=footer)
 
