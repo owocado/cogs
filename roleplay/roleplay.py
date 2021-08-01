@@ -170,9 +170,7 @@ class Roleplay(commands.Cog):
         await self.config.user(member).CUDDLES_RECEIVED.set(gcuddle_from + 1)
         embed = discord.Embed(colour=member.colour)
         if member.id == ctx.me.id:
-            message = (
-                f"Awww thanks for cuddles, {bold(ctx.author.name)}! Very kind of you. 😳"
-            )
+            message = f"Awww thanks for cuddles, {bold(ctx.author.name)}! Very kind of you. 😳"
         else:
             message = f"_**{ctx.author.name}** cuddles_ {member.mention}"
         embed.set_image(url=str(choice(CUDDLE)))
@@ -299,9 +297,7 @@ class Roleplay(commands.Cog):
             return await ctx.send("**Ｎ Ｏ   Ｕ**")
 
         if member.id == ctx.author.id:
-            return await ctx.send(
-                f"{ctx.author.mention} Seppukku is not allowed on my watch. 💀"
-            )
+            return await ctx.send(f"{ctx.author.mention} Seppukku is not allowed on my watch. 💀")
 
         await ctx.trigger_typing()
         kill_to = await self.config.member(ctx.author).KILLS_SENT()
@@ -438,9 +434,7 @@ class Roleplay(commands.Cog):
     async def pat(self, ctx: Context, *, member: discord.Member):
         """Pat a server member with wholesome GIF!"""
         if member.id == ctx.author.id:
-            return await ctx.send(
-                f"{ctx.author.mention} _pats themselves, I guess? **yay**_ 🎉"
-            )
+            return await ctx.send(f"{ctx.author.mention} _pats themselves, I guess? **yay**_ 🎉")
 
         await ctx.trigger_typing()
         pat_to = await self.config.member(ctx.author).PATS_SENT()
