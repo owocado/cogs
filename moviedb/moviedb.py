@@ -11,8 +11,8 @@ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 class MovieDB(commands.Cog):
     """Show various info about a movie or a TV show/series."""
 
-    __author__ = "siu3334 (<@306810730055729152>)"
-    __version__ = "0.1.0"
+    __author__ = "ow0x (<@306810730055729152>)"
+    __version__ = "0.1.1"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -134,8 +134,9 @@ class MovieDB(commands.Cog):
         if data.get("spoken_languages"):
             spoken_languages = ", ".join([m.get("english_name") for m in data["spoken_languages"]])
             embed.add_field(name="Spoken languages", value=spoken_languages, inline=False)
-        production_companies = ", ".join([m.get("name") for m in data.get("production_companies")])
-        embed.add_field(name="Production compananies", value=production_companies, inline=False)
+        if data.get("production_companies"):
+            production_companies = ", ".join([m.get("name") for m in data["production_companies"]])
+            embed.add_field(name="Production compananies", value=production_companies, inline=False)
         if data.get("production_countries"):
             production_countries = ", ".join([m.get("name") for m in data["production_countries"]])
             embed.add_field(name="Production countries", value=production_countries, inline=False)
