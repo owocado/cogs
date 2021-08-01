@@ -217,7 +217,7 @@ class SteamCog(commands.Cog):
             # All credits to Sitryk
             items = ""
             for i, value in enumerate(data[:20], start=1):
-                items += "**{i}.** {value.get('external')}\n"
+                items += f"**{i}.** {value.get('external')}\n"
             count = len(data) if len(data) <= 20 else 20
             choices = f"Here are the first {count} results. Please select one from below or be more specific:\n\n{items}"
             send_to_channel = await ctx.send(choices)
