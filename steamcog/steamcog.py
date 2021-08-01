@@ -20,8 +20,8 @@ USER_AGENT = {
 class SteamCog(commands.Cog):
     """Show various info and metadata about a Steam game and fetch cheap game deals for PC game(s)."""
 
-    __author__ = "siu3334 (<@306810730055729152>)"
-    __version__ = "0.2.1"
+    __author__ = "ow0x (<@306810730055729152>)"
+    __version__ = "0.2.2"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -69,8 +69,8 @@ class SteamCog(commands.Cog):
             # This logic taken from https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
             # All credits belong to Sitryk, I do not take any credit for this code snippet.
             items = ""
-            for count, value in enumerate(data.get("items")):
-                items += "**{}.** {}\n".format(count + 1, value.get("name"))
+            for i, value in enumerate(data.get("items"), start=1):
+                items += f"**{i}.** {value.get('name')}\n"
             choices = (
                 f"Found multiple results for your game query. Please select one from:\n\n{items}"
             )
@@ -104,7 +104,7 @@ class SteamCog(commands.Cog):
             return None
 
     @commands.command()
-    @commands.bot_has_permissions(embed_links=True, read_message_history=True)
+    @commands.bot_has_permissions(add_reactions=True, embed_links=True, read_message_history=True)
     async def steam(self, ctx: commands.Context, *, query: str):
         """Show various info and metadata about a Steam game."""
         await ctx.trigger_typing()
@@ -127,13 +127,13 @@ class SteamCog(commands.Cog):
         pages = []
         embed = discord.Embed(
             title=appdata["name"],
-            description=appdata.get("short_description", "No description."),
+            description=appdata.get("short_description", ""),
             colour=await ctx.embed_color(),
         )
         embed.url = f"https://store.steampowered.com/app/{app_id}"
         embed.set_author(name="Steam", icon_url="https://i.imgur.com/xxr2UBZ.png")
         embed.set_image(url=str(appdata.get("header_image")).replace("\\", ""))
-        if appdata.get("price_overview") is not None:
+        if appdata.get("price_overview"):
             embed.add_field(
                 name="Game Price",
                 value=appdata["price_overview"].get("final_formatted"),
@@ -142,23 +142,25 @@ class SteamCog(commands.Cog):
             embed.add_field(name="Release Date", value="Coming Soon")
         else:
             embed.add_field(name="Release Date", value=appdata["release_date"].get("date"))
-        if appdata.get("metacritic") is not None:
+        if appdata.get("metacritic"):
             metacritic = (
                 bold(str(appdata.get("metacritic").get("score")))
                 + f" ([Critic Reviews]({appdata['metacritic'].get('url')}))"
             )
             embed.add_field(name="Metacritic Score", value=metacritic)
-        if appdata.get("recommendations") is not None:
+        if appdata.get("recommendations"):
             embed.add_field(
                 name="Recommendations",
                 value=humanize_number(appdata["recommendations"].get("total")),
             )
-        if appdata.get("achievements") is not None:
+        if appdata.get("achievements"):
             embed.add_field(name="Achievements", value=appdata["achievements"].get("total"))
-        if appdata.get("dlc") is not None:
+        if appdata.get("dlc"):
             embed.add_field(name="DLC Count", value=len(appdata["dlc"]))
-        embed.add_field(name="Developers", value=", ".join(appdata.get("developers")))
-        embed.add_field(name="Publishers", value=", ".join(appdata.get("publishers")))
+        if appdata.get("developers"):
+            embed.add_field(name="Developers", value=", ".join(appdata["developers"]))
+        if appdata.get("publishers") and appdata.get("publishers") != [""]:
+            embed.add_field(name="Publishers", value=", ".join(appdata.get("publishers")))
         if appdata.get("platforms"):
             windows_emoji = self.platform_emojis["windows"] or "Microsoft Windows\n"
             linux_emoji = self.platform_emojis["linux"] or "Linux\n"
@@ -181,13 +183,13 @@ class SteamCog(commands.Cog):
         pages.append(embed)
 
         if appdata.get("screenshots"):
-            for i, preview in enumerate(appdata["screenshots"]):
+            for i, preview in enumerate(appdata["screenshots"], start=1):
                 embed = discord.Embed(colour=await ctx.embed_color())
                 embed.title = appdata["name"]
                 embed.url = f"https://store.steampowered.com/app/{app_id}"
                 embed.set_author(name="Steam", icon_url="https://i.imgur.com/xxr2UBZ.png")
                 embed.set_image(url=preview["path_full"])
-                embed.set_footer(text=f"Preview {i + 1} of {len(appdata['screenshots'])}")
+                embed.set_footer(text=f"Preview {i} of {len(appdata['screenshots'])}")
                 pages.append(embed)
 
         if len(pages) == 1:
@@ -214,8 +216,8 @@ class SteamCog(commands.Cog):
             # Attribution: https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
             # All credits to Sitryk
             items = ""
-            for i, value in enumerate(data[:20]):
-                items += "**{}.** {}\n".format(i + 1, value.get("external"))
+            for i, value in enumerate(data[:20], start=1):
+                items += "**{i}.** {value.get('external')}\n"
             count = len(data) if len(data) <= 20 else 20
             choices = f"Here are the first {count} results. Please select one from below or be more specific:\n\n{items}"
             send_to_channel = await ctx.send(choices)
@@ -316,7 +318,7 @@ class SteamCog(commands.Cog):
                 return await ctx.send("Operation timed out.")
 
             pages = []
-            for i, data in enumerate(results):
+            for i, data in enumerate(results, start=1):
                 embed = discord.Embed(colour=await ctx.embed_color())
                 embed.title = str(data["title"])
                 if data.get("steamAppID"):
@@ -341,7 +343,7 @@ class SteamCog(commands.Cog):
                     embed.add_field(name="Rating", value=steam_rating)
                 if len(embed.fields) == 5:
                     embed.add_field(name="\u200b", value="\u200b")
-                embed.set_footer(text=f"Page {i + 1} of {len(results)} | Information provided by https://cheapshark.com")
+                embed.set_footer(text=f"Page {i} of {len(results)} | Information provided by https://cheapshark.com")
                 pages.append(embed)
 
         if len(pages) == 1:
