@@ -447,8 +447,8 @@ class Userinfo(commands.Cog):
     @commands.bot_has_permissions(embed_links=True)
     async def names(self, ctx: commands.Context, *, member: discord.Member = None):
         """Show previous names and nicknames of a member."""
-        member = member or [ctx.author]
-        member = member.pop(0)
+        member = member or ctx.author
+        # member = member.pop(0)
         mod = self.bot.get_cog("Mod")
         names, nicks = await mod.get_names_and_nicks(member)
 
