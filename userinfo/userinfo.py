@@ -11,8 +11,6 @@ from redbot.core.utils.chat_formatting import box
 from redbot.core.utils.common_filters import filter_invites
 from redbot.core.utils.menus import menu, next_page
 
-from serverstats.converters import FuzzyMember
-
 
 class RouteV9(discord.http.Route):
     BASE = "https://discord.com/api/v9"
@@ -250,12 +248,11 @@ class Userinfo(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(add_reactions=True, embed_links=True)
-    async def userinfo(self, ctx: commands.Context, *, user: FuzzyMember = None):
+    async def userinfo(self, ctx: commands.Context, *, user: discord.Member = None):
         """Show userinfo with some more details."""
         mod = self.bot.get_cog("Mod")
         await ctx.trigger_typing()
-        user = user or [ctx.author]
-        user = user.pop(0)
+        user = user or ctx.author
 
         sharedguilds = len(user.mutual_guilds) if user is not ctx.me else 0
         shared_guilds = f"**Shared Servers:** {sharedguilds}\n" if sharedguilds > 1 else ""
