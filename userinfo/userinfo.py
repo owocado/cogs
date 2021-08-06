@@ -6,6 +6,7 @@ import aiohttp
 import discord
 from dateutil import relativedelta
 from redbot.core import Config, commands
+from redbot.core.errors import CogLoadError
 from redbot.core.utils.chat_formatting import box
 from redbot.core.utils.common_filters import filter_invites
 from redbot.core.utils.menus import menu, next_page
@@ -138,6 +139,17 @@ class Userinfo(commands.Cog):
                 self.bot.emojis, id=config["badge_emojis"]["verified_bot_developer"]
             ),
         }
+
+    def cog_unload(self):
+        # Remove command logic are from: https://github.com/mikeshardmind/SinbadCogs/tree/v3/messagebox
+        global _old_userinfo
+        global _old_names
+        if _old_userinfo:
+            self.bot.remove_command("userinfo")
+            self.bot.add_command(_old_userinfo)
+        if _old_names:
+            self.bot.remove_command("names")
+            self.bot.add_command(_old_names)
 
     @commands.group()
     @commands.is_owner()
@@ -474,3 +486,18 @@ class Userinfo(commands.Cog):
         to_join = ", ".join([x for x in pretty.split() if x[0] != "0"][:3])
 
         return to_join
+
+
+async def setup(bot):
+    uinfo = Userinfo(bot)
+    if "Mod" not in bot.cogs:
+        raise CogLoadError("This cog requires the Mod cog to be loaded.")
+    global _old_userinfo
+    global _old_names
+    _old_userinfo = bot.get_command("userinfo")
+    _old_names = bot.get_command("names")
+    if _old_userinfo:
+        bot.remove_command(_old_userinfo.name)
+    if _old_names:
+        bot.remove_command(_old_names.name)
+    bot.add_cog(uinfo)
