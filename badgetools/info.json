@@ -3,14 +3,11 @@
     "short": "Various tools to show stats about your server's user profile badges.",
     "description": "Various tools to show stats about your server's user profile badges.",
     "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
-    "install_msg": "This cog displays users' profile badge count of your server. If you wish for the badge emojis to work, you must have you bot added to the friends of Martine server. You can request it to be added here: https://discord.gg/eKxTEsF",
-    "author": [
-        "siu3334",
-        "Fixator10"
-    ],
+    "install_msg": "Hi, thanks for installing this pointless trivial cog.",
+    "author": ["ow0x", "Fixator10"],
     "required_cogs": {},
-    "requirements": ["python-dateutil"],
-    "tags": ["badgetools", "inbadge", "badgecount", "boosters"],
+    "requirements": [""],
+    "tags": ["badgetools", "badges", "badgecount", "boosters"],
     "min_bot_version": "3.4.0",
     "hidden": false,
 	"disabled": false,
