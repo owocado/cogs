@@ -6,7 +6,7 @@
     "install_msg": "Hi, thanks for installing this pointless trivial cog.",
     "author": ["ow0x", "Fixator10"],
     "required_cogs": {},
-    "requirements": [""],
+    "requirements": [],
     "tags": ["badgetools", "badges", "badgecount", "boosters"],
     "min_bot_version": "3.4.0",
     "hidden": false,

@@ -81,7 +81,7 @@ class BadgeTools(commands.Cog):
         async for user in AsyncIter(sorted(ctx.guild.members, key=lambda x: x.joined_at)):
             async for flag in AsyncIter(user.public_flags.all()):
                 if flag.name == badge:
-                    list_of.append(f"`{str(user):>20}` | {user.mention}")
+                    list_of.append(f"str(user)")
 
         output = "\n".join(list_of)
 
@@ -112,12 +112,11 @@ class BadgeTools(commands.Cog):
         if not guild.premium_subscribers:
             return await ctx.send(f"`{guild.name}` does not have any boost(er)s yet.")
 
-        b_list = "`[since ~{since:>9}]`  `{user_name_tag:>20}` | {mention}"
+        b_list = "`[since ~{since:>9}]`  {user_name_tag}"
         all_boosters = [
             b_list.format(
                 since=self._relative_timedelta(user.premium_since),
                 user_name_tag=str(user),
-                mention=user.mention,
             )
             for user in sorted(guild.premium_subscribers, key=lambda x: x.premium_since)
         ]
