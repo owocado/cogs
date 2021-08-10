@@ -1,15 +1,14 @@
-import asyncio
-import datetime
+from datetime import datetime, timezone
 from typing import Union
 
-import aiohttp
 import discord
 from dateutil import relativedelta
 from redbot.core import Config, commands
 from redbot.core.errors import CogLoadError
-from redbot.core.utils.chat_formatting import box
 from redbot.core.utils.common_filters import filter_invites
 from redbot.core.utils.menus import menu, next_page
+
+NOW = datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class RouteV9(discord.http.Route):
@@ -194,7 +193,7 @@ class Userinfo(commands.Cog):
     def _draw_play(self, song):
         song_start_time = song.start
         total_time = song.duration
-        current_time = datetime.datetime.utcnow()
+        current_time = NOW
         elapsed_time = current_time - song_start_time
         sections = 12
         loc_time = round((elapsed_time / total_time) * sections)  # 10 sections
@@ -250,8 +249,8 @@ class Userinfo(commands.Cog):
     @commands.bot_has_permissions(add_reactions=True, embed_links=True)
     async def userinfo(self, ctx: commands.Context, *, user: discord.Member = None):
         """Show userinfo with some more details."""
-        mod = self.bot.get_cog("Mod")
         await ctx.trigger_typing()
+        mod = self.bot.get_cog("Mod")
         user = user or ctx.author
 
         sharedguilds = len(user.mutual_guilds) if user is not ctx.me else 0
@@ -267,12 +266,7 @@ class Userinfo(commands.Cog):
             since_joined, user_joined = ("?", "Unknown")
         user_created = f"<t:{round(user.created_at.timestamp())}:d>"
         voice_state = user.voice
-        member_i = (
-            sorted(ctx.guild.members, key=lambda m: m.joined_at or ctx.message.created_at).index(
-                user
-            )
-            + 1
-        )
+        member_i = sorted(ctx.guild.members, key=lambda m: m.joined_at or NOW).index(user) + 1
 
         created_on = f"**Account created**: {since_created} ago ({user_created})\n"
         joined_on = f"**Joined this server**: {since_joined} ago ({user_joined})\n"
@@ -290,7 +284,7 @@ class Userinfo(commands.Cog):
             statusemoji = self.status_emojis["idle_mobile"] or "📱 **(IDLE)**"
         elif user.is_on_mobile():
             statusemoji = self.status_emojis["mobile"] or "📱"
-        elif any(a.type is discord.ActivityType.streaming for a in user.activities):
+        elif any(a.type == discord.ActivityType.streaming for a in user.activities):
             statusemoji = self.status_emojis["streaming"] or "🟣"
         elif user.status.name == "online":
             statusemoji = self.status_emojis["online"] or "🟢"
@@ -471,10 +465,7 @@ class Userinfo(commands.Cog):
 
     @staticmethod
     def _humanize_time(date_time):
-        dt1 = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-        dt2 = date_time
-
-        diff = relativedelta.relativedelta(dt1, dt2)
+        diff = relativedelta.relativedelta(NOW, date_time)
 
         yrs, mths, days = (diff.years, diff.months, diff.days)
         hrs, mins, secs = (diff.hours, diff.minutes, diff.seconds)
