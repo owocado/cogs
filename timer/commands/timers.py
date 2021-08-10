@@ -206,7 +206,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
             return await self._send_non_existent_msg(ctx, timer_id)
 
         text = text.strip()
-        if len(text) > 900:
+        if len(text) > 250:
             return await reply(ctx, "Your timer text is too long.")
 
 
@@ -252,7 +252,16 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
             )
 
         if ctx.message.reference:
-            time_and_optional_text = ctx.message.reference.resolved.content.rstrip("*_.!")
+            message = ctx.message.reference.resolved
+            if message.author.id == 172002275412279296:
+                time_and_optional_text = (
+                    message.embeds[0].fields[0].value
+                    .replace("*", "")
+                    .replace("`", "")
+                    .replace("!", "")
+                )
+            else:
+                time_and_optional_text = message.content.rstrip("*_.`!")
 
         try:
             (
@@ -264,8 +273,12 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
             return await reply(ctx, str(ba))
         if not timer_time:
             return await ctx.send_help()
-        if len(timer_text) > 900:
+        if len(timer_text) > 250:
             return await reply(ctx, "Your timer text is too long.")
+
+        match = "You can [vote again on top.gg](https://top.gg/bot/172002275412279296/vote)"
+        if timer_text == match:
+            timer_text = "tatsu vote"
 
         next_timer_id = self.get_next_user_timer_id(users_timers)
         repeat = (
