@@ -26,7 +26,7 @@ class AverageFan(commands.Cog):
     Create your very own Average Fan Vs Average Enjoyer meme videos.
     """
 
-    __author__ = ["DankMemer Team", "TrustyJAID", "siu3334"]
+    __author__ = ["DankMemer Team", "TrustyJAID"]
     __version__ = "1.0.0"
 
     def __init__(self, bot):
@@ -36,10 +36,6 @@ class AverageFan(commands.Cog):
         """Thanks Sinbad!"""
         pre_processed = super().format_help_for_context(ctx)
         return f"{pre_processed}\n\nCog Version: {self.__version__}"
-
-    async def red_delete_data_for_user(self, **kwargs):
-        """Nothing to delete"""
-        return
 
     async def check_video_file(self, link: str, name_template: str) -> bool:
         if not (cog_data_path(self) / name_template).is_file():

@@ -1,0 +1,18 @@
+{
+    "name": "VideoToGIF",
+    "short": "Convert video to GIF.",
+    "description": "Converts provided MP4 video attachment to GIF.",
+    "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
+    "install_msg": "This cog converts provided MP4 video attachment to GIF. This cog requires FFMPEG, moviepy (https://github.com/Zulko/moviepy). This cog downloads attachment video which is then saved locally and generates GIF. Processed videos are deleted after uploading. This cog may consume heavy resources rendering videos.",
+    "author": ["TrustyJAID", "ow0x"],
+    "required_cogs": {},
+    "requirements": [
+        "moviepy",
+        "youtube-dl"
+    ],
+    "tags": ["video2gif", "convert", "gif"],
+    "min_bot_version": "3.4.0",
+    "hidden": false,
+    "disabled": false,
+    "type": "COG"
+}

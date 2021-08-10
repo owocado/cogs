@@ -1,0 +1,29 @@
+{
+    "name": "Utilities",
+    "short": "Bunch of my utility commands which don't belong anywhere.",
+    "description": "Bunch of my utility commands which don't belong anywhere.",
+    "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
+    "install_msg": "Hi, this is mainly a cog for my personal use, only made public because I think it would be useful to some people.",
+    "author": [
+        "ow0x (<@306810730055729152>)"
+    ],
+    "required_cogs": {},
+    "requirements": ["beautifulsoup4"],
+    "tags": [
+        "offlinecount",
+        "bitly",
+        "url shorten",
+        "shorten url",
+        "snowflake",
+        "timestamp",
+        "compare snowflake",
+        "screenshot",
+        "inviteinfo",
+        "invite info",
+        "know your meme"
+    ],
+    "min_bot_version": "3.4.0",
+    "hidden": false,
+    "disabled": false,
+    "type": "COG"
+}

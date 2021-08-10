@@ -1,0 +1,15 @@
+{
+    "name": "HTTPCat",
+    "short": "Returns httpcat image for HTTP error code.",
+    "description": "Returns httpcat image for HTTP error code.",
+    "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
+    "install_msg": "This cog displays httpcat, httpdog and httpduck image for given HTTP error code, if found.",
+    "author": ["ow0x"],
+    "required_cogs": {},
+    "requirements": [],
+    "tags": ["httpcat", "httpdog", "httpduck"],
+    "min_bot_version": "3.4.0",
+    "hidden": false,
+    "disabled": false,
+    "type": "COG"
+}
