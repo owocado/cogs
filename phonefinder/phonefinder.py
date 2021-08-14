@@ -128,7 +128,7 @@ class PhoneFinder(commands.Cog):
             embed.set_thumbnail(url=str(phone_thumb.img.get("src")))
 
         release_date = f"🗓 › **{get_spec('released-hl', cls='span')}**\n"
-        body = f"📐  **Body**: {get_spec('body-hl', cls='span'}\n"
+        body = f"📐  **Body**: {get_spec('body-hl', cls='span')}\n"
         phone_os = f"📱  **OS**: {get_spec('os-hl', cls='span')}\n"
         in_memory = f"🤖  **Internal**: {get_spec('internalmemory')}\n"
         storage_type = f"🗄  **Storage Type**: {get_spec('memoryother')}\n\n"
