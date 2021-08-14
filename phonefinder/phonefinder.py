@@ -7,6 +7,7 @@ import discord
 from aiocache import SimpleMemoryCache, cached
 from bs4 import BeautifulSoup as bsp, element
 from redbot.core import commands
+from redbot.core.utils.menus import close_menu, menu
 
 BASE_URL = "https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName={}"
 
@@ -88,7 +89,7 @@ class PhoneFinder(commands.Cog):
             return href
 
     @commands.command()
-    @commands.bot_has_permissions(embed_links=True, read_message_history=True)
+    @commands.bot_has_permissions(add_reactions=True, embed_links=True, read_message_history=True)
     async def phone(self, ctx: commands.Context, *, query: str):
         """Fetch device specs and other metadata about a (smart)phone model."""
         endpoint = await self.fetch_href(ctx=ctx, query=quote(query))
@@ -126,14 +127,14 @@ class PhoneFinder(commands.Cog):
         if phone_thumb:
             embed.set_thumbnail(url=str(phone_thumb.img.get("src")))
 
-        release_date = f"🗓 **{get_spec('released-hl', cls='span')}**\n"
-        phone_os = f"📱 **OS**: {get_spec('os-hl', cls='span')}\n"
-        in_memory = f"🤖 **Internal**: {get_spec('internalmemory')}\n"
-        storage_type = f"🗄 **Storage Type**: {get_spec('memoryother')}\n\n"
-        cpu = f"🧠 **CPU**: {get_spec('cpu')}\n"
-        gpu = f"╰⇢ **GPU**: {get_spec('gpu')}\n"
-        battery = f"🔋 **Battery**: {get_spec('batdescription1')}\n\n"
-        overview = release_date + phone_os + in_memory + storage_type + cpu + gpu + battery
+        release_date = f"🗓 › **{get_spec('released-hl', cls='span')}**\n"
+        body = f"📐  **Body**: {get_spec('body-hl', cls='span'}\n"
+        phone_os = f"📱  **OS**: {get_spec('os-hl', cls='span')}\n"
+        in_memory = f"🤖  **Internal**: {get_spec('internalmemory')}\n"
+        storage_type = f"🗄  **Storage Type**: {get_spec('memoryother')}\n\n"
+        cpu_gpu = f"🧠  **CPU**: {get_spec('cpu')}\n" + f"╰⇢  **GPU**: {get_spec('gpu')}\n"
+        battery = f"🔋  **Battery**: {get_spec('batdescription1')}\n\n"
+        overview = release_date + body + phone_os + in_memory + storage_type + cpu_gpu + battery
         main_camera = (
             "📸 **__MAIN CAMERA__**:\n"
             + f"• **Mode**: {get_spec('cam1modules')}\n"
@@ -167,4 +168,5 @@ class PhoneFinder(commands.Cog):
             text=f"Fans: {fans} • Popularity: 📈 +{hits.strong.text} ({hits.span.text})"
         )
 
-        await ctx.send(embed=embed)
+        controls = {"❌": close_menu}
+        await menu(ctx, [embed], controls=controls, timeout=90.0)
