@@ -8,8 +8,6 @@ from redbot.core.errors import CogLoadError
 from redbot.core.utils.common_filters import filter_invites
 from redbot.core.utils.menus import menu, next_page
 
-NOW = datetime.now(timezone.utc).replace(tzinfo=None)
-
 
 class RouteV9(discord.http.Route):
     BASE = "https://discord.com/api/v9"
@@ -18,7 +16,7 @@ class RouteV9(discord.http.Route):
 class Userinfo(commands.Cog):
     """Replace original Red userinfo command with more details."""
 
-    __version__ = "1.0.0"
+    __version__ = "1.1.1"
 
     def format_help_for_context(self, ctx):
         """Thanks Sinbad."""
@@ -193,7 +191,7 @@ class Userinfo(commands.Cog):
     def _draw_play(self, song):
         song_start_time = song.start
         total_time = song.duration
-        current_time = NOW
+        current_time = datetime.now(timezone.utc).replace(tzinfo=None)
         elapsed_time = current_time - song_start_time
         sections = 12
         loc_time = round((elapsed_time / total_time) * sections)  # 10 sections
@@ -266,7 +264,7 @@ class Userinfo(commands.Cog):
             since_joined, user_joined = ("?", "Unknown")
         user_created = f"<t:{round(user.created_at.timestamp())}:d>"
         voice_state = user.voice
-        member_i = sorted(ctx.guild.members, key=lambda m: m.joined_at or NOW).index(user) + 1
+        member_i = sorted(ctx.guild.members, key=lambda m: m.joined_at or datetime.utcnow()).index(user) + 1
 
         created_on = f"**Account created**: {since_created} ago ({user_created})\n"
         joined_on = f"**Joined this server**: {since_joined} ago ({user_joined})\n"
@@ -465,6 +463,7 @@ class Userinfo(commands.Cog):
 
     @staticmethod
     def _humanize_time(date_time):
+        NOW = datetime.now(timezone.utc).replace(tzinfo=None)
         diff = relativedelta.relativedelta(NOW, date_time)
 
         yrs, mths, days = (diff.years, diff.months, diff.days)
