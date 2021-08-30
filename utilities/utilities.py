@@ -1,7 +1,7 @@
 import asyncio
-import datetime
 import re
-from collections import OrderedDict
+from collections import Counter, OrderedDict
+from datetime import datetime, timezone
 from io import BytesIO
 from typing import Pattern
 
@@ -10,9 +10,10 @@ import discord
 from bs4 import BeautifulSoup as bsp
 from dateutil import relativedelta
 from redbot.core import commands
+from redbot.core.commands import Context, GuildConverter
 from redbot.core.utils import AsyncIter
 from redbot.core.utils.chat_formatting import box, humanize_number, inline, pagify
-from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
+from redbot.core.utils.menus import DEFAULT_CONTROLS, close_menu, menu
 
 INVITE_URL_REGEX: Pattern = re.compile(
     r"((https:\/\/)?(discord|discordapp)\.(com|gg)\/(invite)?\/?[\w-]+)"
@@ -20,12 +21,12 @@ INVITE_URL_REGEX: Pattern = re.compile(
 
 
 class Utilities(commands.Cog):
-    """Some of my useful & fun utility commands, grouped in one cog."""
+    """Some of my useful utility commands, grouped in one cog."""
 
     __author__ = "ow0x"
-    __version__ = "0.0.8"
+    __version__ = "0.1.0"
 
-    def format_help_for_context(self, ctx: commands.Context) -> str:
+    def format_help_for_context(self, ctx: Context) -> str:
         """Thanks Sinbad!"""
         pre_processed = super().format_help_for_context(ctx)
         return f"{pre_processed}\n\nAuthor: {self.__author__}\nCog Version: {self.__version__}"
@@ -38,40 +39,36 @@ class Utilities(commands.Cog):
         self.bot.loop.create_task(self.session.close())
 
     @commands.command()
-    async def snowflake(self, ctx: commands.Context, snowflake: int, snowflake2: int = None):
-        """Convert a snowflake to human relative datetime timedelta
+    async def snowflake(self, ctx: Context, snowflake: int, snowflake2: int = None):
+        """Convert/compare Discord snowflake IDs to human readable time difference.
 
         or compare timedelta difference between 2 snowflakes.
         """
-        time_now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+        dt_now = datetime.now(timezone.utc).replace(tzinfo=None)
         try:
-            snowflake = discord.utils.snowflake_time(snowflake)
+            dt_1 = discord.utils.snowflake_time(snowflake)
         except (ValueError, OverflowError):
-            await ctx.send("Value of given `snowflake` parameter is out of range.")
-            return
-        if snowflake2 is None:
-            snowflake2 = time_now
-        else:
+            return await ctx.send(f"`{snowflake}` value is invalid or out of range.")
+
+        if snowflake2:
             try:
-                snowflake2 = discord.utils.snowflake_time(snowflake2)
+                dt_2 = discord.utils.snowflake_time(snowflake2)
             except (ValueError, OverflowError):
-                await ctx.send("Value of given `snowflake2` parameter is out of range.")
-                return
+                return await ctx.send(f"`{snowflake2}` value is invalid or out of range.")
+        else:
+            dt_2 = dt_now
 
-        diff = self._relative_timedelta(snowflake, snowflake2, 5)
-        strftime1 = snowflake.strftime("%d %b, %Y at %H:%M:%S")
-        strftime2 = (
-            f"**Timestamp 2:** {snowflake2.strftime('%d %b, %Y at %H:%M:%S')} UTC\n"
-            if snowflake2 != time_now
-            else ""
-        )
 
-        final_message = f"**Timestamp  :** {strftime1} UTC\n{strftime2}**Difference  :** {diff}"
+        diff = self._time_diff(dt_1, dt_2, 5)
+        tstamp_1 = f"`Timestamp 1:` <t:{int(dt_1.timestamp())}:f>"
+        tstamp_2 = f"`Timestamp 2:` <t:{int(dt_2.timestamp())}:f>\n" if snowflake2 else ""
+
+        final_message = f"{tstamp_1}\n{tstamp_2}\n`Difference :` {diff}"
 
         await ctx.send(final_message)
 
     @commands.command(name="inviscount")
-    async def invisible_users_in_role(self, ctx: commands.Context, *, role: discord.role):
+    async def invisible_users_in_role(self, ctx: Context, *, role: discord.Role):
         """Get number (and %) of invisible users in a given role."""
         if role is None:
             return await ctx.send("Please provide a valid role name or role ID.")
@@ -90,7 +87,7 @@ class Utilities(commands.Cog):
         await ctx.send(to_send)
 
     @commands.command(aliases=["urlshorten"])
-    async def bitly(self, ctx: commands.Context, url: str, custom_bitlink: str = None):
+    async def bitly(self, ctx: Context, url: str, custom_bitlink: str = None):
         """Generate a shortened URL with Bitly API.
 
         `custom_bitlink` needs to be in format: `bit.ly/yourvanitycode`
@@ -142,7 +139,7 @@ class Utilities(commands.Cog):
     @commands.command()
     @commands.is_owner()
     @commands.bot_has_permissions(attach_files=True)
-    async def thumio(self, ctx: commands.Context, url: str):
+    async def thumio(self, ctx: Context, url: str):
         """Get a free landspace screenshot of a valid publicly accessible webpage."""
         base_url = f"https://image.thum.io/get/width/1920/crop/675/noanimate/{url}"
         await ctx.trigger_typing()
@@ -162,7 +159,7 @@ class Utilities(commands.Cog):
     @commands.bot_has_permissions(attach_files=True)
     async def screenshot(
         self,
-        ctx: commands.Context,
+        ctx: Context,
         web_url: str,
         full_page: bool = False,
         retina: bool = False,
@@ -227,47 +224,9 @@ class Utilities(commands.Cog):
         await ctx.send(ctx.author.mention, file=discord.File(data, "screenshot.png"))
 
     @commands.command()
-    @commands.mod_or_permissions(manage_guild=True)
-    async def seenlist(self, ctx: commands.Context):
-        """Fetch a list of last seen time of all the server members."""
-        # I mainly made this for my own convenience and personal use some time ago,
-        # making it public in case someone finds it useful.
-
-        cog = self.bot.get_cog("Seen")
-        if not cog:
-            return await ctx.send("Please load `Seen` cog first for this command to work.")
-
-        seen_list = ""
-        data = await cog.config.all_members(ctx.guild)
-        sorted_data = OrderedDict(sorted(data.items(), key=lambda i: i[1]["seen"]))
-        async for user, seen in AsyncIter(sorted_data.items()):
-            if ctx.guild.get_member(user):
-                now_dt = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-                seen_dt = datetime.datetime.utcfromtimestamp(seen.get("seen"))
-                seen_delta = self._relative_timedelta(now_dt, seen_dt, 3)
-                seen_list += f"seen {seen_delta:>20} ago | {ctx.guild.get_member(user)}\n"
-            else:
-                seen_list += ""
-        embed_list = []
-        pages = []
-        for page in pagify(seen_list, ["\n"], page_length=750):
-            pages.append(box(page))
-        max_i = len(pages)
-        i = 1
-        for page in pages:
-            embed_list.append(f"Page `{i}` of `{max_i}`:\n\n" + page)
-            i += 1
-        if not embed_list:
-            return await ctx.send("No results.")
-        elif len(embed_list) == 1:
-            return await ctx.send(embed_list[0])
-        else:
-            await menu(ctx, embed_list, DEFAULT_CONTROLS, timeout=60.0)
-
-    @commands.command()
     @commands.cooldown(1, 10, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True)
-    async def inviteinfo(self, ctx: commands.Context, invite_link_or_code: str):
+    async def inviteinfo(self, ctx: Context, invite_link_or_code: str):
         """Get some basic info about a Discord invite and it's parent guild."""
         match = INVITE_URL_REGEX.match(invite_link_or_code)
         invite_link_or_code = match.group(1).split("/")[-1] if match else invite_link_or_code
@@ -281,8 +240,8 @@ class Utilities(commands.Cog):
             "**Server verification level:**  " + str(invite.guild.verification_level).title()
         )
         created_on = invite.guild.created_at
-        now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-        created_delta = self._relative_timedelta(now, created_on, 2) + " ago"
+        now = ctx.message.created_at
+        created_delta = self._time_diff(now, created_on, 2) + " ago"
         guild_info = f"Server ID: {invite.guild.id} • Server created ({created_delta}) on"
         embed = discord.Embed(
             description=(f"{invite.guild.description}\n\n" if invite.guild.description else "\n")
@@ -348,11 +307,11 @@ class Utilities(commands.Cog):
 
     @commands.command(aliases=["kymeme"])
     @commands.bot_has_permissions(embed_links=True)
-    async def knowyourmeme(self, ctx: commands.Context, *, query: str):
+    async def knowyourmeme(self, ctx: Context, *, query: str):
         """Searches Know Your Meme for your meme query."""
         base_url = f"https://knowyourmeme.com/search?q={query}"
         user_agent = {
-            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36"
         }
 
         await ctx.trigger_typing()
@@ -372,7 +331,7 @@ class Utilities(commands.Cog):
         await ctx.send(meme_url)
 
     @commands.command(name="unredirect")
-    async def unredirect_url(self, ctx: commands.Context, url: str):
+    async def unredirect_url(self, ctx: Context, url: str):
         """Find out where those pesky shady redirect URLs leads you to.
 
         Doesn't quite work against temporary redirects. :(
@@ -395,9 +354,10 @@ class Utilities(commands.Cog):
         await ctx.maybe_send_embed(to_send)
 
     @commands.command()
+    @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 3.0, commands.BucketType.member)
-    async def phub(self, ctx: commands.Context, *, query: str):
+    async def phub(self, ctx: Context, *, query: str):
         """Search PornHub for your kinky query. Only works in NSFW channels."""
         if not ctx.channel.is_nsfw():
             return await ctx.send("This command is only allowed in NSFW channels.")
@@ -440,16 +400,21 @@ class Utilities(commands.Cog):
             await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
 
     @staticmethod
-    def _relative_timedelta(value1, value2, index: int):
+    def _time_diff(value1, value2, index: int):
         if value1 > value2:
             diff = relativedelta.relativedelta(value1, value2)
         else:
             diff = relativedelta.relativedelta(value2, value1)
 
-        yrs, mths, days = (diff.years, diff.months, diff.days)
-        hrs, mins, secs = (diff.hours, diff.minutes, diff.seconds)
+        yrs = str(diff.years).zfill(2)
+        mths = str(diff.months).zfill(2)
+        days = str(diff.days).zfill(2)
+        hrs = str(diff.hours).zfill(2)
+        mins = str(diff.minutes).zfill(2)
+        secs = str(diff.seconds).zfill(2)
+        mu_secs = str(diff.microseconds)
 
-        pretty = f"{yrs}y {mths}mth {days}d {hrs}h {mins}m {secs}s"
-        to_join = " ".join([x for x in pretty.split() if x[0] != "0"][:index])
+        pretty = f"{yrs}y {mths}mo {days}d {hrs}h {mins}m {secs}s {mu_secs[:3]}μs"
+        to_join = " ".join([x for x in pretty.split() if x[0:2] != "00"][:index])
 
         return to_join
