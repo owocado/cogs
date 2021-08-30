@@ -44,11 +44,15 @@ class ImageFinder(Converter):
             match = IMAGE_LINKS.match(reference.attachments[0].url)
             if match:
                 urls.append(match.group(1))
+        if reference.embeds and reference.embeds[0].image:
+            urls.append(reference.embeds[0].image.url)
         return urls
 
     async def search_for_images(self, ctx: commands.Context) -> List[str]:
         urls = []
         async for message in ctx.channel.history(limit=20):
+            if message.embeds and message.embeds[0].image:
+                urls.append(message.embeds[0].image.url)
             if message.attachments:
                 for attachment in message.attachments:
                     match = IMAGE_LINKS.match(attachment.url)

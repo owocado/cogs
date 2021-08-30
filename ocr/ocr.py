@@ -1,7 +1,6 @@
 import aiohttp
 import asyncio
 
-import discord
 from redbot.core import commands
 from redbot.core.utils.chat_formatting import pagify
 
@@ -11,40 +10,23 @@ from .converter import ImageFinder
 class OCR(commands.Cog):
     """Detect text in images using (OCR) Google Cloud Vision API."""
 
-    __author__ = ["TrustyJAID", "siu3334 (<@306810730055729152>)"]
-    __version__ = "0.0.4"
+    __author__ = ["TrustyJAID", "ow0x"]
+    __version__ = "0.0.6"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
         pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\n\nAuthors: {', '.join(self.__author__)}\nCog Version: {self.__version__}"
-
-    def __init__(self, bot):
-        self.bot = bot
+        authors = f"Authors: {', '.join(self.__author__)}"
+        return f"{pre_processed}\n\n{authors}\nCog Version: {self.__version__}"
 
     @commands.command()
     @commands.cooldown(1, 3, commands.BucketType.member)
     @commands.bot_has_permissions(read_message_history=True)
     async def ocr(self, ctx: commands.Context, *, image: ImageFinder = None):
-        """Run an image through OCR and return any detected text.
-
-        This command utilizes Google Cloud Vision API and requires an API key.
-
-        ⚠️ **__INFO FOR BOT OWNER:__**
-        Go to this link to enable the Cloud Vision API:
-        https://console.cloud.google.com/flows/enableapi?apiid=vision.googleapis.com
-
-        Once you have enabled this API, go to Credentials section to create an API key:
-        https://console.cloud.google.com/apis/credentials
-
-        Copy the API key and set it in your red instance with:
-        ```
-        [p]set api google_vision api_key <copied_api_key>
-        ```
-        """
+        """Run an image through OCR and return any detected text."""
         api_key = (await ctx.bot.get_shared_api_tokens("google_vision")).get("api_key")
         if not api_key:
-            return await ctx.send_help()
+            return await ctx.send("API key not found. Please set it first.")
 
         await ctx.trigger_typing()
         if image is None:

@@ -1,21 +1,13 @@
 {
-    "author": [
-        "TrustyJAID",
-        "siu3334 (<@306810730055729152>)"
-    ],
-    "install_msg": "Thanks for installing OCR cog. I hope you will find it useful. 😊",
     "name": "OCR",
-    "disabled": false,
+    "author": ["TrustyJAID", "ow0x"],
     "short": "Detect text in images using Google Cloud Vision API.",
     "description": "Detect text in images using Google Cloud Vision API.",
+    "install_msg": "This cog requires an API key for Google Cloud Vision API.\nGo to this link to enable the Cloud Vision API:\n<https://console.cloud.google.com/flows/enableapi?apiid=vision.googleapis.com>\n\nOnce you have enabled this API, go to Credentials section to create an API key:\n<https://console.cloud.google.com/apis/credentials>\n\nℹ The API key gives you free usage quota of 1000 requests per month. More on pricing here:\nhttps://cloud.google.com/vision/pricing\n\n\nOnce you have the API key, Copy it and set it in your red instance with:\n```[p]set api google_vision api_key <copied_api_key>```",
     "end_user_data_statement": "This cog does not persistently store any data or metadata about users.",
-    "tags": [
-        "ocr",
-        "image to text",
-        "optical character recognition",
-        "google vision"
-    ],
+    "tags": ["ocr", "image to text"],
     "min_bot_version": "3.4.8",
     "hidden": false,
+    "disabled": false,
     "type": "COG"
 }
