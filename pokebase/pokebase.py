@@ -1,5 +1,6 @@
 import asyncio
 import base64
+from contextlib import suppress
 from io import BytesIO
 from math import floor
 from random import choice
@@ -23,8 +24,8 @@ API_URL = "https://pokeapi.co/api/v2"
 class Pokebase(commands.Cog):
     """Search for various info about a Pokémon and related data."""
 
-    __author__ = ["phalt", "siu3334"]
-    __version__ = "0.2.9"
+    __author__ = ["phalt", "ow0x"]
+    __version__ = "0.3.0"
 
     def format_help_for_context(self, ctx: Context) -> str:
         """Thanks Sinbad!"""
@@ -136,14 +137,15 @@ class Pokebase(commands.Cog):
     @commands.command()
     @cached(ttl=86400, cache=SimpleMemoryCache)
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 10, commands.BucketType.member)
-    async def pdex(self, ctx: Context, pokemon: str):
+    @commands.cooldown(1, 5, commands.BucketType.member)
+    async def pdex(self, ctx: Context, *, pokemon: str):
         """Search for various info about a Pokémon.
 
         You can search by name or ID of a Pokémon.
         Pokémon ID refers to National Pokédex number.
         https://bulbapedia.bulbagarden.net/wiki/List_of_Pok%C3%A9mon_by_National_Pok%C3%A9dex_number
         """
+        pokemon = pokemon.replace(" ", "-")
         async with ctx.typing():
             data = await self.get_pokemon_data(pokemon)
             if not data:
@@ -151,10 +153,6 @@ class Pokebase(commands.Cog):
 
             # pages = []
             embed = discord.Embed(colour=await ctx.embed_colour())
-            embed.set_author(
-                name=f"#{str(data.get('id')).zfill(3)} - {data.get('name').title()}",
-                url=f"https://www.pokemon.com/us/pokedex/{data.get('name')}",
-            )
             embed.set_thumbnail(
                 url=f"https://assets.pokemon.com/assets/cms2/img/pokedex/full/{str(data.get('id')).zfill(3)}.png",
             )
@@ -271,10 +269,15 @@ class Pokebase(commands.Cog):
 
             evolves_to = ""
             evolves_to_2 = ""
-            if species_data.get("evolution_chain"):
+            base_evo = data.get("name").title()
+            if species_data and species_data.get("evolution_chain"):
                 evo_url = species_data.get("evolution_chain").get("url")
                 evo_data = (await self.get_evolution_chain(evo_url)).get("chain")
-                base_evo = evo_data.get("species").get("name").title()
+                with suppress(IndexError):
+                    base_evo = [
+                        x["name"] for x in species_data["names"]
+                        if x["language"]["name"] == "en"
+                    ][0]
                 if evo_data.get("evolves_to"):
                     evolves_to += " -> " + "/".join(
                         x.get("species").get("name").title() for x in evo_data["evolves_to"]
@@ -284,6 +287,11 @@ class Pokebase(commands.Cog):
                         x.get("species").get("name").title()
                         for x in evo_data.get("evolves_to")[0].get("evolves_to")
                     )
+
+            embed.set_author(
+                name=f"#{str(data.get('id')).zfill(3)} - {base_evo}",
+                url=f"https://www.pokemon.com/us/pokedex/{data.get('name')}",
+            )
             embed.add_field(
                 name="Evolution Chain",
                 value=f"{base_evo} {evolves_to} {evolves_to_2}",
@@ -291,7 +299,7 @@ class Pokebase(commands.Cog):
             )
             type_effectiveness = (
                 "[See it on Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/"
-                + f"{data.get('name').title()}_%28Pokémon%29#Type_effectiveness)"
+                + f"{base_evo.replace(' ', '_')}_%28Pokémon%29#Type_effectiveness)"
             )
             embed.add_field(name="Weakness/Resistance", value=type_effectiveness)
             embed.set_footer(text="Powered by Poke API")
