@@ -1,6 +1,5 @@
 import asyncio
 
-# Required by Red
 import aiohttp
 import discord
 from redbot.core import commands
@@ -12,7 +11,7 @@ class MovieDB(commands.Cog):
     """Show various info about a movie or a TV show/series."""
 
     __author__ = "ow0x (<@306810730055729152>)"
-    __version__ = "0.1.1"
+    __version__ = "0.1.2"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -113,7 +112,7 @@ class MovieDB(commands.Cog):
         )
         if data.get("imdb_id"):
             embed.url = f"https://www.imdb.com/title/{data['imdb_id']}"
-        # embed.set_image(url=f"https://image.tmdb.org/t/p/w500{data.get('backdrop_path', '/')}")
+        embed.set_image(url=f"https://image.tmdb.org/t/p/w500{data.get('backdrop_path', '/')}")
         embed.set_thumbnail(url=f"https://image.tmdb.org/t/p/w500{data.get('poster_path', '/')}")
         if data.get("release_date") and data.get("release_date") != "":
             embed.add_field(name="Release Date (USA)", value=data["release_date"])
@@ -131,6 +130,8 @@ class MovieDB(commands.Cog):
         if data.get("genres"):
             genres = ", ".join([m.get("name") for m in data["genres"]])
             embed.add_field(name="Genres", value=genres)
+        if len(embed.fields) == 5:
+            embed.add_field(name="\u200b", value="\u200b")
         if data.get("spoken_languages"):
             spoken_languages = ", ".join([m.get("english_name") for m in data["spoken_languages"]])
             embed.add_field(name="Spoken languages", value=spoken_languages, inline=False)
@@ -234,8 +235,9 @@ class MovieDB(commands.Cog):
             description=data.get("overview", "No summary."),
             colour=await ctx.embed_color(),
         )
-        embed.url = f"https://www.imdb.com/title/{data.get('imdb_id', '')}"
-        # embed.set_image(url=f"https://image.tmdb.org/t/p/w500{data.get('backdrop_path', '/')}")
+        if data.get("homepage"):
+            embed.url = data["homepage"]
+        embed.set_image(url=f"https://image.tmdb.org/t/p/w500{data.get('backdrop_path', '/')}")
         embed.set_thumbnail(url=f"https://image.tmdb.org/t/p/w500{data.get('poster_path', '/')}")
         if data.get("first_air_date") != "":
             embed.add_field(
@@ -322,7 +324,7 @@ class MovieDB(commands.Cog):
         await ctx.trigger_typing()
         movie_id = await self.fetch_movie_id(ctx, query)
         if movie_id is None:
-            return await ctx.send("Could not find any results.")
+            return await ctx.send(f"Movie `{query[:50]}` ... not found.")
 
         base_url = f"https://api.themoviedb.org/3/movie/{movie_id}/recommendations"
         params = {"api_key": api_key}
@@ -333,6 +335,9 @@ class MovieDB(commands.Cog):
                 output = await response.json()
         except asyncio.TimeoutError:
             return await ctx.send("Operation timed out.")
+
+        if not output.get("results"):
+            return await ctx.send("No recommendations found for that movie. 🤔")
 
         pages = []
         for i, data in enumerate(output.get("results")):
@@ -370,7 +375,7 @@ class MovieDB(commands.Cog):
         await ctx.trigger_typing()
         tv_series_id = await self.fetch_tv_series_id(ctx, query)
         if tv_series_id is None:
-            return await ctx.send("Could not find any results.")
+            return await ctx.send(f"TV show `{query[:50]}` ... not found.")
 
         base_url = f"https://api.themoviedb.org/3/tv/{tv_series_id}/recommendations"
         params = {"api_key": api_key}
@@ -381,6 +386,9 @@ class MovieDB(commands.Cog):
                 output = await response.json()
         except asyncio.TimeoutError:
             return await ctx.send("Operation timed out.")
+
+        if not output.get("results"):
+            return await ctx.send("No recommendations found for this TV show. 🤔")
 
         pages = []
         for i, data in enumerate(output.get("results")):
