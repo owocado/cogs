@@ -179,7 +179,7 @@ class Pokebase(commands.Cog):
             species_data = await self.get_species_data(data.get("id"))
             if species_data:
                 with suppress(IndexError):
-                    base_evo = [
+                    pokemon_name = [
                         x["name"] for x in species_data["names"]
                         if x["language"]["name"] == "en"
                     ][0]
