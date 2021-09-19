@@ -25,7 +25,7 @@ class Pokebase(commands.Cog):
     """Search for various info about a Pokémon and related data."""
 
     __author__ = ["phalt", "ow0x"]
-    __version__ = "0.3.0"
+    __version__ = "0.3.1"
 
     def format_help_for_context(self, ctx: Context) -> str:
         """Thanks Sinbad!"""
@@ -151,7 +151,6 @@ class Pokebase(commands.Cog):
             if not data:
                 return await ctx.send("No results.")
 
-            # pages = []
             embed = discord.Embed(colour=await ctx.embed_colour())
             embed.set_thumbnail(
                 url=f"https://assets.pokemon.com/assets/cms2/img/pokedex/full/{str(data.get('id')).zfill(3)}.png",
@@ -176,8 +175,15 @@ class Pokebase(commands.Cog):
                 value="/".join(x.get("type").get("name").title() for x in data.get("types")),
             )
 
+            pokemon_name = data.get("name", "none").title()
             species_data = await self.get_species_data(data.get("id"))
             if species_data:
+                with suppress(IndexError):
+                    base_evo = [
+                        x["name"] for x in species_data["names"]
+                        if x["language"]["name"] == "en"
+                    ][0]
+
                 gender_rate = species_data.get("gender_rate")
                 male_ratio = 100 - ((gender_rate / 8) * 100)
                 female_ratio = (gender_rate / 8) * 100
@@ -248,58 +254,57 @@ class Pokebase(commands.Cog):
                 base_stats[stat.get("stat").get("name")] = stat.get("base_stat")
             total_base_stats = sum(base_stats.values())
 
+            def multi_bar(attribute: str):
+                return round((base_stats[attribute] / 255) * 10) * 2
+
+            def draw_bar(attribute: str):
+                fill = "█" * multi_bar(attribute)
+                blank = " " * (20 - multi_bar(attribute))
+                return f"`|{fill}{blank}|`"
+
+            sp_attack = base_stats["special-attack"]
+            sp_defense = base_stats["special-defense"]
+
             pretty_base_stats = (
-                f"`HP         : |{'█' * round((base_stats['hp'] / 255) * 10) * 2}"
-                + f"{' ' * (20 - round((base_stats['hp'] / 255) * 10) * 2)}|` **{base_stats['hp']}**\n"
-                + f"`Attack     : |{'█' * round((base_stats['attack'] / 255) * 10) * 2}"
-                + f"{' ' * (20 - round((base_stats['attack'] / 255) * 10) * 2)}|` **{base_stats['attack']}**\n"
-                + f"`Defense    : |{'█' * round((base_stats['defense'] / 255) * 10) * 2}"
-                + f"{' ' * (20 - round((base_stats['defense'] / 255) * 10) * 2)}|` **{base_stats['defense']}**\n"
-                + f"`Sp. Attack : |{'█' * round((base_stats['special-attack'] / 255) * 10) * 2}"
-                + f"{' ' * (20 - round((base_stats['special-attack'] / 255) * 10) * 2)}|` **{base_stats['special-attack']}**\n"
-                + f"`Sp. Defense: |{'█' * round((base_stats['special-defense'] / 255) * 10) * 2}"
-                + f"{' ' * (20 - round((base_stats['special-defense'] / 255) * 10) * 2)}|` **{base_stats['special-defense']}**\n"
-                + f"`Speed      : |{'█' * round((base_stats['speed'] / 255) * 10) * 2}"
-                + f"{' ' * (20 - round((base_stats['speed'] / 255) * 10) * 2)}|` **{base_stats['speed']}**\n"
-                + "`-----------------------------------`\n"
-                + f"`Total      : |{'█' * round((total_base_stats / 1125) * 10) * 2}"
-                + f"{' ' * (20 - round((total_base_stats / 1125) * 10) * 2)}|` **{total_base_stats}**\n"
+                f"**`{'HP':<12}:`**  {draw_bar('hp')} **{base_stats['hp']}**\n"
+                f"**`{'Attack':<12}:`**  {draw_bar('attack')} **{base_stats['attack']}**\n"
+                f"**`{'Defense':<12}:`**  {draw_bar('defense')} **{base_stats['defense']}**\n"
+                f"**`{'Sp. Attack':<12}:`**  {draw_bar('special-attack')} **{sp_attack}**\n"
+                f"**`{'Sp. Defense':<12}:`**  {draw_bar('special-defense')} **{sp_defense}**\n"
+                f"**`{'Speed':<12}:`**  {draw_bar('speed')} **{base_stats['speed']}**\n"
+                f"**`{'Total':<12}:`**  `|--------------------|` **{total_base_stats}**"
             )
             embed.add_field(name="Base Stats (Base Form)", value=pretty_base_stats, inline=False)
 
-            evolves_to = ""
-            evolves_to_2 = ""
-            base_evo = data.get("name").title()
             if species_data and species_data.get("evolution_chain"):
                 evo_url = species_data.get("evolution_chain").get("url")
                 evo_data = (await self.get_evolution_chain(evo_url)).get("chain")
-                with suppress(IndexError):
-                    base_evo = [
-                        x["name"] for x in species_data["names"]
-                        if x["language"]["name"] == "en"
-                    ][0]
+                base_evo = evo_data["species"].get("name").title()
+                evolves_to = ""
                 if evo_data.get("evolves_to"):
                     evolves_to += " -> " + "/".join(
-                        x.get("species").get("name").title() for x in evo_data["evolves_to"]
+                        x["species"].get("name").title() for x in evo_data["evolves_to"]
                     )
-                if evo_data.get("evolves_to") and evo_data.get("evolves_to")[0].get("evolves_to"):
-                    evolves_to_2 += " -> " + "/".join(
-                        x.get("species").get("name").title()
-                        for x in evo_data.get("evolves_to")[0].get("evolves_to")
+                if evo_data.get("evolves_to") and evo_data["evolves_to"][0].get("evolves_to"):
+                    evolves_to += " -> " + "/".join(
+                        x["species"].get("name").title()
+                        for x in evo_data["evolves_to"][0].get("evolves_to")
+                    )
+                if evolves_to != "":
+                    embed.add_field(
+                        name="Evolution Chain",
+                        value=f"{base_evo} {evolves_to}",
+                        inline=False,
                     )
 
             embed.set_author(
-                name=f"#{str(data.get('id')).zfill(3)} - {base_evo}",
+                name=f"#{str(data.get('id')).zfill(3)} - {pokemon_name}",
                 url=f"https://www.pokemon.com/us/pokedex/{data.get('name')}",
             )
-            embed.add_field(
-                name="Evolution Chain",
-                value=f"{base_evo} {evolves_to} {evolves_to_2}",
-                inline=False,
-            )
+
             type_effectiveness = (
                 "[See it on Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/"
-                + f"{base_evo.replace(' ', '_')}_%28Pokémon%29#Type_effectiveness)"
+                + f"{pokemon_name.replace(' ', '_')}_%28Pokémon%29#Type_effectiveness)"
             )
             embed.add_field(name="Weakness/Resistance", value=type_effectiveness)
             embed.set_footer(text="Powered by Poke API")
