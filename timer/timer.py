@@ -207,8 +207,8 @@ class Timer(Commands, commands.Cog, metaclass=CompositeMetaClass):
 
                 delay = current_time_seconds - timer["FUTURE"]
                 reason = f"(for: **{timer['TIMER']}**)" if timer["TIMER"] != "" else ""
-                if len(reason) > 900:
-                    reason = reason[:896] + " ..."
+                if len(reason) > 200:
+                    reason = reason[:196] + " ..."
                 message = f"⏰ Hey {user.mention}, your {timer['FUTURE_TEXT']} of timer is up! {reason}"
                 if delay > self.SEND_DELAY_SECONDS:
                     message += (
@@ -216,7 +216,10 @@ class Timer(Commands, commands.Cog, metaclass=CompositeMetaClass):
                         + f" by {htd(seconds=delay)}. Sorry about that!\n"
                     )
                 if "REPEAT" in timer and timer["REPEAT"]:
-                    message += f"\nℹ This is a repeating timer every {htd(seconds=max(timer['REPEAT'], 120))}."
+                    message += (
+                        "\nℹ This is a repeating timer every "
+                        f"{htd(seconds=max(timer['REPEAT'], 60))}."
+                    )
 
                 try:
                     await channel.send(message)
@@ -237,8 +240,8 @@ class Timer(Commands, commands.Cog, metaclass=CompositeMetaClass):
                         new_timer = None
                         if "REPEAT" in timer and timer["REPEAT"]:
                             new_timer = timer.copy()
-                            if new_timer["REPEAT"] < 120:
-                                new_timer["REPEAT"] = 120
+                            if new_timer["REPEAT"] < 60:
+                                new_timer["REPEAT"] = 60
                             while new_timer["FUTURE"] <= int(current_time.time()):
                                 new_timer["FUTURE"] += new_timer["REPEAT"]
                             new_timer["FUTURE_TEXT"] = htd(seconds=new_timer["REPEAT"])
