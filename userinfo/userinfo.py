@@ -29,8 +29,8 @@ class Userinfo(commands.Cog):
         default_global = {
             "status_emojis": {
                 "mobile": 749067110931759185,
-                "dnd_mobile": 847028205818740747,
-                "idle_mobile": 847028206060961802,
+                "dnd_mobile": 884019767244099604,
+                "idle_mobile": 884019766908575765,
                 "online": 749221433552404581,
                 "away": 749221433095356417,
                 "dnd": 749221432772395140,
@@ -52,8 +52,6 @@ class Userinfo(commands.Cog):
                 "verified_bot": 848561838974697532,
                 "verified_bot2": 848561839260434482,
                 "server_booster": 710871139227795487,
-                "system_1": 872393608202952725,
-                "system_2": 872393665757196348,
                 "discord_nitro": 710871154839126036,
                 "bot_tag": 848557763172892722,
             },
@@ -64,6 +62,15 @@ class Userinfo(commands.Cog):
     def cog_unload(self):
         if self.emojis:
             self.emojis.cancel()
+        # Remove command logic are from: https://github.com/mikeshardmind/SinbadCogs/tree/v3/messagebox
+        global _old_userinfo
+        global _old_names
+        if _old_userinfo:
+            self.bot.remove_command("userinfo")
+            self.bot.add_command(_old_userinfo)
+        if _old_names:
+            self.bot.remove_command("names")
+            self.bot.add_command(_old_names)
 
     async def init(self):
         await self.bot.wait_until_ready()
@@ -122,8 +129,6 @@ class Userinfo(commands.Cog):
             ),
             "partner": discord.utils.get(self.bot.emojis, id=config["badge_emojis"]["partner"]),
             "staff": discord.utils.get(self.bot.emojis, id=config["badge_emojis"]["staff"]),
-            "system_1": discord.utils.get(self.bot.emojis, id=config["badge_emojis"]["system_1"]),
-            "system_2": discord.utils.get(self.bot.emojis, id=config["badge_emojis"]["system_2"]),
             "verified_bot": discord.utils.get(
                 self.bot.emojis, id=config["badge_emojis"]["verified_bot"]
             ),
@@ -134,17 +139,6 @@ class Userinfo(commands.Cog):
                 self.bot.emojis, id=config["badge_emojis"]["verified_bot_developer"]
             ),
         }
-
-    def cog_unload(self):
-        # Remove command logic are from: https://github.com/mikeshardmind/SinbadCogs/tree/v3/messagebox
-        global _old_userinfo
-        global _old_names
-        if _old_userinfo:
-            self.bot.remove_command("userinfo")
-            self.bot.add_command(_old_userinfo)
-        if _old_names:
-            self.bot.remove_command("names")
-            self.bot.add_command(_old_names)
 
     @commands.group()
     @commands.is_owner()
@@ -299,10 +293,7 @@ class Userinfo(commands.Cog):
         if status_string:
             status_string = "\n__**Activities**__:\n" + status_string
 
-        spot = next(
-            (c for c in user.activities if isinstance(c, discord.Spotify)),
-            None,
-        )
+        spot = next((c for c in user.activities if isinstance(c, discord.Spotify)), None)
         spotify = f"{self._draw_play(spot)}" if spot else ""
 
         pages = []
@@ -333,27 +324,34 @@ class Userinfo(commands.Cog):
                 role_str = "".join(role_chunks)
 
             data.add_field(
-                name=f"**Roles**: ({len(roles)})" if len(roles) > 1 else "**Role**:",
+                name=f"Roles: ({len(roles)})" if len(roles) > 1 else "Role:",
                 value=role_str,
                 inline=False,
             )
 
         if voice_state and voice_state.channel:
             data.add_field(
-                name="**Connected to VC**:",
+                name="Connected to VC:",
                 value="{0.mention} ID: `{0.id}`".format(voice_state.channel),
                 inline=False,
             )
+
         names, nicks = await mod.get_names_and_nicks(user)
-        previous_names = []
         if names:
-            previous_names.append(f"{len(names)} username(s)")
-        if nicks:
-            previous_names.append(f"{len(nicks)} nickname(s)")
-        if previous_names:
+            val = filter_invites(", ".join(names))
             data.add_field(
-                name="**Previous Names**:",
-                value=f"`Found:` {' & '.join(previous_names)}",
+                name=f"Previous Usernames ({len(names)})"
+                if len(names) > 1 else "Previous Username",
+                value=val,
+                inline=False,
+            )
+        if nicks:
+            val = filter_invites(", ".join(nicks))
+            data.add_field(
+                name=f"Previous Nicknames ({len(nicks)})"
+                if len(nicks) > 1 else "Previous Nickname",
+                value=val,
+                inline=False,
             )
 
         name = "  ".join((str(user), f"({user.nick})")) if user.nick else str(user)
@@ -364,15 +362,12 @@ class Userinfo(commands.Cog):
         data.set_thumbnail(url=avatar)
 
         v_emoji = f"{self.badge_emojis['verified_bot']}{self.badge_emojis['verified_bot2']}"
-        sys_emoji = f"{self.badge_emojis['system_1']}{self.badge_emojis['system_2']}"
         flags = [f.name for f in user.public_flags.all()]
         badges = []
         if flags:
             for badge in flags:
                 if badge == "verified_bot":
                     emoji = v_emoji
-                elif badge == "system":
-                    emoji = sys_emoji
                 else:
                     emoji = self.badge_emojis[badge]
                 badges.append(emoji)
@@ -408,7 +403,7 @@ class Userinfo(commands.Cog):
         web = f"{status[w]} Web Browser" if w != "offline" else ""
         devices = desktop + mobile + web
         if devices:
-            data.add_field(name="**Device Presence**:", value=devices, inline=False)
+            data.add_field(name="Device Presence:", value=devices, inline=False)
 
         nth = self._get_suffix(member_i)
         footer = f"{member_i}{nth} member | User ID: {user.id}\n"
@@ -463,8 +458,7 @@ class Userinfo(commands.Cog):
 
     @staticmethod
     def _humanize_time(date_time):
-        NOW = datetime.now(timezone.utc).replace(tzinfo=None)
-        diff = relativedelta.relativedelta(NOW, date_time)
+        diff = relativedelta.relativedelta(datetime.utcnow(), date_time)
 
         yrs, mths, days = (diff.years, diff.months, diff.days)
         hrs, mins, secs = (diff.hours, diff.minutes, diff.seconds)
