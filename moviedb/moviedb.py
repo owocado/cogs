@@ -112,8 +112,8 @@ class MovieDB(commands.Cog):
         )
         if data.get("imdb_id"):
             embed.url = f"https://www.imdb.com/title/{data['imdb_id']}"
-        embed.set_image(url=f"https://image.tmdb.org/t/p/w500{data.get('backdrop_path', '/')}")
-        embed.set_thumbnail(url=f"https://image.tmdb.org/t/p/w500{data.get('poster_path', '/')}")
+        embed.set_image(url=f"https://image.tmdb.org/t/p/original{data.get('backdrop_path', '/')}")
+        embed.set_thumbnail(url=f"https://image.tmdb.org/t/p/original{data.get('poster_path', '/')}")
         if data.get("release_date") and data.get("release_date") != "":
             embed.add_field(name="Release Date (USA)", value=data["release_date"])
         if data.get("runtime") > 0:
@@ -237,8 +237,8 @@ class MovieDB(commands.Cog):
         )
         if data.get("homepage"):
             embed.url = data["homepage"]
-        embed.set_image(url=f"https://image.tmdb.org/t/p/w500{data.get('backdrop_path', '/')}")
-        embed.set_thumbnail(url=f"https://image.tmdb.org/t/p/w500{data.get('poster_path', '/')}")
+        embed.set_image(url=f"https://image.tmdb.org/t/p/original{data.get('backdrop_path', '/')}")
+        embed.set_thumbnail(url=f"https://image.tmdb.org/t/p/original{data.get('poster_path', '/')}")
         if data.get("first_air_date") != "":
             embed.add_field(
                 name="First Air Date",
@@ -345,9 +345,9 @@ class MovieDB(commands.Cog):
             embed.title = str(data["title"])
             embed.description = data.get("overview", "No summary.")
             embed.url = f"https://www.themoviedb.org/movie/{data.get('id', '')}"
-            embed.set_image(url=f"https://image.tmdb.org/t/p/w500{data.get('backdrop_path', '/')}")
+            embed.set_image(url=f"https://image.tmdb.org/t/p/original{data.get('backdrop_path', '/')}")
             embed.set_thumbnail(
-                url=f"https://image.tmdb.org/t/p/w500{data.get('poster_path', '/')}"
+                url=f"https://image.tmdb.org/t/p/original{data.get('poster_path', '/')}"
             )
             if data.get("release_date") != "":
                 embed.add_field(name="Release Date", value=data["release_date"])
@@ -398,9 +398,9 @@ class MovieDB(commands.Cog):
                 colour=await ctx.embed_color(),
             )
             embed.url = f"https://www.themoviedb.org/tv/{data.get('id', '')}"
-            embed.set_image(url=f"https://image.tmdb.org/t/p/w500{data.get('backdrop_path', '/')}")
+            embed.set_image(url=f"https://image.tmdb.org/t/p/original{data.get('backdrop_path', '/')}")
             embed.set_thumbnail(
-                url=f"https://image.tmdb.org/t/p/w500{data.get('poster_path', '/')}"
+                url=f"https://image.tmdb.org/t/p/original{data.get('poster_path', '/')}"
             )
             if data.get("first_air_date") != "":
                 embed.add_field(name="First Air Date", value=data["first_air_date"])
