@@ -4,9 +4,7 @@
     "description": "Fetch some basic trivia & information about a country.",
     "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
     "install_msg": "Thank you for installing Country cog.",
-    "author": [
-        "siu3334"
-    ],
+    "author": ["ow0x"],
     "required_cogs": {},
     "requirements": [],
     "tags": ["country", "countries"],

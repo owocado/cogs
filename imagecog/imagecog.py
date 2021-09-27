@@ -149,14 +149,6 @@ class ImageCog(commands.Cog):
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 5, commands.BucketType.member)
-    async def adorable(self, ctx: commands.Context, text: str):
-        """Fetch an \"adorable\" avatar."""
-
-        await ctx.send(f"https://api.hello-avatar.com/adorables/400/{text}.png")
-
-    @commands.command()
-    @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 5, commands.BucketType.member)
     async def shields(
         self,
         ctx: commands.Context,
