@@ -1,6 +1,6 @@
 from redbot.core import commands
 
-from .jishaku import Jishaku
+from .jsk_cog import Jishaku
 
 
 def setup(bot: commands.Bot):

@@ -9,6 +9,6 @@
     "tags": ["jishaku", "jsk"],
     "min_bot_version": "3.4.12",
     "hidden": false,
-	"disabled": false,
+    "disabled": false,
     "type": "COG"
 }
