@@ -1,5 +1,6 @@
 import aiohttp
 import asyncio
+from typing import Optional
 
 from redbot.core import commands
 from redbot.core.utils.chat_formatting import pagify
@@ -11,7 +12,7 @@ class OCR(commands.Cog):
     """Detect text in images using (OCR) Google Cloud Vision API."""
 
     __author__ = ["TrustyJAID", "ow0x"]
-    __version__ = "0.0.6"
+    __version__ = "0.0.7"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -22,13 +23,20 @@ class OCR(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 3, commands.BucketType.member)
     @commands.bot_has_permissions(read_message_history=True)
-    async def ocr(self, ctx: commands.Context, *, image: ImageFinder = None):
+    async def ocr(
+        self,
+        ctx: commands.Context,
+        detect_handwriting: Optional[bool] = False,
+        *,
+        image: ImageFinder = None, 
+    ):
         """Run an image through OCR and return any detected text."""
         api_key = (await ctx.bot.get_shared_api_tokens("google_vision")).get("api_key")
         if not api_key:
             return await ctx.send("API key not found. Please set it first.")
 
         await ctx.trigger_typing()
+        detect_type = "DOCUMENT_TEXT_DETECTION" if detect_handwriting else "TEXT_DETECTION"
         if image is None:
             if ctx.message.reference:
                 message = ctx.message.reference.resolved
@@ -44,7 +52,7 @@ class OCR(commands.Cog):
             "requests": [
                 {
                     "image": {"source": {"imageUri": image[0]}},
-                    "features": [{"type": "TEXT_DETECTION"}],
+                    "features": [{"type": detect_type}],
                 }
             ]
         }
