@@ -13,14 +13,14 @@ by using this command in your terminal (may require you to run with sudo):
 ```
 docker pull manimcommunity/manim:stable
 ```
-Current Manim stable docker image version as of 4th June 2021 is v0.7.0
+Current Manim stable docker image version as of 3rd October 2021 is v0.11.0
 
 It may take sometime to download+extract this docker image, depending on your ISP host provider's internet speed.
 Once it's done, check if its successfully downloaded with:
 ```
 $ docker images -a
-REPOSITORY             TAG       IMAGE ID       CREATED      SIZE
-manimcommunity/manim   stable    818bf20d18d8   2 days ago   1.58GB
+REPOSITORY             TAG       IMAGE ID       CREATED        SIZE
+manimcommunity/manim   stable    a9ffd7d499c3   15 hours ago   1.89GB
 ```
 
 # Install manim cog

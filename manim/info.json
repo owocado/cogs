@@ -1,7 +1,7 @@
 {
     "author": [
         "The Manim Community Developers",
-        "siu3334"
+        "ow0x"
     ],
     "install_msg": "This cog lets you evaluate Manim code snippets to render short mathematical animations through Manim python animation engine.\nYou can find out how to setup this cog and Manim here: https://github.com/siu3334/owo-cogs/blob/main/manim/README.md",
     "name": "Manim",
