@@ -834,7 +834,7 @@ class Pokebase(commands.Cog):
     async def whosthatpokemon(self, ctx: commands.Context, generation: str = None):
         """Guess Who's that Pokémon within 15 seconds!
 
-        You can optionally specify `generation` from number 1 to 8,
+        You can optionally specify generation from `gen1` to `gen8` only,
         to restrict this guessing game to specific Pokemon generation.
 
         Otherwise, it will default to pulling random pokemon from all 8 Gens.
