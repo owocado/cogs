@@ -1,9 +1,9 @@
 import asyncio
 import base64
+import random
 from contextlib import suppress
 from io import BytesIO
 from math import floor
-from random import choice
 from string import capwords
 
 import aiohttp
@@ -11,9 +11,13 @@ import discord
 import jmespath
 from aiocache import SimpleMemoryCache, cached
 from bs4 import BeautifulSoup as bsp
+from PIL import Image
+
 from redbot.core import commands
+from redbot.core.bot import Red
 from redbot.core.commands import Context
-from redbot.core.utils.chat_formatting import bold, humanize_number, pagify
+from redbot.core.data_manager import bundled_data_path
+from redbot.core.utils.chat_formatting import bold, humanize_number, inline, pagify
 from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
 
 cache = SimpleMemoryCache()
@@ -24,15 +28,15 @@ API_URL = "https://pokeapi.co/api/v2"
 class Pokebase(commands.Cog):
     """Search for various info about a Pokémon and related data."""
 
-    __author__ = ["phalt", "ow0x"]
-    __version__ = "0.3.1"
+    __authors__ = "phalt", "ow0x"
+    __version__ = "0.4.1"
 
     def format_help_for_context(self, ctx: Context) -> str:
         """Thanks Sinbad!"""
         pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\n\nAuthors: {', '.join(self.__author__)}\nCog Version: {self.__version__}"
+        return f"{pre_processed}\n\nAuthors: {self.__authors__}\nCog Version: {self.__version__}"
 
-    def __init__(self, bot):
+    def __init__(self, bot: Red):
         self.bot = bot
         self.session = aiohttp.ClientSession()
         self.intro_gen = ["na", "rb", "gs", "rs", "dp", "bw", "xy", "sm", "ss"]
@@ -105,10 +109,9 @@ class Pokebase(commands.Cog):
                 if response.status != 200:
                     return None
                 pokemon_data = await response.json()
+                return pokemon_data
         except asyncio.TimeoutError:
             return None
-
-        return pokemon_data
 
     @cached(ttl=86400, cache=SimpleMemoryCache)
     async def get_species_data(self, pkmn_id: int):
@@ -221,7 +224,8 @@ class Pokebase(commands.Cog):
                     if x.get("language").get("name") == "en"
                 ]
                 flavor_text = (
-                    choice(flavor_text).replace("\n", " ").replace("\f", " ").replace("\r", " ")
+                    random.choice(flavor_text).replace("\n", " ").replace("\f", " ")
+                    .replace("\r", " ")
                 )
                 flavor_text = flavor_text
                 embed.description = f"**{genus_text}**\n\n{flavor_text}"
@@ -774,3 +778,139 @@ class Pokebase(commands.Cog):
             return
         else:
             await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
+
+    async def get_pokemon_image(self, url: str):
+        try:
+            async with self.session.get(url) as response:
+                if response.status != 200:
+                    return None
+                data = await response.read()
+                # data.seek(0)
+                return BytesIO(data)
+        except asyncio.TimeoutError:
+            return None
+
+    async def generate_image(self, poke_id, hide: bool):
+        base_image = Image.open(bundled_data_path(self) / "template.png")
+        bg_width, bg_height = base_image.size
+
+        base_url = f"https://assets.pokemon.com/assets/cms2/img/pokedex/full/{poke_id}.png"
+        pbytes = await self.get_pokemon_image(base_url)
+        # if pbytes is None:
+        #     return None
+
+        poke_image = Image.open(pbytes)
+
+        poke_width, poke_height = poke_image.size
+
+        poke_image_resized = poke_image.resize((int(poke_width * 1.6), int(poke_height * 1.6)))
+
+        if hide:
+            p_load = poke_image_resized.load()
+            for y in range(poke_image_resized.size[1]):
+                for x in range(poke_image_resized.size[0]):
+                    if p_load[x, y] == (0, 0, 0, 0):
+                        continue
+                    else:
+                        p_load[x, y] = (1, 1, 1)
+
+        paste_w = int((bg_width - poke_width) / 10)
+        paste_h = int((bg_height - poke_height) / 4)
+
+        base_image.paste(poke_image_resized, (paste_w, paste_h), poke_image_resized)
+
+        temp = BytesIO()
+        base_image.save(temp, "png")
+        temp.seek(0)
+        pbytes.close()
+        base_image.close()
+        poke_image.close()
+        return temp
+
+    @commands.command(aliases=["wtp"])
+    @commands.cooldown(1, 20, commands.BucketType.channel)
+    @commands.max_concurrency(1, commands.BucketType.channel)
+    @commands.bot_has_permissions(attach_files=True, embed_links=True)
+    async def whosthatpokemon(self, ctx: commands.Context, generation: str = None):
+        """Guess Who's that Pokémon within 15 seconds!
+
+        You can optionally specify `generation` from number 1 to 8,
+        to restrict this guessing game to specific Pokemon generation.
+
+        Otherwise, it will default to pulling random pokemon from all 8 Gens.
+        """
+        allowed_gens = ["gen1", "gen2", "gen3", "gen4", "gen5", "gen6", "gen7", "gen8"]
+        if generation and generation not in allowed_gens:
+            ctx.command.reset_cooldown(ctx)
+            return await ctx.send(
+                f"Only {', '.join(inline(x) for x in allowed_gens)} generations are allowed."
+            )
+
+        if generation == "gen1":
+            poke_id = random.randint(1, 151)
+        elif generation == "gen2":
+            poke_id = random.randint(152, 251)
+        elif generation == "gen3":
+            poke_id = random.randint(252, 386)
+        elif generation == "gen4":
+            poke_id = random.randint(387, 493)
+        elif generation == "gen5":
+            poke_id = random.randint(494, 649)
+        elif generation == "gen6":
+            poke_id = random.randint(650, 721)
+        elif generation == "gen7":
+            poke_id = random.randint(722, 809)
+        elif generation == "gen8":
+            poke_id = random.randint(810, 898)
+        else:
+            poke_id = random.randint(1, 898)
+
+        await ctx.channel.trigger_typing()
+        temp = await self.generate_image(str(poke_id).zfill(3), True)
+        initial_img = discord.File(temp, "whosthatpokemon.png")
+        message = await ctx.reply(
+            embed=discord.Embed(
+                title="You have __**15** seconds__ to answer. Who's that Pokémon?",
+                colour=await ctx.embed_colour(),
+            ).set_image(url="attachment://whosthatpokemon.png"),
+            file=initial_img,
+            mention_author=False,
+        )
+
+        names_data = (await self.get_species_data(poke_id)).get("names")
+        eligible_names = [x["name"].lower() for x in names_data]
+        english_name = [x["name"] for x in names_data if x["language"]["name"] == "en"][0]
+
+        def check(m):
+            return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
+
+        try:
+            answer = await self.bot.wait_for("message", check=check, timeout=15.0)
+        except asyncio.TimeoutError:
+            with suppress(discord.NotFound, discord.Forbidden, discord.HTTPException):
+                await message.delete()
+            return await ctx.send(
+                f"Time over! **{ctx.author}** did not guess the Pokémon within 15 seconds."
+            )
+
+        revealed = await self.generate_image(str(poke_id).zfill(3), False)
+        img = discord.File(revealed, "whosthatpokemon.png")
+        if answer and answer.content.lower() not in eligible_names:
+            with suppress(discord.NotFound, discord.Forbidden, discord.HTTPException):
+                await message.delete()
+            emb = discord.Embed(
+                title="Your guess is very wrong! 😔 😮\u200d💨",
+                colour=0xFF0000,
+            )
+            emb.description = f"It was ... **{english_name}**"
+            emb.set_image(url="attachment://whosthatpokemon.png")
+            emb.set_footer(text=f"Requested by {ctx.author}", icon_url=str(ctx.author.avatar_url))
+            return await ctx.channel.send(embed=emb, file=img)
+        else:
+            with suppress(discord.NotFound, discord.Forbidden, discord.HTTPException):
+                await message.delete()
+            emb = discord.Embed(title="🎉 POGGERS!! You guessed it right! 🎉", colour=0x00FF00)
+            emb.description = f"It was ... **{english_name}**"
+            emb.set_image(url=f"attachment://whosthatpokemon.png")
+            emb.set_footer(text=f"Requested by {ctx.author}", icon_url=str(ctx.author.avatar_url))
+            return await ctx.channel.send(embed=emb, file=img)
