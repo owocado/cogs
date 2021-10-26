@@ -1,16 +1,19 @@
 {
     "author": ["<@306810730055729152>"],
-    "install_msg": "This cog lets you fetch basic info about Reddit user accounts and existing subreddits.",
+    "install_msg": "Fetch random hot meme or basic info about Reddit user accounts and existing subreddits.",
     "name": "RedditInfo",
     "disabled": false,
-    "short": "Fetch basic info about Reddit user accounts and subreddits.",
-    "description": "Fetch basic info about Reddit user accounts and subreddits.",
+    "short": "Fetch hot meme or basic info about Reddit user accounts and subreddits.",
+    "description": "Fetch hot meme or basic info about Reddit user accounts and subreddits.",
     "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
     "tags": [
+        "meme",
+        "hot meme",
+        "reddit meme",
         "reddit",
         "subreddit"
     ],
-    "min_bot_version": "3.4.8",
+    "min_bot_version": "3.4.12",
     "hidden": false,
     "type": "COG"
 }
