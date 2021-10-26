@@ -97,32 +97,21 @@ class RedditInfo(commands.Cog):
             data = data.get("data")
             if data.get("over18") and not ctx.message.channel.is_nsfw():
                 return await ctx.send("That subreddit is marked NSFW. Search aborted in SFW channel.")
-            if not details:
-                em = discord.Embed(colour=discord.Colour.random())
-                em.title = data.get("url")
-                em.url = f"https://reddit.com{data.get('url')}"
-                em.description = data.get("public_description")
-                if data.get("banner_img") != "":
-                    em.set_image(url=str(data.get("banner_img")))
-                if data.get("community_icon") != "":
-                    em.set_thumbnail(url=str(data.get("community_icon")).split("?")[0])
-                cake_day = datetime.utcfromtimestamp(data.get("created_utc")).strftime('%b %d, %Y')
-                em.add_field(name="Created On", value=str(cake_day))
-                em.add_field(name="Subscribers", value=humanize_number(str(data.get("subscribers"))))
-                em.add_field(name="Active Users", value=humanize_number(str(data.get("active_user_count"))))
-            else:
-                em = discord.Embed(colour=discord.Colour.random())
-                em.title = data.get("url")
-                em.url = f"https://reddit.com{data.get('url')}"
-                em.description = data.get("public_description")
-                if data.get("banner_img") != "":
-                    em.set_image(url=str(data.get("banner_img")))
-                if data.get("community_icon") != "":
-                    em.set_thumbnail(url=str(data.get("community_icon")).split("?")[0])
-                cake_day = datetime.utcfromtimestamp(data.get("created_utc")).strftime('%b %d, %Y')
-                em.add_field(name="Created On", value=str(cake_day))
-                em.add_field(name="Subscribers", value=humanize_number(str(data.get("subscribers"))))
-                em.add_field(name="Active Users", value=humanize_number(str(data.get("active_user_count"))))
+
+            em = discord.Embed(colour=discord.Colour.random())
+            em.title = data.get("url")
+            em.url = f"https://reddit.com{data.get('url')}"
+            em.description = data.get("public_description")
+            if data.get("banner_img") != "":
+                em.set_image(url=data.get("banner_img") or "")
+            if data.get("community_icon") != "":
+                em.set_thumbnail(url=str(data.get("community_icon")).split("?")[0])
+            cake_day = datetime.utcfromtimestamp(data.get("created_utc")).strftime('%b %d, %Y')
+            em.add_field(name="Created On", value=str(cake_day))
+            em.add_field(name="Subscribers", value=humanize_number(str(data.get("subscribers"))))
+            em.add_field(name="Active Users", value=humanize_number(str(data.get("active_user_count"))))
+            if details:
+
                 em.add_field(name="Wiki enabled?", value="Yes" if data.get("wiki_enabled") else "No")
                 em.add_field(name="Users can assign flairs?", value="Yes" if data.get("can_assign_user_flair") else "No")
                 em.add_field(name="Galleries allowed?", value="Yes" if data.get("allow_galleries") else "No")
