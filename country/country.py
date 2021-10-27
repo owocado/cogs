@@ -8,15 +8,16 @@ import discord
 from redbot.core import commands
 from redbot.core.utils.chat_formatting import humanize_number
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
+# from redbot.core.utils.xmenus import BaseMenu, ListPages
 
 from .iso3166 import ALPHA3_CODES
 
 
 class Country(commands.Cog):
-    """Shows some information trivia about a country."""
+    """Shows basic statistics and info about a country."""
 
     __author__ = "ow0x"
-    __version__ = "0.0.7"
+    __version__ = "0.0.8"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -26,7 +27,7 @@ class Country(commands.Cog):
     @commands.command()
     @commands.bot_has_permissions(embed_links=True, add_reactions=True)
     async def country(self, ctx: commands.Context, *, name: str):
-        """Fetch some basic trivia and info about a country."""
+        """Fetch some basic statistics and info about a country."""
         await ctx.trigger_typing()
         try:
             async with aiohttp.ClientSession() as session:
@@ -46,7 +47,7 @@ class Country(commands.Cog):
             embed.title = data["name"]
             embed.url = "https://en.wikipedia.org/wiki/" + quote(data["name"])
             if data.get("flags"):
-                embed.set_thumbnail(url=[x for x in data["flags"] if x.endswith("png")][0])
+                embed.set_thumbnail(url=data["flags"].get("png") or "")
             embed.add_field(
                 name="Population", value=humanize_number(data.get("population", 0))
             )
@@ -54,10 +55,13 @@ class Country(commands.Cog):
                 embed.add_field(name="Area", value=f"{humanize_number(data['area'])} km²")
             embed.add_field(name="Calling Code", value="+" + data.get("callingCodes")[0])
             embed.add_field(name="Capital", value=f"\u200b{data.get('capital')}")
-            currencies = "\n".join([f"{x['name']} ({x['code']})" for x in data["currencies"]])
-            embed.add_field(name="Currency", value=currencies)
+            # Fix for Antarctica
+            if data.get("currencies"):
+                currencies = "\n".join([f"{x['name']} ({x['code']})" for x in data["currencies"]])
+                embed.add_field(name="Currency", value=currencies)
             embed.add_field(
-                name="Region / Continent", value=f"{data['region']} / {data['continent']}"
+                # "continent" key was changed to "region" now in API!
+                name="Region / Continent", value=f"{data['subregion']} / {data.get('region')}"
             )
             if data.get("topLevelDomain")[0] != "":
                 embed.add_field(name="Top Level Domain", value=data["topLevelDomain"][0])
@@ -87,7 +91,7 @@ class Country(commands.Cog):
                 description += f"**Other Names:** {alt_names}\n"
             embed.description = description
             embed.set_footer(
-                text=f"Page {i + 1} of {len(result)} | Powered by restcountries.com"
+                text=f"Page {i + 1} of {len(result)} • Powered by restcountries.com"
             )
             pages.append(embed)
 
@@ -95,3 +99,4 @@ class Country(commands.Cog):
             return await ctx.send(embed=pages[0])
         else:
             await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
+            # await BaseMenu(ListPages(pages), ctx=ctx).start(ctx)
