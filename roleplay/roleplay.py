@@ -2,6 +2,7 @@ from random import choice
 
 import discord
 from redbot.core import Config, commands
+from redbot.core.bot import Red
 from redbot.core.commands import Context
 from redbot.core.utils.chat_formatting import bold, quote
 
@@ -11,15 +12,15 @@ from .constants import *
 class Roleplay(commands.Cog):
     """Do roleplay with your Discord friends or virtual strangers."""
 
-    __author__ = "ow0x (<@306810730055729152>)"
-    __version__ = "1.0.1"
+    __author__ = "ow0x"
+    __version__ = "1.0.2"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
         pre_processed = super().format_help_for_context(ctx)
         return f"{pre_processed}\n\nAuthor: {self.__author__}\nCog Version: {self.__version__}"
 
-    def __init__(self, bot):
+    def __init__(self, bot: Red):
         self.bot = bot
         self.config = Config.get_conf(self, 123456789987654321, force_registration=True)
         default_global = {"schema_version": 1}
@@ -60,6 +61,9 @@ class Roleplay(commands.Cog):
         self.config.register_global(**default_global)
         self.config.register_member(**default_user)
         self.config.register_user(**default_user)
+        # TODO: you can do better
+        if self.bot.get_cog("General"):
+            self.bot.remove_command("hug")
 
     @commands.command()
     @commands.guild_only()
@@ -256,7 +260,7 @@ class Roleplay(commands.Cog):
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 10, commands.BucketType.member)
-    async def hugs(self, ctx: Context, *, member: discord.Member):
+    async def hug(self, ctx: Context, *, member: discord.Member):
         """Hug a user virtually on Discord!"""
         if member.id == ctx.author.id:
             return await ctx.send(
