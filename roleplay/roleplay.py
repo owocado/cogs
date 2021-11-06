@@ -13,7 +13,7 @@ class Roleplay(commands.Cog):
     """Do roleplay with your Discord friends or virtual strangers."""
 
     __author__ = "ow0x"
-    __version__ = "1.0.2"
+    __version__ = "1.0.3"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -324,14 +324,12 @@ class Roleplay(commands.Cog):
         await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
+    @commands.is_nsfw()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 10, commands.BucketType.member)
     async def kiss(self, ctx: Context, *, member: discord.Member):
         """[NSFW] Kiss a user! Only allowed in NSFW channel."""
-        if not ctx.channel.is_nsfw():
-            return await ctx.send("NSFW command blocked in non NSFW channel.")
-
         if member.id == ctx.author.id:
             return await ctx.send(
                 f"Poggers {bold(ctx.author.name)}, you just kissed yourself! LOL!!! 💋"
@@ -361,14 +359,12 @@ class Roleplay(commands.Cog):
         await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
+    @commands.is_nsfw()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 10, commands.BucketType.member)
     async def lick(self, ctx: Context, *, member: discord.Member):
         """[NSFW] Lick a user! Only allowed in NSFW channel."""
-        if not ctx.channel.is_nsfw():
-            return await ctx.send("NSFW command blocked in non NSFW channel.")
-
         if member.id == ctx.me.id:
             return await ctx.send(
                 f"{ctx.author.mention} You wanna lick a bot? Very horny! Here, lick this: 🍆"

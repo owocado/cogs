@@ -101,9 +101,10 @@ HUG = [
     "https://media1.tenor.com/images/21ed61a5f10121c402e4a221bb4355b3/tenor.gif",
     "https://media1.tenor.com/images/dd1b8fe694d7bfba2ae87e1ede030244/tenor.gif",
     "https://media1.tenor.com/images/5ce46aca3246d88b81e99c4a8eaaf84c/tenor.gif",
+    "https://media1.tenor.com/images/0a9827e250d6c8440855457585907bf1/tenor.gif",
+    "https://media1.tenor.com/images/923d9f0b5e35184a3f5af71c08ccd95b/tenor.gif",
     "https://safebooru.org/images/1174/5ebeacd87b22a0c5949ecb875667ae75702c2fed.gif",
     "https://safebooru.org/images/160/ba09bc95bc05b4f47af22671950e66f085c7ea9e.gif",
-    "https://media1.tenor.com/images/0a9827e250d6c8440855457585907bf1/tenor.gif",
 ]
 CUDDLE = [
     "https://cdn.nekos.life/v3/sfw/gif/cuddle/cuddle_001.gif",
@@ -465,6 +466,7 @@ LICK = [
     "https://media1.tenor.com/images/feeef4685f9307b76c78a22ba0a69f48/tenor.gif",
     "https://media1.tenor.com/images/efd46743771a78e493e66b5d26cd2af1/tenor.gif",
     "https://media1.tenor.com/images/e5bcf451fdc6a47e1316c11a7f9d9b48/tenor.gif",
+    "https://media1.tenor.com/images/6b701503b0e5ea725b0b3fdf6824d390/tenor.gif",
 ]
 HIGHFIVE = [
     "https://cdn.weeb.sh/images/r1MMK1msb.gif",
