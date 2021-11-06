@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 import discord
 from dateutil import relativedelta
 from redbot.core import commands
-from redbot.core.commands import Context, GuildConverter
 from redbot.core.utils import AsyncIter
 from redbot.core.utils.chat_formatting import pagify
 from redbot.core.utils.menus import close_menu, menu, DEFAULT_CONTROLS
@@ -16,7 +15,7 @@ class BadgeTools(commands.Cog):
     __author__ = ["ow0x", "Fixator10"]
     __version__ = "0.1.0"
 
-    def format_help_for_context(self, ctx: Context) -> str:
+    def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
         pre_processed = super().format_help_for_context(ctx)
         return f"{pre_processed}\n\nCog Version: {self.__version__}"
@@ -36,11 +35,9 @@ class BadgeTools(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
-    async def badgecount(self, ctx: Context, guild: GuildConverter = None):
+    async def badgecount(self, ctx: commands.Context):
         """Shows the count of user profile badges of the server."""
-        guild = guild or ctx.guild
-        if not await self.bot.is_owner(ctx.author):
-            guild = ctx.guild
+        guild = ctx.guild
 
         async with ctx.typing():
             count = Counter()
@@ -65,7 +62,7 @@ class BadgeTools(commands.Cog):
     @commands.is_owner()
     @commands.guild_only()
     @commands.bot_has_permissions(add_reactions=True, embed_links=True)
-    async def hasbadge(self, ctx: Context, *, badge: str):
+    async def hasbadge(self, ctx: commands.Context, *, badge: str):
         """Returns the list of users with X profile badge in the server."""
         badge = badge.replace(" ", "_").lower()
 
@@ -103,11 +100,9 @@ class BadgeTools(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(add_reactions=True, embed_links=True)
-    async def boosters(self, ctx: Context, guild: GuildConverter = None):
+    async def boosters(self, ctx: commands.Context):
         """Returns the list of active boosters of the server."""
-        guild = guild or ctx.guild
-        if not await self.bot.is_owner(ctx.author):
-            guild = ctx.guild
+        guild = ctx.guild
 
         if not guild.premium_subscribers:
             return await ctx.send(f"{guild.name} does not have any boost(er)s yet.")
