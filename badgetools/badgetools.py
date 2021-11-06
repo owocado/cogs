@@ -61,7 +61,7 @@ class BadgeTools(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.command(hidden=True)
     @commands.is_owner()
     @commands.guild_only()
     @commands.bot_has_permissions(add_reactions=True, embed_links=True)
@@ -110,9 +110,9 @@ class BadgeTools(commands.Cog):
             guild = ctx.guild
 
         if not guild.premium_subscribers:
-            return await ctx.send(f"`{guild.name}` does not have any boost(er)s yet.")
+            return await ctx.send(f"{guild.name} does not have any boost(er)s yet.")
 
-        b_list = "`[since ~{since:>9}]`  {user_name_tag}"
+        b_list = "`[since {since:>9}]`  {user_name_tag}"
         all_boosters = [
             b_list.format(
                 since=self._relative_timedelta(user.premium_since),
@@ -121,10 +121,7 @@ class BadgeTools(commands.Cog):
             for user in sorted(guild.premium_subscribers, key=lambda x: x.premium_since)
         ]
         output = "\n".join(all_boosters)
-        footer = (
-            f"{guild.name} currently has {guild.premium_subscription_count} boosts "
-            + f"thanks to these {len(guild.premium_subscribers)} boosters! ❤️"
-        )
+        footer = f"{guild.premium_subscription_count} boosts from {len(guild.premium_subscribers)} boosters!"
 
         embed_list = []
         for page in pagify(output, ["\n"], page_length=1500):
@@ -139,14 +136,13 @@ class BadgeTools(commands.Cog):
     @staticmethod
     def _relative_timedelta(date_time):
         dt1 = datetime.now(timezone.utc).replace(tzinfo=None)
-        dt2 = date_time
 
-        diff = relativedelta.relativedelta(dt1, dt2)
+        diff = relativedelta.relativedelta(dt1, date_time)
 
         yrs, mths, days = (diff.years, diff.months, diff.days)
         hrs, mins, secs = (diff.hours, diff.minutes, diff.seconds)
 
-        pretty = f"{yrs}y {mths}mth {days}d {hrs}h {mins}m {secs}s"
+        pretty = f"{yrs}y {mths}mo {days}d {hrs}h {mins}m {secs}s"
         to_join = " ".join([x for x in pretty.split() if x[0] != "0"][:2])
 
         return to_join
