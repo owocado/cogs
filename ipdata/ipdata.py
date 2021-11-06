@@ -60,19 +60,19 @@ class IPData(commands.Cog):
         embed.add_field(name="Latitude/Longitude", value=lat_long_maps)
         threat_info = ""
         if data.get("threat").get("is_anonymous"):
-            threat_info += "✅ : Is anonymous!"
+            threat_info += "✅ : Is anonymous!\n"
         if data.get("threat").get("is_bogon"):
-            threat_info += "✅ : Is Bogon?"
+            threat_info += "✅ : Is Bogon!\n"
         if data.get("threat").get("is_known_abuser"):
-            threat_info += "✅ : Is known abuser!"
+            threat_info += "✅ : Is known abuser!\n"
         if data.get("threat").get("is_known_attacker"):
-            threat_info += "✅ : Is attacker!"
+            threat_info += "✅ : Is attacker!\n"
         if data.get("threat").get("is_proxy"):
-            threat_info += "✅ : Is proxy!"
+            threat_info += "✅ : Is proxy!\n"
         if data.get("threat").get("is_threat"):
-            threat_info += "✅ : Is threat!"
+            threat_info += "✅ : Is threat!\n"
         if data.get("threat").get("is_tor"):
-            threat_info += "✅ : Is TOR!"
+            threat_info += "✅ : Is TOR!\n"
         if threat_info:
             embed.description = "**Threat Info:**\n\n" + threat_info
 
