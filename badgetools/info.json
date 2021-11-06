@@ -4,7 +4,7 @@
     "description": "Various tools to show stats about your server's user profile badges.",
     "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
     "install_msg": "⚠ **THIS COG IS NOT FOR GENERAL USE** ⚠\n This cog was only made for educational purposes only. I do not recommend installing this cog on a public bot.\nDO NOT LOAD THIS COG IF YOU DO NOT AGREE TO THE RISKS. NOT ALL RISKS HAVE BEEN EXPLAINED HERE. USE IT AT YOUR OWN RISK.",
-    "author": ["ow0x", "Fixator10"],
+    "author": ["ow0x"],
     "required_cogs": {},
     "requirements": [],
     "tags": ["badgetools", "badges", "badgecount", "boosters"],
