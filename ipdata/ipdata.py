@@ -17,7 +17,8 @@ class IPData(commands.Cog):
         return f"{pre_processed}\n\nAuthor: {self.__author__}\nCog Version: {self.__version__}"
 
     @commands.command()
-    @commands.cooldown(1, 60, commands.BucketType.user)
+    # why this stupid command owner only lmao :kekw: you ask? keep wondering
+    @commands.is_owner()
     @commands.bot_has_permissions(embed_links=True)
     async def ip(self, ctx: commands.Context, ip_address: str):
         """Fetch various geolocation data about a provided public IP address."""
@@ -82,5 +83,4 @@ class IPData(commands.Cog):
         if threat_info:
             embed.description = "**Threat Info:**\n\n" + threat_info
 
-        delete_delay = None if await ctx.bot.is_owner(ctx.author) else 10.0
-        await ctx.send(embed=embed, delete_after=delete_delay)
+        await ctx.send(embed=embed)
