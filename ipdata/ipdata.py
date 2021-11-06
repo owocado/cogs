@@ -76,5 +76,5 @@ class IPData(commands.Cog):
         if threat_info:
             embed.description = "**Threat Info:**\n\n" + threat_info
 
-        delete_delay = None if await ctx.bot.is_owner(ctx.author) else 5.0
+        delete_delay = None if await ctx.bot.is_owner(ctx.author) else 10.0
         await ctx.send(embed=embed, delete_after=delete_delay)
