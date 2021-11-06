@@ -4,5 +4,4 @@ __red_end_user_data_statement__ = "This cog does not persistently store data or 
 
 
 async def setup(bot):
-    n = IPData(bot)
-    bot.add_cog(n)
+    bot.add_cog(IPData())
