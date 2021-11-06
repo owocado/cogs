@@ -73,6 +73,8 @@ class IPData(commands.Cog):
             threat_info += "✅ : Is threat!"
         if data.get("threat").get("is_tor"):
             threat_info += "✅ : Is TOR!"
-        embed.description = "**Threat Info:**\n\n" + threat_info
+        if threat_info:
+            embed.description = "**Threat Info:**\n\n" + threat_info
 
-        await ctx.send(embed=embed)
+        delete_delay = None if await ctx.bot.is_owner(ctx.author) else 5.0
+        await ctx.send(embed=embed, delete_after=delete_delay)
