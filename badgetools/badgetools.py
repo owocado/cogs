@@ -12,7 +12,7 @@ from redbot.core.utils.menus import close_menu, menu, DEFAULT_CONTROLS
 class BadgeTools(commands.Cog):
     """Various commands to show the stats about users' profile badges."""
 
-    __author__ = ["ow0x", "Fixator10"]
+    __author__ = "ow0x"
     __version__ = "0.1.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
