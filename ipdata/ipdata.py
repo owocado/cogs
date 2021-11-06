@@ -47,17 +47,23 @@ class IPData(commands.Cog):
             embed.add_field(name="ASN Type", value=str(data["asn"].get("type").upper()))
             embed.add_field(name="ASN Domain", value=str(data["asn"].get("domain")))
             embed.add_field(name="ASN Route", value=str(data["asn"].get("route")))
-        embed.add_field(name="City", value=str(data.get("city")))
-        embed.add_field(name="Region", value=str(data.get("region")))
-        embed.add_field(name="Country", value=str(data.get("country_name")))
-        embed.add_field(name="Continent", value=str(data.get("continent_name")))
-        embed.add_field(name="Calling Code", value="+" + str(data.get("calling_code")))
+        if data.get("city"):
+            embed.add_field(name="City", value=str(data.get("city")))
+        if data.get("region"):
+            embed.add_field(name="Region", value=str(data.get("region")))
+        if data.get("country_name"):
+            embed.add_field(name="Country", value=str(data.get("country_name")))
+        if data.get("continent_name"):
+            embed.add_field(name="Continent", value=str(data.get("continent_name")))
+        if data.get("calling_code"):
+            embed.add_field(name="Calling Code", value="+" + str(data.get("calling_code")))
         lat_long_maps = (
             f"{data.get('latitude')}, {data.get('longitude')}\n"
             + "[See it on Google Maps](https://www.google.com/maps?q="
             + f"{data.get('latitude')},{data.get('longitude')})"
         )
-        embed.add_field(name="Latitude/Longitude", value=lat_long_maps)
+        if data.get("latitude") and data.get("longitude"):
+            embed.add_field(name="Latitude/Longitude", value=lat_long_maps)
         threat_info = ""
         if data.get("threat").get("is_anonymous"):
             threat_info += "✅ : Is anonymous!\n"
