@@ -1,6 +1,6 @@
-import aiohttp
 import asyncio
 
+import aiohttp
 import discord
 from redbot.core import commands
 
@@ -8,11 +8,8 @@ from redbot.core import commands
 class IPData(commands.Cog):
     """IP Geolocation and Proxy Detection cog."""
 
-    __author__ = "siu3334 (<@306810730055729152>)"
-    __version__ = "0.0.10"
-
-    def __init__(self, bot):
-        self.bot = bot
+    __author__ = "ow0x"
+    __version__ = "0.0.11"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -20,37 +17,30 @@ class IPData(commands.Cog):
         return f"{pre_processed}\n\nAuthor: {self.__author__}\nCog Version: {self.__version__}"
 
     @commands.command()
-    @commands.is_owner()
+    @commands.cooldown(1, 60, commands.BucketType.user)
     @commands.bot_has_permissions(embed_links=True)
     async def ip(self, ctx: commands.Context, ip_address: str):
-        """Fetch various geolocation data about a provided public IP address.
-
-        If you have your own API key and if you want to set it, you can do:
-        ```
-        [p]set api ipdata api_key <api_key>
-        ```
-        """
+        """Fetch various geolocation data about a provided public IP address."""
         api_key = (await ctx.bot.get_shared_api_tokens("ipdata")).get("api_key")
-        if not api_key:
+        if api_key is None:
             api_key = "a01cfa2e81e015d3e07c65b13d199cdc9e7c4f7fa4e4a3c3bdea3923"
 
         await ctx.trigger_typing()
         base_url = f"https://api.ipdata.co/{ip_address}?api-key={api_key}"
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(base_url) as response:
-                    if response.status in [400, 401, 403]:
-                        return await ctx.send((await response.json())["message"])
-                    elif response.status != 200:
-                        return await ctx.send(f"https://http.cat/{response.status}")
-                    data = await response.json()
+            async with aiohttp.request("GET", base_url) as response:
+                if response.status in [400, 401, 403]:
+                    return await ctx.send((await response.json())["message"])
+                elif response.status != 200:
+                    return await ctx.send(f"https://http.cat/{response.status}")
+                data = await response.json()
         except asyncio.TimeoutError:
             return await ctx.send("Operation timed out.")
 
         embed = discord.Embed(color=await ctx.embed_colour())
         embed.set_author(
             name=f"Info for IP: {data.get('ip')}",
-            icon_url=str(data.get("flag")),
+            icon_url=data.get("flag") or "",
         )
         if data.get("asn"):
             embed.add_field(name="ASN (ISP)", value="\u200b" + str(data["asn"].get("name")))
