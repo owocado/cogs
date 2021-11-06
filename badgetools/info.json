@@ -9,7 +9,7 @@
     "requirements": [],
     "tags": ["badgetools", "badges", "badgecount", "boosters"],
     "min_bot_version": "3.4.0",
-    "hidden": false,
+    "hidden": true,
     "disabled": false,
     "type": "COG"
 }
