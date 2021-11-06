@@ -4,7 +4,7 @@
     "description": "This cog returns various info about any valid public IP address.",
     "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
     "install_msg": "Thanks for installing. This cog shows various info about given **>> __Public IP address__ <<** from ipdata.co API.",
-    "author": ["siu3334"],
+    "author": ["ow0x"],
     "required_cogs": {},
     "requirements": [],
     "tags": ["ip", "whois", "ipdata"],
