@@ -27,7 +27,7 @@ class BadgeTools(commands.Cog):
         cog = self.bot.get_cog("Userinfo")
         if cog is None:
             return f"{badge_name.replace('_', ' ').title()} :"
-        emoji = str(cog.badge_emojis[badge_name])
+        emoji = str(cog.badge_emojis.get(badge_name))
         if "848561838974697532" in str(emoji):
             emoji = "<:verified_bot:848557763328344064>"
         return emoji
