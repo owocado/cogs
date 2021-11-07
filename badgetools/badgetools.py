@@ -78,7 +78,7 @@ class BadgeTools(commands.Cog):
         async for user in AsyncIter(sorted(ctx.guild.members, key=lambda x: x.joined_at)):
             async for flag in AsyncIter(user.public_flags.all()):
                 if flag.name == badge:
-                    list_of.append(f"str(user)")
+                    list_of.append(f"{user}")
 
         output = "\n".join(list_of)
 
