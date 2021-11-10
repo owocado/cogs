@@ -4,23 +4,25 @@ from datetime import datetime, timezone
 import discord
 from dateutil import relativedelta
 from redbot.core import commands
+from redbot.core.bot import Red
 from redbot.core.utils import AsyncIter
 from redbot.core.utils.chat_formatting import pagify
 from redbot.core.utils.menus import close_menu, menu, DEFAULT_CONTROLS
+# from redbot.core.utils.xmenus import BaseMenu, ListPages
 
 
 class BadgeTools(commands.Cog):
     """Various commands to show the stats about users' profile badges."""
 
     __author__ = "ow0x"
-    __version__ = "0.1.0"
+    __version__ = "0.2.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
         pre_processed = super().format_help_for_context(ctx)
         return f"{pre_processed}\n\nCog Version: {self.__version__}"
 
-    def __init__(self, bot):
+    def __init__(self, bot: Red):
         self.bot = bot
 
     def badge_emoji(self, badge_name: str):
@@ -31,6 +33,23 @@ class BadgeTools(commands.Cog):
         if "848561838974697532" in str(emoji):
             emoji = "<:verified_bot:848557763328344064>"
         return emoji
+
+    def statusmoji(self, member: discord.Member):
+        cog = self.bot.get_cog("Userinfo")
+        if cog is None:
+            return ""
+        if member.is_on_mobile():
+            return f"{cog.status_emojis.get('mobile', '📱')}  "
+        elif member.status.name == "online":
+            return f"{cog.status_emojis.get('online', '🟢')}  "
+        elif member.status.name == "idle":
+            return f"{cog.status_emojis.get('idle', '🟠')}  "
+        elif member.status.name == "dnd":
+            return f"{cog.status_emojis.get('dnd', '🔴')}  "
+        elif any(a.type is discord.ActivityType.streaming for a in member.activities):
+            return f"{cog.status_emojis.get('streaming', '🟣')}  "
+        else:
+            return f"{cog.status_emojis.get('offline', '⚫')}  "
 
     @commands.command()
     @commands.guild_only()
@@ -78,24 +97,27 @@ class BadgeTools(commands.Cog):
         async for user in AsyncIter(sorted(ctx.guild.members, key=lambda x: x.joined_at)):
             async for flag in AsyncIter(user.public_flags.all()):
                 if flag.name == badge:
-                    list_of.append(f"{user}")
+                    list_of.append(f"{self.statusmoji(user)}{user}")
 
         output = "\n".join(list_of)
 
-        embed_list = []
+        pages = []
         for page in pagify(output, ["\n"], page_length=1000):
             em = discord.Embed(colour=await ctx.embed_color())
             em.set_author(name=str(ctx.guild.name), icon_url=str(ctx.guild.icon_url))
             em.description = page
             footer = f"Found {len(list_of)} users with {badge.replace('_', ' ').title()} badge!"
             em.set_footer(text=footer)
-            embed_list.append(em)
+            pages.append(em)
 
-        if not embed_list:
+        if not pages:
             return await ctx.send(f"I could not find any users with `{badge}` badge.")
 
-        controls = {"❌": close_menu} if len(embed_list) == 1 else DEFAULT_CONTROLS
-        await menu(ctx, embed_list, controls=controls, timeout=60.0)
+        controls = {"❌": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
+        await menu(ctx, pages, controls=controls, timeout=60.0)
+
+        # For my bot which is on dpy2
+        # await BaseMenu(ListPages(pages), ctx=ctx).start(ctx)
 
     @commands.command()
     @commands.guild_only()
@@ -107,9 +129,10 @@ class BadgeTools(commands.Cog):
         if not guild.premium_subscribers:
             return await ctx.send(f"{guild.name} does not have any boost(er)s yet.")
 
-        b_list = "`[since {since:>9}]`  {user_name_tag}"
+        b_list = "{status}`[since {since:>9}]`  {user_name_tag}"
         all_boosters = [
             b_list.format(
+                status=self.statusmoji(user),
                 since=self._relative_timedelta(user.premium_since),
                 user_name_tag=str(user),
             )
@@ -118,15 +141,17 @@ class BadgeTools(commands.Cog):
         output = "\n".join(all_boosters)
         footer = f"{guild.premium_subscription_count} boosts from {len(guild.premium_subscribers)} boosters!"
 
-        embed_list = []
+        pages = []
         for page in pagify(output, ["\n"], page_length=1500):
             em = discord.Embed(colour=await ctx.embed_color())
             em.description = page
             em.set_footer(text=footer)
-            embed_list.append(em)
+            pages.append(em)
 
-        controls = {"❌": close_menu} if len(embed_list) == 1 else DEFAULT_CONTROLS
-        await menu(ctx, embed_list, controls=controls, timeout=60.0)
+        controls = {"❌": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
+        await menu(ctx, pages, controls=controls, timeout=60.0)
+        # For my bot which is on dpy2
+        # await BaseMenu(ListPages(pages), ctx=ctx).start(ctx)
 
     @staticmethod
     def _relative_timedelta(date_time):
