@@ -5,7 +5,7 @@ class Jishaku(*OPTIONAL_FEATURES, *STANDARD_FEATURES):
     """Jishaku, a debugging and testing cog for discord.py rewrite bots."""
     pass
 
-    __version__ = "2.3.0"
+    __version__ = "2.3.2"
     __author__ = "Gorialis"
 
     def format_help_for_context(self, ctx):
