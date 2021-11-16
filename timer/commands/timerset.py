@@ -1,6 +1,6 @@
 from abc import ABC
 
-from redbot.core import checks, commands
+from redbot.core import commands
 
 from ..abc import CompositeMetaClass, MixinMeta
 from ..pcx_lib import SettingDisplay, checkmark
@@ -8,7 +8,7 @@ from ..pcx_lib import SettingDisplay, checkmark
 
 class TimerSetCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
     @commands.group()
-    @checks.admin_or_permissions(manage_guild=True)
+    @commands.admin_or_permissions(manage_guild=True)
     async def timerset(self, ctx: commands.Context):
         """Manage Timers settings."""
         pass
@@ -71,7 +71,7 @@ class TimerSetCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
         )
 
     @timerset.command()
-    @checks.is_owner()
+    @commands.is_owner()
     async def max(self, ctx: commands.Context, maximum: int):
         """Global: Set the maximum number of timers a user can create at one time."""
         await self.config.max_user_timers.set(maximum)

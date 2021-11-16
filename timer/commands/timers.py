@@ -46,16 +46,14 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
         )
 
     @commands.group(invoke_without_command=True)
+    @commands.cooldown(1, 3, commands.BucketType.user)
     async def timer(self, ctx: Context, *, time_and_optional_text: str = ""):
         """Create a timer with optional timer text.
 
-        Either of the following formats are allowed:
-        `[p]timer [in] <time> [to] [timer_text]`
-        `[p]timer [to] [timer_text] [in] <time>`
-
         `<time>` supports commas, spaces, and "and":
-        `12h30m`, `6 hours and 15 minutes`
-        Accepts seconds, minutes, hours, days, and weeks.
+        • i.e. `12h30m`, `6 hours and 15 minutes`
+
+        Accepts seconds, minutes, hours, upto 1 day.
 
         Add `every <repeat_time>` to the command for repeating timers.
 
@@ -66,7 +64,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
         """
         await self._create_timer(ctx, time_and_optional_text)
 
-    @timer.command(aliases=["ls"])
+    @timer.command()
     async def list(self, ctx: Context, sort: str = "time"):
         """Show a list of all of your timers.
 
@@ -94,24 +92,20 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
         embed = discord.Embed(color=await ctx.embed_color())
         embed.set_author(
             name=f"{ctx.author.name}'s pending timers:",
-            icon_url=str(ctx.author.avatar_url),
+            icon_url=str(ctx.author.display_avatar.url),
         )
         current_time_seconds = int(current_time.time())
+        timer_text = ""
         for timer in to_send:
             delta = timer["FUTURE"] - current_time_seconds
-            timer_title = "**[`{}`]**  {}".format(
-                timer["USER_TIMER_ID"],
-                timer["TIMER"],
+            timer_text += (
+                f"**[`{timer['USER_TIMER_ID']}`]**  <t:{timer['FUTURE']}:R>"
+                f"{' (for: ' + timer['TIMER'] + ')' if timer['TIMER'] != ''  else ''}\n"
             )
-            timer_text = "╰⇢ In {}\n\n".format(htd(seconds=delta) if delta > 1 else "Now!")
             if "REPEAT" in timer and timer["REPEAT"]:
-                timer_text += f"ℹ *repeating every `{htd(seconds=timer['REPEAT'])}`*"
+                timer_text += f"ℹ  *repeating every `{htd(seconds=timer['REPEAT'])}`*\n"
 
-            embed.add_field(
-                name=timer_title,
-                value=timer_text,
-                inline=False,
-            )
+        embed.description = timer_text
         await embed_splitter(embed, ctx.channel)
 
     @timer.group(aliases=["edit"])
@@ -132,7 +126,9 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
                 time, maximum=timedelta(hours=24), minimum=timedelta(seconds=20)
             )
             if not time_delta:
-                return await ctx.send_help()
+                return await ctx.send(
+                    "❌ I couldn't understand the format of your timer time or text."
+                )
         except BadArgument as ba:
             return await reply(ctx, str(ba))
         future = int(current_time.time() + time_delta.total_seconds())
@@ -144,7 +140,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
             current_timers.remove(old_timer)
             current_timers.append(new_timer)
         message = (
-            f"Timer with ID# **{timer_id}** will now remind you in {future_text}"
+            f"Timer with ID# **{timer_id}** will now ping you <t:{future}:R>"
         )
         if "REPEAT" in new_timer and new_timer["REPEAT"]:
             message += f", repeating every {htd(seconds=new_timer['REPEAT'])} thereafter."
@@ -154,8 +150,8 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
 
     @modify.command()
     async def repeat(self, ctx: Context, timer_id: int, *, time: str):
-        """Modify the repeating time of an existing timer. 
-        
+        """Modify the repeating time of an existing timer.
+
         Pass "0" to <time> in order to disable repeating.
         """
         users_timers = await self.get_user_timers(ctx.author.id)
@@ -171,8 +167,8 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
                 current_timers.append(new_timer)
             await reply(
                 ctx,
-                f"Timer with ID# **{timer_id}** will not repeat anymore. The final timer will "
-                + f"be sent in {htd(seconds=int(new_timer['FUTURE'] - current_time.time()))}.",
+                f"Timer with ID# **{timer_id}** will not repeat anymore. "
+                f"The final timer will be sent <t:{new_timer['FUTURE']}:R>.",
             )
         else:
             try:
@@ -183,7 +179,9 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
                     allowed_units=["hours", "minutes"]
                 )
                 if not time_delta:
-                    return await ctx.send_help()
+                    return await ctx.send(
+                        "❌ I couldn't understand the format of your timer time or text."
+                    )
             except BadArgument as ba:
                 return await reply(ctx, str(ba))
 
@@ -194,9 +192,8 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
                 current_timers.append(new_timer)
             await reply(
                 ctx,
-                f"Timer with ID# **{timer_id}** will now remind you " +
-                f"every {htd(timedelta=time_delta)}, with the first timer being sent "
-                + f"in {htd(seconds=int(new_timer['FUTURE'] - current_time.time()))}.",
+                f"Timer with ID# **{timer_id}** will now ping you every "
+                f"{htd(timedelta=time_delta)}, with the first timer <t:{new_timer['FUTURE']}:R>.",
             )
 
     @modify.command()
@@ -254,13 +251,12 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
 
         if ctx.message.reference:
             message = ctx.message.reference.resolved
-            if message.author.id == 172002275412279296:
-                time_and_optional_text = (
-                    message.embeds[0].fields[0].value
-                    .replace("*", "")
-                    .replace("`", "")
-                    .replace("!", "")
-                )
+            em = message.embeds
+            RGX = re.compile(r"00`\*+h\*+ |\*+|`+|!+")
+            if em and em[0].fields and message.author.id == 172002275412279296:
+                time_and_optional_text = re.sub(RGX, "", em[0].fields[0].value)
+            elif em and em[0].title and em[0].description and message.author.id == 824029844496056364:
+                time_and_optional_text = re.sub(RGX, "", em[0].title + " " + em[0].description)
             else:
                 time_and_optional_text = message.content.rstrip("*_.`!")
 
@@ -273,7 +269,9 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
         except BadArgument as ba:
             return await reply(ctx, str(ba))
         if not timer_time:
-            return await ctx.send_help()
+            return await ctx.send(
+                "❌ I couldn't understand the format of your timer time or text."
+            )
         if len(timer_text) > 200:
             return await reply(ctx, "Your timer text is too long.")
 
@@ -303,9 +301,9 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
         if repeat:
             message += f"every {htd(timedelta=timer_time_repeat)}"
             if timer_time_repeat != timer_time:
-                message += f", with the first timer in {future_text}."
+                message += f", with the first timer <t:{future}:R>."
         else:
-            message += f"in {future_text}."
+            message += f"<t:{future}:R>."
         await reply(ctx, message)
 
         if (
@@ -327,7 +325,7 @@ class TimerCommands(MixinMeta, ABC, metaclass=CompositeMetaClass):
 
         Takes all "every {time_repeat}", "in {time}", and "{time}" from the start of timer_text.
         At most one instance of "every {time_repeat}", "in {time}" or "{time}" will be consumed.
-        If the parser runs into a timedelta (in or every) that has already been parsed, 
+        If the parser runs into a timedelta (in or every) that has already been parsed,
         parsing stops. Same process is then repeated from the end of the string.
 
         If an "every" time is provided but no "in" time,

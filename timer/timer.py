@@ -1,10 +1,12 @@
 """Timer cog for Red-DiscordBot ported and enhanced by PhasecoreX."""
 import asyncio
+import contextlib
 import logging
 import time as current_time
 
 import discord
 from redbot.core import Config, commands
+from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import humanize_timedelta as htd
 
 from .abc import CompositeMetaClass
@@ -28,7 +30,7 @@ class Timer(Commands, commands.Cog, metaclass=CompositeMetaClass):
     }
     SEND_DELAY_SECONDS = 30
 
-    def __init__(self, bot):
+    def __init__(self, bot: Red):
         """Set up the cog."""
         super().__init__()
         self.bot = bot
@@ -40,6 +42,8 @@ class Timer(Commands, commands.Cog, metaclass=CompositeMetaClass):
         self.bg_loop_task = None
         self.me_too_timers = {}
         self.timer_emoji = "\N{ALARM CLOCK}"
+        with contextlib.suppress(RuntimeError, ValueError):
+            self.bot.add_dev_env_value(self.__class__.__cog_name__.lower(), lambda x: self)
 
     async def initialize(self):
         """Perform setup actions before loading cog."""
