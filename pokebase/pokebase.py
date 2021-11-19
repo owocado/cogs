@@ -19,6 +19,7 @@ from redbot.core.commands import Context
 from redbot.core.data_manager import bundled_data_path
 from redbot.core.utils.chat_formatting import bold, humanize_number, inline, pagify
 from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
+# from redbot.core.utils.xmenus import BaseMenu, ListPages
 
 cache = SimpleMemoryCache()
 
@@ -28,8 +29,8 @@ API_URL = "https://pokeapi.co/api/v2"
 class Pokebase(commands.Cog):
     """Search for various info about a Pokémon and related data."""
 
-    __authors__ = "phalt", "ow0x"
-    __version__ = "0.4.1"
+    __authors__ = "ow0x, phalt"
+    __version__ = "0.4.2"
 
     def format_help_for_context(self, ctx: Context) -> str:
         """Thanks Sinbad!"""
@@ -78,7 +79,7 @@ class Pokebase(commands.Cog):
         }
 
     def cog_unload(self):
-        self.bot.loop.create_task(self.session.close())
+        asyncio.create_task(self.session.close())
 
     def get_generation(self, pkmn_id: int):
         if pkmn_id > 898:
@@ -137,7 +138,7 @@ class Pokebase(commands.Cog):
 
         return evolution_data
 
-    @commands.command()
+    @commands.command(aliases=("pokemon", "pokedex"))
     @cached(ttl=86400, cache=SimpleMemoryCache)
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 5, commands.BucketType.member)
@@ -145,8 +146,9 @@ class Pokebase(commands.Cog):
         """Search for various info about a Pokémon.
 
         You can search by name or ID of a Pokémon.
-        Pokémon ID refers to National Pokédex number.
-        https://bulbapedia.bulbagarden.net/wiki/List_of_Pok%C3%A9mon_by_National_Pok%C3%A9dex_number
+
+        Pokémon ID refers to:
+        [National Pokédex](https://bulbapedia.bulbagarden.net/wiki/National_Pok%C3%A9dex) number.
         """
         pokemon = pokemon.replace(" ", "-")
         async with ctx.typing():
@@ -321,13 +323,15 @@ class Pokebase(commands.Cog):
     @commands.cooldown(1, 5, commands.BucketType.member)
     async def ability(self, ctx: Context, *, ability: str):
         """Get various info about a known Pokémon ability.
+
         You can search by ability's name or it's unique ID.
 
         Abilities provide passive effects for Pokémon in battle or in the overworld.
         Pokémon have multiple possible abilities but can have only one ability at a time.
+
         Check out Bulbapedia for greater detail:
-        http://bulbapedia.bulbagarden.net/wiki/Ability
-        https://bulbapedia.bulbagarden.net/wiki/Ability#List_of_Abilities
+        • http://bulbapedia.bulbagarden.net/wiki/Ability
+        • https://bulbapedia.bulbagarden.net/wiki/Ability#List_of_Abilities
         """
         async with ctx.typing():
             try:
@@ -359,8 +363,7 @@ class Pokebase(commands.Cog):
                     + bold(str(data.get("generation").get("name").split("-")[1].upper())),
                 )
             short_effect = [
-                x.get("short_effect")
-                for x in data.get("effect_entries")
+                x.get("short_effect") for x in data.get("effect_entries")
                 if x.get("language").get("name") == "en"
             ][0]
             embed.add_field(name="Ability's Effect", value=short_effect, inline=False)
@@ -399,16 +402,20 @@ class Pokebase(commands.Cog):
                 )
 
             pages = []
-            for page in pagify(moves_list, delims=["\n"], page_length=400):
+            all_pages = list(pagify(moves_list, page_length=400))
+            for i, page in enumerate(all_pages, start=1):
                 embed = discord.Embed(colour=await ctx.embed_colour())
                 embed.title = f"Moves for : {data['name'].title()} (#{str(data['id']).zfill(3)})"
                 embed.set_thumbnail(
                     url=f"https://assets.pokemon.com/assets/cms2/img/pokedex/full/{str(data['id']).zfill(3)}.png",
                 )
                 embed.description = page
+                embed.set_footer(text=f"Page {i} of {len(all_pages)}")
                 pages.append(embed)
 
         await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
+        # nice button menu for my dpy2 bot
+        # await BaseMenu(ListPages(pages), ctx=ctx).start(ctx)
 
     @commands.command()
     @cached(ttl=86400, cache=SimpleMemoryCache)
@@ -416,12 +423,14 @@ class Pokebase(commands.Cog):
     @commands.cooldown(1, 5, commands.BucketType.member)
     async def moveinfo(self, ctx: Context, *, move: str):
         """Get various info about a Pokémon's move.
+
         You can search by a move name or it's ID.
 
         Moves are the skills of Pokémon in battle.
         In battle, a Pokémon uses one move each turn.
-        Some moves (including those learned by Hidden Machine) can be used outside of battle as well,
-        usually for the purpose of removing obstacles or exploring new areas.
+
+        Some moves (including those learned by Hidden Machine) can be used outside of
+        battle as well, usually for the purpose of removing obstacles or exploring new areas.
 
         You can find a list of known Pokémon moves here:
         https://bulbapedia.bulbagarden.net/wiki/List_of_moves
@@ -492,46 +501,31 @@ class Pokebase(commands.Cog):
     @cached(ttl=86400, cache=SimpleMemoryCache)
     @commands.bot_has_permissions(attach_files=True, embed_links=True)
     @commands.cooldown(1, 60, commands.BucketType.guild)
-    async def trainercard(
-        self,
-        ctx: Context,
-        name: str,
-        style: str,
-        trainer: str,
-        badge: str,
-        *,
-        pokemons: str,
-    ):
+    async def trainercard(self, ctx: Context, name: str, style: str, trainer: str, badge: str, *, pokemons: str):
         """Generate a trainer card for a Pokémon trainer in different styles.
 
         This command requires you to pass values for multiple parameters.
-        These parameters are explained briefly as follows:
 
-        `name` - Provide any personalised name of your choice.
-        `style` - Only `default`, `black`, `collector`, `dp`, `purple` styles are supported.
-        `trainer` - `ash`, `red`, `ethan`, `lyra`, `brendan`, `may`, `lucas`, `dawn` are supported.
-        `badge` - `kanto`, `johto`, `hoenn`, `sinnoh`, `unova` and `kalos`  badge leagues are supported.
-        `pokemons` - You can provide maximum up to 6 Pokémon's names or IDs.
-        (Pokémons from #891 to #898 are not supported yet for trainer card)
+        Supported values for these parameters are explained briefly as follows:
+        ```apache
+        name    : Provide any personalised name of your choice.
+        style   : default, black, collector, dp, purple
+        trainer : ash, red, ethan, lyra, brendan, may, lucas, dawn
+        badge   : kanto, johto, hoenn, sinnoh, unova and kalos
+        pokemons: You can provide maximum up to 6 Pokémon's names or #IDs
+        ```
+
+        ℹ Pokémons from #891 to #898 are not supported yet for trainer card
         """
         base_url = "https://pokecharms.com/index.php?trainer-card-maker/render"
         if style.lower() not in ["default", "black", "collector", "dp", "purple"]:
-            return await ctx.send_help()
-        if trainer.lower() not in [
-            "ash",
-            "red",
-            "ethan",
-            "lyra",
-            "brendan",
-            "may",
-            "lucas",
-            "dawn",
-        ]:
-            return await ctx.send_help()
+            return await ctx.send(f"style value `{style}` is unsupported. See command help!")
+        if trainer.lower() not in ["ash", "red", "ethan", "lyra", "brendan", "may", "lucas", "dawn"]:
+            return await ctx.send(f"trainer value `{trainer}` is unsupported. See command help!")
         if badge.lower() not in ["kanto", "johto", "hoenn", "sinnoh", "unova", "kalos"]:
-            return await ctx.send_help()
+            return await ctx.send(f"badge value `{badge}` is unsupported. See command help!")
         if len(pokemons.split()) > 6:
-            return await ctx.send_help()
+            return await ctx.send("You cannot provide more than 6 Pokémons.")
 
         async with ctx.typing():
             pkmn_ids = []
@@ -599,14 +593,18 @@ class Pokebase(commands.Cog):
     @commands.cooldown(1, 5, commands.BucketType.member)
     async def item(self, ctx: Context, *, item: str):
         """Get various info about a Pokémon item.
+
         You can search by an item's name or unique ID.
 
         An item is an object in the games which the player can pick up,
         keep in their bag, and use in some manner.
+
         They have various uses, including healing, powering up,
-        helping catch Pokémon, or to access a new area. For more info:
-        https://bulbapedia.bulbagarden.net/wiki/Item
-        https://bulbapedia.bulbagarden.net/wiki/Category:Items
+        helping catch Pokémon, or to access a new area.
+
+        For more info:
+        • https://bulbapedia.bulbagarden.net/wiki/Item
+        • https://bulbapedia.bulbagarden.net/wiki/Category:Items
         """
         item = item.replace(" ", "-").lower()
         async with ctx.typing():
@@ -739,10 +737,7 @@ class Pokebase(commands.Cog):
     async def tcgcard(self, ctx: commands.Context, *, query: str):
         """Fetch Pokémon cards based on Pokémon Trading Card Game (a.k.a Pokémon TCG)."""
         api_key = (await ctx.bot.get_shared_api_tokens("pokemontcg")).get("api_key")
-        if api_key:
-            headers = {"X-Api-Key": api_key}
-        else:
-            headers = None
+        headers = {"X-Api-Key": api_key} if api_key else None
 
         await ctx.trigger_typing()
         base_url = f"https://api.pokemontcg.io/v2/cards?q=name:{query}"
@@ -769,15 +764,15 @@ class Pokebase(commands.Cog):
             embed.set_thumbnail(url=str(data["set"]["images"]["logo"]))
             embed.set_image(url=str(data["images"]["large"]))
             embed.set_footer(
-                text=f"Page {i + 1} of {len(output['data'])} | Powered by Pokémon TCG API!"
+                text=f"Page {i + 1} of {len(output['data'])} • Powered by Pokémon TCG API!"
             )
             pages.append(embed)
 
         if len(pages) == 1:
-            await ctx.send(embed=pages[0])
-            return
+            return await ctx.send(embed=pages[0])
         else:
             await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
+            # await BaseMenu(ListPages(pages), ctx=ctx).start(ctx)
 
     async def get_pokemon_image(self, url: str):
         try:

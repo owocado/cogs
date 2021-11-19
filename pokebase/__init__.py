@@ -3,6 +3,5 @@ from .pokebase import Pokebase
 __red_end_user_data_statement__ = "This cog does not persistently store data about users."
 
 
-async def setup(bot):
-    n = Pokebase(bot)
-    bot.add_cog(n)
+def setup(bot):
+    bot.add_cog(Pokebase(bot))
