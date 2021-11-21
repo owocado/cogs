@@ -5,12 +5,12 @@
     "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
     "install_msg": "Hi, thanks for installing this cog. Please note, this cog requires a free API key from themoviedb.org.\nFollow this link if you want to apply for a free API key:\n<https://developers.themoviedb.org/3/getting-started/introduction>\n\nOnce you have the said API key, you can then set it in your redbot instance with:\n```[p]set api tmdb api_key <api_key>```",
     "author": [
-        "siu3334 (<@306810730055729152>)"
+        "ow0x"
     ],
     "required_cogs": {},
     "requirements": [],
     "tags": ["movie", "tv series", "tv show", "themoviedb", "imdb"],
-    "min_bot_version": "3.4.0",
+    "min_bot_version": "3.4.12",
     "hidden": false,
     "disabled": false,
     "type": "COG"
