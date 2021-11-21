@@ -5,13 +5,14 @@ import discord
 from redbot.core import commands
 from redbot.core.utils.chat_formatting import humanize_number as hnum
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
+# from redbot.core.utils.xmenus import BaseMenu, ListPages
 
 
 class MovieDB(commands.Cog):
     """Show various info about a movie or a TV show/series."""
 
-    __author__ = "ow0x (<@306810730055729152>)"
-    __version__ = "0.1.2"
+    __author__ = "ow0x"
+    __version__ = "0.1.3"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -23,7 +24,7 @@ class MovieDB(commands.Cog):
         self.session = aiohttp.ClientSession()
 
     def cog_unload(self):
-        self.bot.loop.create_task(self.session.close())
+        asyncio.create_task(self.session.close())
 
     async def fetch_movie_id(self, ctx: commands.Context, query: str):
         url = "https://api.themoviedb.org/3/search/movie"
@@ -271,11 +272,12 @@ class MovieDB(commands.Cog):
         embed.add_field(name="Networks", value=networks, inline=False)
         spoken_languages = ", ".join([m.get("english_name") for m in data.get("spoken_languages")])
         embed.add_field(name="Spoken languages", value=spoken_languages, inline=False)
-        production_companies = ", ".join([m.get("name") for m in data.get("production_companies")])
-        embed.add_field(name="Production compananies", value=production_companies, inline=False)
+        if data.get("production_companies"):
+            production_companies = ", ".join([m.get("name") for m in data["production_companies"]])
+            embed.add_field(name="Production compananies", value=production_companies, inline=False)
         if data.get("production_countries"):
             production_countries = ", ".join(
-                [m.get("name") for m in data.get("production_countries")]
+                [m.get("name") for m in data["production_countries"]]
             )
             embed.add_field(name="Production countries", value=production_countries, inline=False)
         avg_episode_runtime = f"Average episode runtime: {data.get('episode_run_time')[0]} minutes"
@@ -294,10 +296,10 @@ class MovieDB(commands.Cog):
         )
         if data.get("next_episode_to_air"):
             next_episode_info = (
-                f"**S{data.get('next_episode_to_air').get('season_number', 0)}E"
-                f"{data.get('next_episode_to_air').get('episode_number', 0)}: "
-                f"{data.get('next_episode_to_air').get('name', 'N/A')}**\n"
-                f"`air date: {data.get('next_episode_to_air').get('air_date', 'N/A')}`"
+                f"**S{data['next_episode_to_air'].get('season_number', 0)}E"
+                f"{data['next_episode_to_air'].get('episode_number', 0)}: "
+                f"{data['next_episode_to_air'].get('name', 'N/A')}**\n"
+                f"`air date: {data['next_episode_to_air'].get('air_date', 'N/A')}`"
             )
             embed.add_field(name="Info on next episode", value=next_episode_info, inline=False)
         if data.get("tagline", "") != "":
@@ -355,7 +357,7 @@ class MovieDB(commands.Cog):
                 rating = f"{round(data['vote_average'] * 10)}% ({hnum(data['vote_count'])} votes)"
                 embed.add_field(name="TMDB Rating", value=rating)
             embed.set_footer(
-                text=f"Page {i + 1} of {len(output['results'])} | Powered by themoviedb API ❤️",
+                text=f"Page {i + 1} of {len(output['results'])} • Powered by themoviedb API ❤️",
                 icon_url="https://i.imgur.com/sSE7Usn.png",
             )
             pages.append(embed)
@@ -364,6 +366,7 @@ class MovieDB(commands.Cog):
             return await ctx.send(embed=pages[0])
         else:
             await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
+            # await BaseMenu(ListPages(pages), ctx=ctx).start(ctx)
 
     @recommend.command(aliases=["series"])
     async def shows(self, ctx: commands.Context, *, query: str):
@@ -417,3 +420,4 @@ class MovieDB(commands.Cog):
             return await ctx.send(embed=pages[0])
         else:
             await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
+            # await BaseMenu(ListPages(pages), ctx=ctx).start(ctx)
