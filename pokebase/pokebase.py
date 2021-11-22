@@ -881,7 +881,7 @@ class Pokebase(commands.Cog):
         revealed_img = discord.File(revealed, "whosthatpokemon.png")
         while attempts != 3:
             try:
-                guess = await self.bot.wait_for("message", timeout=15.0, check=check)
+                guess = await self.bot.wait_for("message", timeout=30.0, check=check)
                 if guess:
                     if guess.content.lower() in eligible_names:
                         attempts = 3
