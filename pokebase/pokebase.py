@@ -30,7 +30,7 @@ class Pokebase(commands.Cog):
     """Search for various info about a Pokémon and related data."""
 
     __authors__ = "ow0x, phalt"
-    __version__ = "0.4.2"
+    __version__ = "0.4.3"
 
     def format_help_for_context(self, ctx: Context) -> str:
         """Thanks Sinbad!"""
@@ -138,7 +138,7 @@ class Pokebase(commands.Cog):
 
         return evolution_data
 
-    @commands.command(aliases=("pokemon", "pokedex"))
+    @commands.command()
     @cached(ttl=86400, cache=SimpleMemoryCache)
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 5, commands.BucketType.member)
