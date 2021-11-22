@@ -30,7 +30,7 @@ class Pokebase(commands.Cog):
     """Search for various info about a Pokémon and related data."""
 
     __authors__ = "ow0x, phalt"
-    __version__ = "0.4.3"
+    __version__ = "0.4.4"
 
     def format_help_for_context(self, ctx: Context) -> str:
         """Thanks Sinbad!"""
@@ -823,11 +823,11 @@ class Pokebase(commands.Cog):
         return temp
 
     @commands.command(aliases=["wtp"])
-    @commands.cooldown(1, 20, commands.BucketType.channel)
+    @commands.cooldown(1, 30, commands.BucketType.user)
     @commands.max_concurrency(1, commands.BucketType.channel)
     @commands.bot_has_permissions(attach_files=True, embed_links=True)
     async def whosthatpokemon(self, ctx: commands.Context, generation: str = None):
-        """Guess Who's that Pokémon within 15 seconds!
+        """Guess Who's that Pokémon in 30 seconds!
 
         You can optionally specify generation from `gen1` to `gen8` only,
         to restrict this guessing game to specific Pokemon generation.
@@ -860,17 +860,15 @@ class Pokebase(commands.Cog):
         else:
             poke_id = random.randint(1, 898)
 
+        attempts = 0
+        if_guessed_right = False
         await ctx.channel.trigger_typing()
         temp = await self.generate_image(str(poke_id).zfill(3), True)
-        initial_img = discord.File(temp, "whosthatpokemon.png")
-        message = await ctx.reply(
-            embed=discord.Embed(
-                title="You have __**15** seconds__ to answer. Who's that Pokémon?",
-                colour=await ctx.embed_colour(),
-            ).set_image(url="attachment://whosthatpokemon.png"),
-            file=initial_img,
-            mention_author=False,
+        inital_img = await ctx.send(
+            "You have **30 seconds** to answer. Who's that Pokémon?",
+            file=discord.File(temp, "guessthatpokemon.png"),
         )
+        message = await ctx.send("You have **3**/3 attempts left to guess it right.")
 
         names_data = (await self.get_species_data(poke_id)).get("names")
         eligible_names = [x["name"].lower() for x in names_data]
@@ -879,33 +877,50 @@ class Pokebase(commands.Cog):
         def check(m):
             return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
 
-        try:
-            answer = await self.bot.wait_for("message", check=check, timeout=15.0)
-        except asyncio.TimeoutError:
-            with suppress(discord.NotFound, discord.Forbidden, discord.HTTPException):
-                await message.delete()
-            return await ctx.send(
-                f"Time over! **{ctx.author}** did not guess the Pokémon within 15 seconds."
-            )
-
         revealed = await self.generate_image(str(poke_id).zfill(3), False)
-        img = discord.File(revealed, "whosthatpokemon.png")
-        if answer and answer.content.lower() not in eligible_names:
-            with suppress(discord.NotFound, discord.Forbidden, discord.HTTPException):
-                await message.delete()
-            emb = discord.Embed(
-                title="Your guess is very wrong! 😔 😮\u200d💨",
-                colour=0xFF0000,
-            )
-            emb.description = f"It was ... **{english_name}**"
-            emb.set_image(url="attachment://whosthatpokemon.png")
-            emb.set_footer(text=f"Requested by {ctx.author}", icon_url=str(ctx.author.avatar_url))
-            return await ctx.channel.send(embed=emb, file=img)
-        else:
-            with suppress(discord.NotFound, discord.Forbidden, discord.HTTPException):
-                await message.delete()
-            emb = discord.Embed(title="🎉 POGGERS!! You guessed it right! 🎉", colour=0x00FF00)
-            emb.description = f"It was ... **{english_name}**"
-            emb.set_image(url=f"attachment://whosthatpokemon.png")
-            emb.set_footer(text=f"Requested by {ctx.author}", icon_url=str(ctx.author.avatar_url))
-            return await ctx.channel.send(embed=emb, file=img)
+        revealed_img = discord.File(revealed, "whosthatpokemon.png")
+        while attempts != 3:
+            try:
+                guess = await self.bot.wait_for("message", timeout=15.0, check=check)
+                if guess:
+                    if guess.content.lower() in eligible_names:
+                        attempts = 3
+                        if_guessed_right = True
+                        with suppress(discord.NotFound, discord.HTTPException):
+                            await inital_img.delete()
+                            await message.delete()
+                    else:
+                        attempts += 1
+                        if_guessed_right = False
+                        to_send = f"❌ Your guess is wrong! **{3 - attempts}**/3 attempts remaining."
+                        try:
+                            await message.edit(to_send)
+                        except (discord.NotFound, discord.HTTPException):
+                            await ctx.send(to_send)
+            except asyncio.TimeoutError:
+                attempts = 3
+                with suppress(discord.NotFound, discord.HTTPException):
+                    await inital_img.delete()
+                    await message.delete()
+                return await ctx.send(
+                    f"Time over! **{ctx.author}** did not guess the Pokémon in 30 seconds."
+                )
+            else:
+                if attempts == 3:
+                    with suppress(discord.NotFound, discord.HTTPException):
+                        await inital_img.delete()
+                        await message.delete()
+                    emb = discord.Embed()
+                    if if_guessed_right:
+                        emb.title = "🎉 POGGERS!! You guessed it right! 🎉"
+                        emb.colour = discord.Colour(0x00FF00)
+                    else:
+                        emb.title = "You took too many attempts! 😔 😮\u200d💨"
+                        emb.colour = discord.Colour(0xFF0000)
+                    emb.description = f"It was ... **{english_name}**"
+                    emb.set_image(url=f"attachment://whosthatpokemon.png")
+                    emb.set_footer(
+                        text=f"Requested by {ctx.author}",
+                        icon_url=str(ctx.author.avatar_url),
+                    )
+                    await ctx.channel.send(embed=emb, file=revealed_img)
