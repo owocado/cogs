@@ -23,8 +23,12 @@ INVITE_URL_REGEX: Pattern = re.compile(
 class Utilities(commands.Cog):
     """Some of my useful utility commands, grouped in one cog."""
 
+    async def red_delete_data_for_user(self, **kwargs):
+        """Nothing to delete"""
+        return
+
     __author__ = "ow0x"
-    __version__ = "0.1.0"
+    __version__ = "0.1.1"
 
     def format_help_for_context(self, ctx: Context) -> str:
         """Thanks Sinbad!"""
@@ -36,36 +40,38 @@ class Utilities(commands.Cog):
         self.session = aiohttp.ClientSession()
 
     def cog_unload(self):
-        self.bot.loop.create_task(self.session.close())
+        asyncio.create_task(self.session.close())
 
     @commands.command()
     async def snowflake(self, ctx: Context, snowflake: int, snowflake2: int = None):
-        """Convert/compare Discord snowflake IDs to human readable time difference.
+        """Convert Discord snowflake ID to human readable time difference.
 
-        or compare timedelta difference between 2 snowflakes.
+        or compare timedelta difference between 2 Discord snowflakes IDs.
         """
-        dt_now = datetime.now(timezone.utc).replace(tzinfo=None)
+        now = datetime.now(timezone.utc)
         try:
             dt_1 = discord.utils.snowflake_time(snowflake)
         except (ValueError, OverflowError):
             return await ctx.send(f"`{snowflake}` value is invalid or out of range.")
 
-        if snowflake2:
-            try:
-                dt_2 = discord.utils.snowflake_time(snowflake2)
-            except (ValueError, OverflowError):
-                return await ctx.send(f"`{snowflake2}` value is invalid or out of range.")
-        else:
-            dt_2 = dt_now
+        if snowflake2 is None:
+            return await ctx.send(
+                f"Given snowflake ID converts to: <t:{int(dt_1.timestamp())}:F>\n"
+                f"That is {time_diff(now, dt_1, 5)} {'ago' if now > dt_1 else 'in future'}"
+                f" (or roughly <t:{int(dt_1.timestamp())}:R>)"
+            )
 
+        try:
+            dt_2 = discord.utils.snowflake_time(snowflake2)
+        except (ValueError, OverflowError):
+            return await ctx.send(f"`{snowflake2}` value is invalid or out of range.")
 
-        diff = self._time_diff(dt_1, dt_2, 5)
-        tstamp_1 = f"`Timestamp 1:` <t:{int(dt_1.timestamp())}:f>"
-        tstamp_2 = f"`Timestamp 2:` <t:{int(dt_2.timestamp())}:f>\n" if snowflake2 else ""
+        diff = time_diff(dt_1, dt_2, 6)
+        tstamp_1 = f"- Timestamp 1: {dt_1.replace(tzinfo=None)} UTC"
+        tstamp_2 = f"- Timestamp 2: {dt_2.replace(tzinfo=None)} UTC\n"
 
-        final_message = f"{tstamp_1}\n{tstamp_2}\n`Difference :` {diff}"
-
-        await ctx.send(final_message)
+        final_message = f"{tstamp_1}\n{tstamp_2}\n+ Difference : {diff}"
+        await ctx.send(box(final_message, lang="diff"))
 
     @commands.command(name="inviscount")
     async def invisible_users_in_role(self, ctx: Context, *, role: discord.Role):

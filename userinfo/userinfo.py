@@ -16,6 +16,10 @@ class RouteV9(discord.http.Route):
 class Userinfo(commands.Cog):
     """Replace original Red userinfo command with more details."""
 
+    async def red_delete_data_for_user(self, **kwargs):
+        """Nothing to delete"""
+        return
+
     __version__ = "1.1.1"
 
     def format_help_for_context(self, ctx):

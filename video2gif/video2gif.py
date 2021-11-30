@@ -3,8 +3,6 @@ import functools
 import logging
 import os
 
-from typing import Any, Dict, Literal
-
 import aiohttp
 import discord
 import youtube_dl
@@ -16,8 +14,6 @@ from redbot.core.utils.predicates import MessagePredicate
 
 log = logging.getLogger("red.owo-cogs.video2gif")
 
-RequestType = Literal["discord_deleted_user", "owner", "user", "user_strict"]
-
 
 class VideoToGIF(commands.Cog):
     """Converts given MP4 video attachment to GIF file format."""
@@ -25,19 +21,12 @@ class VideoToGIF(commands.Cog):
     __author__ = ["TrustyJAID", "ow0x"]
     __version__ = "0.1.1"
 
-    def __init__(self, bot):
+    def __init__(self, bot: Red):
         self.bot = bot
 
-    # credits to jack1142
-    async def red_get_data_for_user(self, *, user_id: int) -> Dict[str, Any]:
-        # this cog does not story any data
-        return {}
-
-    async def red_delete_data_for_user(
-        self, *, requester: RequestType, user_id: int
-    ) -> None:
-        # this cog does not story any data
-        pass
+    async def red_delete_data_for_user(self, **kwargs):
+        """Nothing to delete"""
+        return
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """

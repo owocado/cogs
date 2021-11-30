@@ -4,5 +4,4 @@ __red_end_user_data_statement__ = "This cog does not persistently store data or 
 
 
 def setup(bot):
-    cog = AverageFan(bot)
-    bot.add_cog(cog)
+    bot.add_cog(AverageFan(bot))

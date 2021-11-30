@@ -10,15 +10,16 @@ from redbot.core import commands
 from redbot.core.utils.chat_formatting import box
 from redbot.core.utils.menus import close_menu, menu, DEFAULT_CONTROLS
 
-TODAY = datetime.now(timezone.utc).day
-MONTH = datetime.now(timezone.utc).month
-YEAR = datetime.now(timezone.utc).year
 
 class Today(commands.Cog):
     """Various commands to show the stats about users' profile badges."""
 
+    async def red_delete_data_for_user(self, **kwargs):
+        """Nothing to delete"""
+        return
+
     __author__ = "ow0x (<@306810730055729152>)"
-    __version__ = "0.1.0"
+    __version__ = "0.1.1"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -30,16 +31,19 @@ class Today(commands.Cog):
         self.session = aiohttp.ClientSession()
 
     def cog_unload(self):
-        self.bot.loop.create_task(self.session.close())
+        asyncio.create_task(self.session.close())
 
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 3, commands.BucketType.member)
-    async def today(self, ctx: commands.Context, day: int = TODAY, month: int = MONTH):
+    async def today(self, ctx: commands.Context, day: int = None, month: int = None):
         """Get a random fact on what happened today in history.
 
         You can also fetch history facts for a specific day and month.
         """
+        day = max(min(day, 31), 1) if day else datetime.now(timezone.utc).day
+        month = max(min(month, 12), 1) if month else datetime.now(timezone.utc).month
+
         await ctx.trigger_typing()
         base_url = f"https://history.muffinlabs.com/date/{month}/{day}"
         try:
@@ -67,11 +71,14 @@ class Today(commands.Cog):
     @commands.command(aliases=["googledoodle"])
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 5, commands.BucketType.member)
-    async def doodle(self, ctx: commands.Context, month: int = MONTH, year: int = YEAR):
+    async def doodle(self, ctx: commands.Context, month: int = None, year: int = None):
         """Fetch Google doodle of the current day and month.
 
         Or doodles of specific month/year if `month` and `year` values are provided.
         """
+        month = max(min(month, 12), 1) if month else datetime.now(timezone.utc).month
+        year = year or datetime.now(timezone.utc).year
+
         await ctx.trigger_typing()
         base_url = f"https://www.google.com/doodles/json/{year}/{month}"
         try:
