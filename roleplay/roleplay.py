@@ -14,6 +14,10 @@ class Roleplay(commands.Cog):
 
     __author__ = "ow0x"
     __version__ = "1.0.3"
+    
+    async def red_delete_data_for_user(self, **kwargs):
+        """ Nothing to delete """
+        pass
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
