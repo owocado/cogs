@@ -2,7 +2,11 @@ from redbot.core import commands
 
 
 class HTTPCat(commands.Cog):
-    """Fetch you an image card for a given standard HTTP status code, but as funnily expressed by cats, dogs and ducks."""
+    """Fetch you an funny image for a given standard HTTP status code expressed by cats, dogs and ducks."""
+
+    async def red_delete_data_for_user(self, **kwargs):
+        """Nothing to delete"""
+        return
 
     __author__ = "ow0x"
     __version__ = "0.0.4"
