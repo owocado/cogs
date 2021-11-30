@@ -1,8 +1,10 @@
 import asyncio
+from datetime import datetime
 
 import aiohttp
 import discord
 from redbot.core import commands
+from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import humanize_number as hnum
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 # from redbot.core.utils.xmenus import BaseMenu, ListPages
@@ -12,19 +14,33 @@ class MovieDB(commands.Cog):
     """Show various info about a movie or a TV show/series."""
 
     __author__ = "ow0x"
-    __version__ = "0.1.3"
+    __version__ = "0.2.3"
+    
+    async def red_delete_data_for_user(self, **kwargs):
+        """ Nothing to delete """
+        # this cog does not store any end user data YET
+        # TODO: change this when watchlist/todolist is added
+        pass
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
         pre_processed = super().format_help_for_context(ctx)
         return f"{pre_processed}\n\nAuthor: {self.__author__}\nCog Version: {self.__version__}"
 
-    def __init__(self, bot):
+    def __init__(self, bot: Red):
         self.bot = bot
         self.session = aiohttp.ClientSession()
 
     def cog_unload(self):
         asyncio.create_task(self.session.close())
+
+    def get_timestamp(self, date_string: str, style: str = "R") -> str:
+        try:
+            timestamp = datetime.strptime(date_string, "%Y-%m-%d").timestamp()
+            return f"<t:{int(timestamp)}:{style}>"
+        # Future proof it in case API changes date string
+        except ValueError:
+            return "unknown"
 
     async def fetch_movie_id(self, ctx: commands.Context, query: str):
         url = "https://api.themoviedb.org/3/search/movie"
@@ -47,13 +63,14 @@ class MovieDB(commands.Cog):
             # This logic taken from https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
             # All credits belong to Sitryk, I do not take any credit for this code snippet.
             items = ""
-            for count, value in enumerate(data.get("results")):
-                items += "**{}.** {} ({})\n".format(
-                    count + 1,
-                    value.get("title", "Missing title"),
-                    value.get("release_date", "Not released yet"),
+            for i, obj in enumerate(data.get("results"), start=1):
+                items += "**{}.** {}{}\n".format(
+                    i,
+                    obj.get("title", "Missing title"),
+                    f" ({self.get_timestamp(obj['release_date'], 'D')})"
+                    if obj.get("release_date") and obj["release_date"] != "" else "",
                 )
-            choices = f"Found multiple results for your movie query. Please select one from below:\n\n{items}"
+            choices = f"Found multiple results. Please select one from below:\n\n{items}"
             send_to_channel = await ctx.send(choices)
 
             def check(msg):
@@ -83,7 +100,7 @@ class MovieDB(commands.Cog):
         else:
             return None
 
-    @commands.command()
+    @commands.command(usage="<movie_name_or_title>")
     @commands.bot_has_permissions(embed_links=True, read_message_history=True)
     async def movie(self, ctx: commands.Context, *, query: str):
         """Show various info about a movie."""
@@ -115,8 +132,11 @@ class MovieDB(commands.Cog):
             embed.url = f"https://www.imdb.com/title/{data['imdb_id']}"
         embed.set_image(url=f"https://image.tmdb.org/t/p/original{data.get('backdrop_path', '/')}")
         embed.set_thumbnail(url=f"https://image.tmdb.org/t/p/original{data.get('poster_path', '/')}")
-        if data.get("release_date") and data.get("release_date") != "":
-            embed.add_field(name="Release Date (USA)", value=data["release_date"])
+        if data.get("release_date", "") != "":
+            embed.add_field(
+                name="Release Date",
+                value=self.get_timestamp(data["release_date"]),
+            )
         if data.get("runtime") > 0:
             hours = data.get("runtime", 0) // 60
             mins = data.get("runtime", 0) % 60
@@ -125,8 +145,8 @@ class MovieDB(commands.Cog):
             embed.add_field(name="Budget", value="$" + hnum(data.get("budget")))
         if data.get("revenue") > 0:
             embed.add_field(name="Revenue", value="$" + hnum(data.get("revenue")))
-        if data.get("vote_average") > 0.0 and data.get("vote_count") > 0:
-            rating = f"{round(data['vote_average'] * 10)}% ({hnum(data['vote_count'])} votes)"
+        if data.get("vote_average", 0.0) > 0.0 and data.get("vote_count", 0) > 0:
+            rating = f"{round(data['vote_average'], 1)} / 10\n({hnum(data['vote_count'])} votes)"
             embed.add_field(name="TMDB Rating", value=rating)
         if data.get("genres"):
             genres = ", ".join([m.get("name") for m in data["genres"]])
@@ -172,13 +192,14 @@ class MovieDB(commands.Cog):
             # This logic taken from https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
             # All credits belong to Sitryk, I do not take any credit for this code snippet.
             items = ""
-            for count, value in enumerate(data.get("results")):
-                items += "**{}.** {} ({})\n".format(
-                    count + 1,
-                    value.get("original_name", "Missing title"),
-                    value.get("first_air_date", "Not released yet"),
+            for i, obj in enumerate(data.get("results"), start=1):
+                items += "**{}.** {}{}\n".format(
+                    i,
+                    obj.get("original_name", "Missing title"),
+                    f" ({self.get_timestamp(obj['first_air_date'], 'D')})"
+                    if obj.get("first_air_date") and obj["first_air_date"] != "" else "",
                 )
-            choices = f"Found multiple results for your TV Show query. Please select one from below:\n\n{items}"
+            choices = f"Found multiple results. Please select one from below:\n\n{items}"
             send_to_channel = await ctx.send(choices)
 
             def check(msg):
@@ -208,7 +229,7 @@ class MovieDB(commands.Cog):
         else:
             return None
 
-    @commands.command()
+    @commands.command(usage="<tvshow_name_or_title>")
     @commands.bot_has_permissions(embed_links=True, read_message_history=True)
     async def tvshow(self, ctx: commands.Context, *, query: str):
         """Show various info about a TV show/series."""
@@ -240,15 +261,15 @@ class MovieDB(commands.Cog):
             embed.url = data["homepage"]
         embed.set_image(url=f"https://image.tmdb.org/t/p/original{data.get('backdrop_path', '/')}")
         embed.set_thumbnail(url=f"https://image.tmdb.org/t/p/original{data.get('poster_path', '/')}")
-        if data.get("first_air_date") != "":
+        if data.get("first_air_date", "") != "":
             embed.add_field(
                 name="First Air Date",
-                value=data.get("first_air_date", "Not released yet."),
+                value=self.get_timestamp(data["first_air_date"]),
             )
-        if data.get("last_air_date") != "":
+        if data.get("last_air_date", "") != "":
             embed.add_field(
                 name="Last Air Date",
-                value=data.get("last_air_date", "Not released yet."),
+                value=self.get_timestamp(data["last_air_date"]),
             )
         if data.get("number_of_seasons", 0) > 0:
             embed.add_field(
@@ -260,9 +281,9 @@ class MovieDB(commands.Cog):
             embed.add_field(name="Creators", value=creators)
         genres = ", ".join([m.get("name") for m in data.get("genres")])
         embed.add_field(name="Genres", value=genres)
-        if data.get("vote_average") > 0.0 and data.get("vote_count") > 0:
+        if data.get("vote_average", 0.0) > 0.0 and data.get("vote_count", 0) > 0:
             rating = (
-                f"{round(data.get('vote_average') * 10)}% ({hnum(data.get('vote_count'))} votes)"
+                f"{round(data['vote_average'], 1)} / 10\n({hnum(data.get('vote_count'))} votes)"
             )
             embed.add_field(name="TMDB Rating", value=rating)
         embed.add_field(name="In production?", value="Yes" if data.get("in_production") else "No")
@@ -282,12 +303,13 @@ class MovieDB(commands.Cog):
             embed.add_field(name="Production countries", value=production_countries, inline=False)
         avg_episode_runtime = f"Average episode runtime: {data.get('episode_run_time')[0]} minutes"
         seasons_meta = ""
-        for count, value in enumerate(data.get("seasons")):
-            seasons_meta += "**{}**. {} ({} episodes) ({})\n".format(
-                count + 1,
-                value.get("name", "N/A"),
-                value.get("episode_count", 0),
-                value.get("air_date", "N/A"),
+        for i, obj in enumerate(data.get("seasons"), start=1):
+            seasons_meta += "**{}**. {} ({} episodes){}\n".format(
+                i,
+                obj.get("name", "N/A"),
+                obj.get("episode_count", 0),
+                f" ({self.get_timestamp(obj['air_date'])})"
+                if obj.get("air_date") and obj['air_date'] != "" else "",
             )
         embed.add_field(
             name="Seasons summary",
@@ -295,11 +317,13 @@ class MovieDB(commands.Cog):
             inline=False,
         )
         if data.get("next_episode_to_air"):
+            next_ep = data["next_episode_to_air"]
+            next_airing = "N/A"
+            if next_ep.get("air_date"):
+                next_airing = self.get_timestamp(next_ep['air_date'])
             next_episode_info = (
-                f"**S{data['next_episode_to_air'].get('season_number', 0)}E"
-                f"{data['next_episode_to_air'].get('episode_number', 0)}: "
-                f"{data['next_episode_to_air'].get('name', 'N/A')}**\n"
-                f"`air date: {data['next_episode_to_air'].get('air_date', 'N/A')}`"
+                f"**S{next_ep.get('season_number', 0)}E{next_ep.get('episode_number', 0)}: "
+                f"{next_ep.get('name', 'N/A')}**\n`next airing:` {next_airing}"
             )
             embed.add_field(name="Info on next episode", value=next_episode_info, inline=False)
         if data.get("tagline", "") != "":
@@ -311,14 +335,10 @@ class MovieDB(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.group()
+    @commands.command(usage="<movie_name>")
     @commands.bot_has_permissions(embed_links=True, read_message_history=True)
-    async def recommend(self, ctx: commands.Context):
-        """Get recommendations related to a movie/TV series title."""
-
-    @recommend.command()
-    async def movies(self, ctx: commands.Context, *, query: str):
-        """Get movies recommendations related to a movie title."""
+    async def suggestmovies(self, ctx: commands.Context, *, query: str):
+        """Get movies suggestions based on a movie title."""
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
         if not api_key:
             return await ctx.send("Please set an API key first!")
@@ -342,7 +362,7 @@ class MovieDB(commands.Cog):
             return await ctx.send("No recommendations found for that movie. 🤔")
 
         pages = []
-        for i, data in enumerate(output.get("results")):
+        for i, data in enumerate(output.get("results"), start=1):
             embed = discord.Embed(colour=await ctx.embed_color())
             embed.title = str(data["title"])
             embed.description = data.get("overview", "No summary.")
@@ -351,13 +371,16 @@ class MovieDB(commands.Cog):
             embed.set_thumbnail(
                 url=f"https://image.tmdb.org/t/p/original{data.get('poster_path', '/')}"
             )
-            if data.get("release_date") != "":
-                embed.add_field(name="Release Date", value=data["release_date"])
-            if data.get("vote_average") > 0.0 and data.get("vote_count") > 0:
-                rating = f"{round(data['vote_average'] * 10)}% ({hnum(data['vote_count'])} votes)"
+            if data.get("release_date", "") != "":
+                embed.add_field(
+                    name="Release Date",
+                    value=self.get_timestamp(data["release_date"]),
+                )
+            if data.get("vote_average", 0.0) > 0.0 and data.get("vote_count", 0) > 0:
+                rating = f"{round(data['vote_average'], 1)} / 10\n({hnum(data['vote_count'])} votes)"
                 embed.add_field(name="TMDB Rating", value=rating)
             embed.set_footer(
-                text=f"Page {i + 1} of {len(output['results'])} • Powered by themoviedb API ❤️",
+                text=f"Page {i} of {len(output['results'])} • Powered by themoviedb API ❤️",
                 icon_url="https://i.imgur.com/sSE7Usn.png",
             )
             pages.append(embed)
@@ -368,9 +391,10 @@ class MovieDB(commands.Cog):
             await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
             # await BaseMenu(ListPages(pages), ctx=ctx).start(ctx)
 
-    @recommend.command(aliases=["series"])
-    async def shows(self, ctx: commands.Context, *, query: str):
-        """Get TV show recommendations related to a TV series title."""
+    @commands.command(usage="<tv_series_name_or_title>")
+    @commands.bot_has_permissions(embed_links=True, read_message_history=True)
+    async def suggestshows(self, ctx: commands.Context, *, query: str):
+        """Get TV show suggestions related to a TV series title."""
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
         if not api_key:
             return await ctx.send("Please set an API key first!")
@@ -394,7 +418,7 @@ class MovieDB(commands.Cog):
             return await ctx.send("No recommendations found for this TV show. 🤔")
 
         pages = []
-        for i, data in enumerate(output.get("results")):
+        for i, data in enumerate(output.get("results"), start=1):
             embed = discord.Embed(
                 title=str(data["name"]),
                 description=data.get("overview", "No summary."),
@@ -405,13 +429,16 @@ class MovieDB(commands.Cog):
             embed.set_thumbnail(
                 url=f"https://image.tmdb.org/t/p/original{data.get('poster_path', '/')}"
             )
-            if data.get("first_air_date") != "":
-                embed.add_field(name="First Air Date", value=data["first_air_date"])
-            if data.get("vote_average") > 0.0 and data.get("vote_count") > 0:
-                rating = f"{round(data['vote_average'] * 10)}% ({hnum(data['vote_count'])} votes)"
+            if data.get("first_air_date", "") != "":
+                embed.add_field(
+                    name="First Air Date",
+                    value=self.get_timestamp(data["first_air_date"]),
+                )
+            if data.get("vote_average", 0.0) > 0.0 and data.get("vote_count", 0) > 0:
+                rating = f"{round(data['vote_average'], 1)} / 10\n({hnum(data['vote_count'])} votes)"
                 embed.add_field(name="TMDB Rating", value=rating)
             embed.set_footer(
-                text=f"Page {i + 1} of {len(output['results'])} | Powered by themoviedb API ❤️",
+                text=f"Page {i} of {len(output['results'])} | Powered by themoviedb API ❤️",
                 icon_url="https://i.imgur.com/sSE7Usn.png",
             )
             pages.append(embed)
