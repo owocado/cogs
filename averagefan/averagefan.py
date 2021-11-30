@@ -10,6 +10,7 @@ import youtube_dl
 from moviepy.editor import CompositeVideoClip, TextClip, VideoFileClip
 
 from redbot.core import commands
+from redbot.core.bot import Red
 from redbot.core.data_manager import cog_data_path
 
 logging.captureWarnings(False)
@@ -22,14 +23,16 @@ log = logging.getLogger("red.owo-cogs.averagefan")
 
 
 class AverageFan(commands.Cog):
-    """
-    Create your very own Average Fan Vs Average Enjoyer meme videos.
-    """
+    """Create your very own Average Fan Vs Average Enjoyer meme videos."""
+
+    async def red_delete_data_for_user(self, **kwargs):
+        """Nothing to delete"""
+        return
 
     __author__ = ["DankMemer Team", "TrustyJAID"]
     __version__ = "1.0.0"
 
-    def __init__(self, bot):
+    def __init__(self, bot: Red):
         self.bot = bot
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
