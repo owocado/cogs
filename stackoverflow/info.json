@@ -1,0 +1,21 @@
+{
+    "name": "StackOverflow",
+    "author": [
+        "ow0x (<@306810730055729152>)"
+    ],
+    "install_msg": "This cog is counterproductive. You're better off using the actual website.",
+    "short": "Search your nerdy tech questions on stackoverflow and stackexchange network.",
+    "description": "Search your nerdy tech questions on stackoverflow and stackexchange network.",
+    "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
+    "tags": [
+        "stackoverflow",
+        "stackexchange",
+        "askubuntu",
+        "superuser",
+        "serverfault"
+    ],
+    "min_bot_version": "3.4.12",
+    "hidden": false,
+    "disabled": false,
+    "type": "COG"
+}
