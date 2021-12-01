@@ -292,7 +292,7 @@ class SteamCog(commands.Cog):
                 embed.add_field(name="Deal Price", value=final_deal)
                 deal_store_info = (
                     f"[{bold(STORES[data['gameInfo'].get('storeID')])}]"
-                    + f"(https://cheapshark.com/redirect?dealID={deal_id} 'Click here to go to this deal')"
+                    f"(https://cheapshark.com/redirect?dealID={deal_id} 'Click here to go to this deal')"
                 )
                 embed.add_field(name="Deal available on", value=deal_store_info)
             if data["gameInfo"].get("steamRatingPercent") != "0" and data["gameInfo"].get("steamRatingText"):
