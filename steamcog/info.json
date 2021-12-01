@@ -1,16 +1,14 @@
 {
     "name": "SteamCog",
-    "short": "Fetch various info about a Steam game.",
-    "description": "Fetch various info about a Steam game.",
+    "short": "Fetch various useful info about a Steam game.",
+    "description": "Fetch various useful info about a Steam game all from the comfort of your Discord home.",
     "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
     "install_msg": "Thank you for installing this MEH cog.",
-    "author": [
-        "siu3334"
-    ],
+    "author": ["ow0x"],
     "required_cogs": {},
     "requirements": [],
     "tags": ["steam", "steamcog"],
-    "min_bot_version": "3.4.0",
+    "min_bot_version": "3.4.12",
     "hidden": false,
     "disabled": false,
     "type": "COG"

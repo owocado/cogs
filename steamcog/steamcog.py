@@ -1,5 +1,5 @@
 import asyncio
-
+import contextlib
 from datetime import datetime
 
 # Required by Red
@@ -70,9 +70,8 @@ class SteamCog(commands.Cog):
             items = ""
             for i, value in enumerate(data.get("items"), start=1):
                 items += f"**{i}.** {value.get('name')}\n"
-            choices = (
-                f"Found multiple results for your game query. Please select one from:\n\n{items}"
-            )
+            choices = f"Found multiple results for your query. Please select one from:\n\n{items}"
+
             send_to_channel = await ctx.send(choices)
 
             def check(msg):
@@ -80,8 +79,8 @@ class SteamCog(commands.Cog):
                 if (
                     content.isdigit()
                     and int(content) in range(0, len(items) + 1)
-                    and msg.author is ctx.author
-                    and msg.channel is ctx.channel
+                    and msg.author.id == ctx.author.id
+                    and msg.channel.id == ctx.channel.id
                 ):
                     return True
 
@@ -91,24 +90,26 @@ class SteamCog(commands.Cog):
                 choice = None
 
             if choice is None or choice.content.strip() == "0":
-                await send_to_channel.edit(content="Operation cancelled.")
+                with contextlib.suppress(discord.NotFound, discord.HTTPException):
+                    await send_to_channel.edit("Operation cancelled.")
                 return None
             else:
                 choice = choice.content.strip()
                 choice = int(choice) - 1
                 app_id = data.get("items")[choice].get("id")
-                await send_to_channel.delete()
+                with contextlib.suppress(discord.NotFound, discord.HTTPException):
+                    await send_to_channel.delete()
                 return app_id
         else:
             return None
 
-    @commands.command()
+    @commands.command(usage="<name of steam game>")
     @commands.bot_has_permissions(add_reactions=True, embed_links=True, read_message_history=True)
     async def steam(self, ctx: commands.Context, *, query: str):
-        """Show various info and metadata about a Steam game."""
+        """Fetch some useful info about a Steam game all from the comfort of your Discord home."""
         await ctx.trigger_typing()
         app_id = await self.fetch_steam_game_id(ctx, query)
-        if not app_id:
+        if app_id is None:
             return await ctx.send("Could not find any results.")
 
         base_url = "https://store.steampowered.com/api/appdetails"
@@ -143,7 +144,7 @@ class SteamCog(commands.Cog):
             embed.add_field(name="Release Date", value=appdata["release_date"].get("date"))
         if appdata.get("metacritic"):
             metacritic = (
-                bold(str(appdata.get("metacritic").get("score")))
+                bold(str(appdata["metacritic"].get("score")))
                 + f" ([Critic Reviews]({appdata['metacritic'].get('url')}))"
             )
             embed.add_field(name="Metacritic Score", value=metacritic)
@@ -158,24 +159,25 @@ class SteamCog(commands.Cog):
             embed.add_field(name="DLC Count", value=len(appdata["dlc"]))
         if appdata.get("developers"):
             embed.add_field(name="Developers", value=", ".join(appdata["developers"]))
-        if appdata.get("publishers") and appdata.get("publishers") != [""]:
-            embed.add_field(name="Publishers", value=", ".join(appdata.get("publishers")))
+        if appdata.get("publishers", [""]) != [""]:
+            embed.add_field(name="Publishers", value=", ".join(appdata["publishers"]))
+        platforms = ""
         if appdata.get("platforms"):
-            windows_emoji = self.platform_emojis["windows"] or "Microsoft Windows\n"
+            windows_emoji = self.platform_emojis["windows"] or "Windows\n"
             linux_emoji = self.platform_emojis["linux"] or "Linux\n"
             macos_emoji = self.platform_emojis["mac"] or "Mac OS\n"
-            platforms = ""
             if appdata["platforms"].get("windows"):
                 platforms += f"{windows_emoji}"
             if appdata["platforms"].get("linux"):
                 platforms += f"{linux_emoji}"
             if appdata["platforms"].get("mac"):
                 platforms += f"{macos_emoji}"
+        if platforms:
             embed.add_field(name="Supported Platforms", value=platforms)
         if appdata.get("genres"):
             genres = ", ".join(m.get("description") for m in appdata["genres"])
             embed.add_field(name="Genres", value=genres)
-        footer = "Click on reactions to browse through this game's screenshot previews\n"
+        footer = "Click on reactions to browse through game previews\n"
         if appdata.get("content_descriptors").get("notes"):
             footer += f"Note: {appdata['content_descriptors']['notes']}"
         embed.set_footer(text=footer)
@@ -194,7 +196,7 @@ class SteamCog(commands.Cog):
         if len(pages) == 1:
             return await ctx.send(embed=pages[0])
         else:
-            await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
+            await menu(ctx, pages, DEFAULT_CONTROLS, timeout=90.0)
 
     async def fetch_deal_id(self, ctx, query: str):
         url = f"https://www.cheapshark.com/api/1.0/games?title={query}"
@@ -213,7 +215,6 @@ class SteamCog(commands.Cog):
             return deal_id
         elif len(data) > 1:
             # Attribution: https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
-            # All credits to Sitryk
             items = ""
             for i, value in enumerate(data[:20], start=1):
                 items += f"**{i}.** {value.get('external')}\n"
@@ -226,8 +227,8 @@ class SteamCog(commands.Cog):
                 if (
                     content.isdigit()
                     and int(content) in range(0, len(items) + 1)
-                    and msg.author is ctx.author
-                    and msg.channel is ctx.channel
+                    and msg.author.id == ctx.author.id
+                    and msg.channel.id == ctx.channel.id
                 ):
                     return True
 
@@ -300,7 +301,7 @@ class SteamCog(commands.Cog):
     @commands.max_concurrency(1, commands.BucketType.channel)
     @commands.bot_has_permissions(embed_links=True, read_message_history=True)
     async def latestdeals(self, ctx: commands.Context, *, sort_by: str = "recent"):
-        """Fetch list of recent cheapest games from cheapshark.com
+        """Fetch list of latest deals for games from cheapshark.com
 
         `sort_by` argument accepts only one of the following parameter:
         `deal rating`, `title`, `savings`, `price`, `metacritic`, `reviews`, `release`, `store`, `recent`
@@ -348,4 +349,4 @@ class SteamCog(commands.Cog):
         if len(pages) == 1:
             return await ctx.send(embed=pages[0])
         else:
-            await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
+            await menu(ctx, pages, DEFAULT_CONTROLS, timeout=90.0)
