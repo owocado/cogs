@@ -24,10 +24,15 @@ class SteamCog(commands.Cog):
     __author__ = "ow0x"
     __version__ = "0.2.2"
 
+    async def red_delete_data_for_user(self, **kwargs):
+        """Nothing to delete"""
+        pass
+
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
         pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\n\nCog Version: {self.__version__}"
+        author = f"Author: {self.__author__}"
+        return f"{pre_processed}\n\n{author}\nCog Version: {self.__version__}"
 
     def __init__(self, bot: Red):
         self.bot = bot
