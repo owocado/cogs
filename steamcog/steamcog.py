@@ -13,14 +13,15 @@ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from .stores import STORES
 
 USER_AGENT = {
-    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
 }
 
 
 class SteamCog(commands.Cog):
-    """Show various info and metadata about a Steam game and fetch cheap game deals for PC game(s)."""
+    """Get brief info about a Steam game and fetch cheap game deals for PC game(s)."""
 
-    __author__ = "ow0x (<@306810730055729152>)"
+    __author__ = "ow0x"
     __version__ = "0.2.2"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
@@ -36,9 +37,9 @@ class SteamCog(commands.Cog):
     def cog_unload(self):
         if self.emojis:
             self.emojis.cancel()
-        self.bot.loop.create_task(self.session.close())
+        asyncio.create_task(self.session.close())
 
-    # Credits and many thanks to flare#0001 for providing this logic ❤️
+    # Credits to someone, unfortunately
     async def init(self):
         await self.bot.wait_until_ready()
         self.platform_emojis = {
@@ -47,8 +48,7 @@ class SteamCog(commands.Cog):
             "linux": discord.utils.get(self.bot.emojis, id=501561148156542996),
         }
 
-    # Logic taken from https://github.com/TrustyJAID/Trusty-cogs/blob/master/notsobot/notsobot.py#L212
-    # All credits to TrustyJAID ❤️, I do not claim any credit for this.
+    # Attribution: https://github.com/TrustyJAID/Trusty-cogs/blob/master/notsobot/notsobot.py#L212
     async def fetch_steam_game_id(self, ctx: commands.Context, query: str):
         url = "https://store.steampowered.com/api/storesearch"
         params = {"cc": "us", "l": "en", "term": query}
@@ -66,8 +66,7 @@ class SteamCog(commands.Cog):
             app_id = data.get("items")[0].get("id")
             return app_id
         elif data.get("total") > 1:
-            # This logic taken from https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
-            # All credits belong to Sitryk, I do not take any credit for this code snippet.
+            # Attribution: https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
             items = ""
             for i, value in enumerate(data.get("items"), start=1):
                 items += f"**{i}.** {value.get('name')}\n"
