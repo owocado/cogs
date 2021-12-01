@@ -53,6 +53,13 @@ class SteamCog(commands.Cog):
             "linux": discord.utils.get(self.bot.emojis, id=501561148156542996),
         }
 
+    def timestamp(self, date_string: str) -> str:
+        try:
+            time_obj = datetime.strptime(date_string, "%b %d, %Y")
+        except ValueError:
+            time_obj = datetime.strptime(date_string, "%d %b, %Y")
+        return f"<t:{int(time_obj.timestamp())}:R>"
+
     # Attribution: https://github.com/TrustyJAID/Trusty-cogs/blob/master/notsobot/notsobot.py#L212
     async def fetch_steam_game_id(self, ctx: commands.Context, query: str):
         url = "https://store.steampowered.com/api/storesearch"
@@ -65,7 +72,7 @@ class SteamCog(commands.Cog):
         except asyncio.TimeoutError:
             return None
 
-        if data.get("total") == 0:
+        if data.get("total", 0) == 0:
             return None
         elif data.get("total") == 1:
             app_id = data.get("items")[0].get("id")
@@ -146,7 +153,9 @@ class SteamCog(commands.Cog):
         if appdata.get("release_date").get("coming_soon"):
             embed.add_field(name="Release Date", value="Coming Soon")
         else:
-            embed.add_field(name="Release Date", value=appdata["release_date"].get("date"))
+            embed.add_field(
+                name="Release Date", value=self.timestamp(appdata["release_date"].get("date")),
+            )
         if appdata.get("metacritic"):
             metacritic = (
                 bold(str(appdata["metacritic"].get("score")))
@@ -290,9 +299,9 @@ class SteamCog(commands.Cog):
                 steam_rating = f"{data['gameInfo'].get('steamRatingPercent')}% ({data['gameInfo'].get('steamRatingText')})"
                 embed.add_field(name="Rating", value=steam_rating)
             if data.get("cheapestPrice") and data["cheapestPrice"].get("price"):
-                date_from_epoch = datetime.utcfromtimestamp(data["cheapestPrice"]["date"]).strftime("%d %b %Y")
+                date_from_epoch = datetime.utcfromtimestamp(data["cheapestPrice"]["date"]).timestamp()
                 cheapest_price = (
-                    f"{data['cheapestPrice'].get('price')} USD\n(was on {date_from_epoch})"
+                    f"{data['cheapestPrice'].get('price')} USD\nthat was:\n<t:{int(date_from_epoch)}:R>"
                 )
                 embed.add_field(name="Historical Cheapest Price", value=cheapest_price)
             if len(embed.fields) == 5:
@@ -311,6 +320,11 @@ class SteamCog(commands.Cog):
         `sort_by` argument accepts only one of the following parameter:
         `deal rating`, `title`, `savings`, `price`, `metacritic`, `reviews`, `release`, `store`, `recent`
         """
+        if sort_by not in [
+            "title", "savings", "price", "metacritic", "reviews", "release", "store", "recent", "deal rating"
+        ]:
+            return await ctx.send_help()
+
         base_url = f"https://www.cheapshark.com/api/1.0/deals?sortBy={sort_by}"
 
         async with ctx.typing():
