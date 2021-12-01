@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 from datetime import datetime
+from html2text import html2text
 
 # Required by Red
 import aiohttp
@@ -211,6 +212,75 @@ class SteamCog(commands.Cog):
             return await ctx.send(embed=pages[0])
         else:
             await menu(ctx, pages, DEFAULT_CONTROLS, timeout=90.0)
+
+    @commands.command(name="sysreqs", usage="<name of steam game>")
+    @commands.bot_has_permissions(embed_links=True, read_message_history=True)
+    async def game_system_requirements(self, ctx: commands.Context, *, query: str):
+        """Fetch system requirements for a Steam game, both minimum and recommended if any."""
+        await ctx.trigger_typing()
+        app_id = await self.fetch_steam_game_id(ctx, query)
+        if app_id is None:
+            return await ctx.send("Could not find any results.")
+
+        base_url = "https://store.steampowered.com/api/appdetails"
+        params = {"appids": app_id, "l": "en", "cc": "us", "json": 1}
+        try:
+            async with self.session.get(base_url, params=params, headers=USER_AGENT) as response:
+                if response.status != 200:
+                    return await ctx.send(f"https://http.cat/{response.status}")
+                data = await response.json()
+        except asyncio.TimeoutError:
+            return await ctx.send("Operation timed out.")
+
+        appdata = data[f"{app_id}"].get("data")
+        if not (
+            appdata.get("pc_requirements")
+            and appdata.get("mac_requirements")
+            and appdata.get("linux_requirements")
+        ):
+            return await ctx.send("Hmmm, no system requirements found for this game on Steam!")
+
+        pages = []
+        embed = discord.Embed(title=appdata["name"], colour=await ctx.embed_color())
+        embed.url = f"https://store.steampowered.com/app/{app_id}"
+        embed.set_author(
+            name="Steam - System Requirements", icon_url="https://i.imgur.com/xxr2UBZ.png",
+        )
+        if appdata.get("pc_requirements"):
+            pc_reqs = []
+            if appdata["pc_requirements"].get("minimum"):
+                pc_reqs.append(
+                    html2text(appdata["pc_requirements"]["minimum"]).replace("\n\n", "\n")
+                )
+            if appdata["pc_requirements"].get("recommended"):
+                pc_reqs.append(
+                    html2text(appdata["pc_requirements"]["recommended"]).replace("\n\n", "\n")
+                )
+            embed.add_field(name="Microsoft Windows:", value="\n\n".join(pc_reqs))
+        if appdata.get("mac_requirements"):
+            mac_reqs = []
+            if appdata["mac_requirements"].get("minimum"):
+                mac_reqs.append(
+                    html2text(appdata["mac_requirements"]["minimum"]).replace("\n\n", "\n")
+                )
+            if appdata["mac_requirements"].get("recommended"):
+                mac_reqs.append(
+                    html2text(appdata["mac_requirements"]["recommended"]).replace("\n\n", "\n")
+                )
+            embed.add_field(name="Mac OS:", value="\n\n".join(mac_reqs), inline=False)
+        if appdata.get("linux_requirements"):
+            linux_reqs = []
+            if appdata["linux_requirements"].get("minimum"):
+                linux_reqs.append(
+                    html2text(appdata["linux_requirements"]["minimum"]).replace("\n\n", "\n")
+                )
+            if appdata["linux_requirements"].get("recommended"):
+                linux_reqs.append(
+                    html2text(appdata["linux_requirements"]["recommended"]).replace("\n\n", "\n")
+                )
+            embed.add_field(name="Linux Platform:", value="\n\n".join(linux_reqs), inline=False)
+
+        await ctx.send(embed=embed)
 
     async def fetch_deal_id(self, ctx, query: str):
         url = f"https://www.cheapshark.com/api/1.0/games?title={query}"

@@ -6,7 +6,7 @@
     "install_msg": "Thank you for installing this MEH cog.",
     "author": ["ow0x"],
     "required_cogs": {},
-    "requirements": [],
+    "requirements": ["html2text"],
     "tags": ["steam", "steamcog"],
     "min_bot_version": "3.4.12",
     "hidden": false,
