@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import re
 from datetime import datetime
 from html2text import html2text
 
@@ -213,7 +214,7 @@ class SteamCog(commands.Cog):
         else:
             await menu(ctx, pages, DEFAULT_CONTROLS, timeout=90.0)
 
-    @commands.command(name="sysreqs", usage="<name of steam game>")
+    @commands.command(name="gamereqs", usage="<name of steam game>")
     @commands.bot_has_permissions(embed_links=True, read_message_history=True)
     async def game_system_requirements(self, ctx: commands.Context, *, query: str):
         """Fetch system requirements for a Steam game, both minimum and recommended if any."""
@@ -242,16 +243,24 @@ class SteamCog(commands.Cog):
         }
 
         def prettify(raw_text: str, header: str) -> str:
-            markdown_text = str(html2text(raw_text)).replace("\n\n", "\n")
-            to_parse = markdown_text.replace(header, "")
-            prettify = to_parse.replace("  *  **", "**`").replace(":**", ":`** ")
-            return prettify
+            pattern = re.compile(r"\*+[a-zA-Z0-9_ ]*:\*+", flags=re.IGNORECASE)
+            markdown_text = str(html2text(raw_text))
+            strings = markdown_text.split("\n\n")
+            joined_strings = ""
+            for line in strings:
+                new_line = line.replace("  *  ", "").strip()
+                word = pattern.search(new_line).group(0)
+                clean_word = word.replace("**", "").replace(":", "")
+                substitute = re.sub(pattern, f"**`{clean_word:<12}:`**", new_line)
+                joined_strings += f"{substitute}\n"
+
+            return joined_strings
 
         for key, value in appdata.get("platforms").items():
             if value and appdata.get(platform_mapping[key]):
                 embed = discord.Embed(title=appdata["name"], colour=await ctx.embed_color())
                 embed.url = f"https://store.steampowered.com/app/{app_id}"
-                embed.set_author(name="Steam : System Requirements")
+                embed.set_author(name="System Requirements")
                 embed.set_thumbnail(url=str(appdata.get("header_image")).replace("\\", ""))
                 all_reqs = []
                 if appdata[platform_mapping[key]].get("minimum"):
