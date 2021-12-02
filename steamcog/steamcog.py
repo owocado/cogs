@@ -248,11 +248,15 @@ class SteamCog(commands.Cog):
             strings = markdown_text.split("\n\n")
             joined_strings = ""
             for line in strings:
-                new_line = line.replace("  *  ", "").strip()
-                word = pattern.search(new_line).group(0)
-                clean_word = word.replace("**", "").replace(":", "")
-                substitute = re.sub(pattern, f"**`{clean_word:<12}:`**", new_line)
-                joined_strings += f"{substitute}\n"
+                # new_line = line.replace("  *  ", "").strip()
+                match = pattern.search(line)
+                if match:
+                    word = match.group(0)
+                    clean_word = word.replace("**", "").replace(":", "")
+                    substitute = re.sub(pattern, f"**`{clean_word:<12}:`**", line)
+                    joined_strings += f"{substitute}\n"
+                else:
+                    joined_strings += f"{line}\n"
 
             return joined_strings
 
