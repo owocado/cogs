@@ -246,7 +246,7 @@ class SteamCog(commands.Cog):
             "mac": "mac_requirements",
             "linux": "linux_requirements",
         }
-        for key, value in appdata.get("platforms"):
+        for key, value in appdata.get("platforms").items():
             if value and appdata.get(platform_mapping[key]):
                 embed = discord.Embed(title=appdata["name"], colour=await ctx.embed_color())
                 embed.url = f"https://store.steampowered.com/app/{app_id}"
