@@ -245,6 +245,7 @@ class SteamCog(commands.Cog):
             markdown_text = str(html2text(raw_text)).replace("\n\n", "\n")
             to_parse = markdown_text.replace(header, "")
             prettify = to_parse.replace("  *  **", "**`").replace(":**", ":`** ")
+            return prettify
 
         for key, value in appdata.get("platforms").items():
             if value and appdata.get(platform_mapping[key]):
