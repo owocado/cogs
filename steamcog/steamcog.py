@@ -244,7 +244,7 @@ class SteamCog(commands.Cog):
 
         def prettify(raw_text: str, header: str) -> str:
             pattern = re.compile(r"\*+[a-zA-Z0-9_ ]*:\*+", flags=re.IGNORECASE)
-            markdown_text = str(html2text(raw_text))
+            markdown_text = str(html2text(raw_text)).replace(header, "")
             strings = markdown_text.split("\n\n")
             joined_strings = ""
             for line in strings:
