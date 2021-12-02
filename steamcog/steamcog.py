@@ -24,7 +24,7 @@ class SteamCog(commands.Cog):
     """Get brief info about a Steam game and fetch cheap game deals for PC game(s)."""
 
     __author__ = "ow0x"
-    __version__ = "0.2.2"
+    __version__ = "0.3.2"
 
     async def red_delete_data_for_user(self, **kwargs):
         """Nothing to delete"""
@@ -371,7 +371,7 @@ class SteamCog(commands.Cog):
                 )
                 embed.add_field(name="Deal available on", value=deal_store_info)
             if data["gameInfo"].get("steamRatingPercent") != "0" and data["gameInfo"].get("steamRatingText"):
-                steam_rating = f"{data['gameInfo'].get('steamRatingPercent')}% ({data['gameInfo'].get('steamRatingText')})"
+                steam_rating = f"{data['gameInfo'].get('steamRatingPercent')}%\n({data['gameInfo'].get('steamRatingText')})"
                 embed.add_field(name="Rating", value=steam_rating)
             if data.get("cheapestPrice") and data["cheapestPrice"].get("price"):
                 date_from_epoch = datetime.utcfromtimestamp(data["cheapestPrice"]["date"]).timestamp()
