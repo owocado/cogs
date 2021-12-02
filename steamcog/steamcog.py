@@ -241,46 +241,35 @@ class SteamCog(commands.Cog):
             return await ctx.send("Hmmm, no system requirements found for this game on Steam!")
 
         pages = []
-        embed = discord.Embed(title=appdata["name"], colour=await ctx.embed_color())
-        embed.url = f"https://store.steampowered.com/app/{app_id}"
-        embed.set_author(
-            name="Steam - System Requirements", icon_url="https://i.imgur.com/xxr2UBZ.png",
-        )
-        if appdata.get("pc_requirements"):
-            pc_reqs = []
-            if appdata["pc_requirements"].get("minimum"):
-                pc_reqs.append(
-                    html2text(appdata["pc_requirements"]["minimum"]).replace("\n\n", "\n")
-                )
-            if appdata["pc_requirements"].get("recommended"):
-                pc_reqs.append(
-                    html2text(appdata["pc_requirements"]["recommended"]).replace("\n\n", "\n")
-                )
-            embed.add_field(name="Microsoft Windows:", value="\n\n".join(pc_reqs))
-        if appdata.get("mac_requirements"):
-            mac_reqs = []
-            if appdata["mac_requirements"].get("minimum"):
-                mac_reqs.append(
-                    html2text(appdata["mac_requirements"]["minimum"]).replace("\n\n", "\n")
-                )
-            if appdata["mac_requirements"].get("recommended"):
-                mac_reqs.append(
-                    html2text(appdata["mac_requirements"]["recommended"]).replace("\n\n", "\n")
-                )
-            embed.add_field(name="Mac OS:", value="\n\n".join(mac_reqs), inline=False)
-        if appdata.get("linux_requirements"):
-            linux_reqs = []
-            if appdata["linux_requirements"].get("minimum"):
-                linux_reqs.append(
-                    html2text(appdata["linux_requirements"]["minimum"]).replace("\n\n", "\n")
-                )
-            if appdata["linux_requirements"].get("recommended"):
-                linux_reqs.append(
-                    html2text(appdata["linux_requirements"]["recommended"]).replace("\n\n", "\n")
-                )
-            embed.add_field(name="Linux Platform:", value="\n\n".join(linux_reqs), inline=False)
+        platform_mapping = {
+            "windows": "pc_requirements",
+            "mac": "mac_requirements",
+            "linux": "linux_requirements",
+        }
+        for key, value in appdata.get("platforms"):
+            if value and appdata.get(platform_mapping[key]):
+                embed = discord.Embed(title=appdata["name"], colour=await ctx.embed_color())
+                embed.url = f"https://store.steampowered.com/app/{app_id}"
+                embed.set_author(name="Steam : System Requirements")
 
-        await ctx.send(embed=embed)
+                all_reqs = []
+                if appdata[platform_mapping[key]].get("minimum"):
+                    all_reqs.append(
+                        html2text(appdata[platform_mapping[key]]["minimum"]).replace("\n\n", "\n")
+                    )
+                if appdata[platform_mapping[key]].get("recommended"):
+                    embed.add_field(
+                        name="Recommended:",
+                        value=html2text(
+                            appdata[platform_mapping[key]]["recommended"]
+                        ).replace("\n\n", "\n"),
+                    )
+                embed.set_footer(text="Powered by Steam", icon_url="https://i.imgur.com/xxr2UBZ.png")
+                pages.append(embed)
+
+        if not pages:
+            return await ctx.send("No results found.")
+        await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
 
     async def fetch_deal_id(self, ctx, query: str):
         url = f"https://www.cheapshark.com/api/1.0/games?title={query}"
