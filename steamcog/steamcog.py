@@ -177,17 +177,12 @@ class SteamCog(commands.Cog):
             embed.add_field(name="Developers", value=", ".join(appdata["developers"]))
         if appdata.get("publishers", [""]) != [""]:
             embed.add_field(name="Publishers", value=", ".join(appdata["publishers"]))
+        # thanks to npc203 (epic guy)
         platforms = ""
-        if appdata.get("platforms"):
-            windows_emoji = self.platform_emojis["windows"] or "Windows\n"
-            linux_emoji = self.platform_emojis["linux"] or "Linux\n"
-            macos_emoji = self.platform_emojis["mac"] or "Mac OS\n"
-            if appdata["platforms"].get("windows"):
-                platforms += f"{windows_emoji}"
-            if appdata["platforms"].get("linux"):
-                platforms += f"{linux_emoji}"
-            if appdata["platforms"].get("mac"):
-                platforms += f"{macos_emoji}"
+        if platform_dict := appdata.get("platforms"):
+            for k, v in platform_dict.items():
+                if v:
+                    platforms += self.platform_emojis[k] or f"{k.title()} OS\n"
         if platforms:
             embed.add_field(name="Supported Platforms", value=platforms)
         if appdata.get("genres"):
