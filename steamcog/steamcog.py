@@ -9,7 +9,7 @@ import discord
 from redbot.core import commands
 from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import bold, humanize_number
-from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
+from redbot.core.utils.menus import close_menu, menu, DEFAULT_CONTROLS
 
 from .stores import STORES
 
@@ -269,7 +269,9 @@ class SteamCog(commands.Cog):
 
         if not pages:
             return await ctx.send("No results found.")
-        await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
+
+        controls = {"❌": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
+        await menu(ctx, pages, controls=controls, timeout=60.0)
 
     async def fetch_deal_id(self, ctx, query: str):
         url = f"https://www.cheapshark.com/api/1.0/games?title={query}"
