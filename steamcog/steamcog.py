@@ -254,8 +254,11 @@ class SteamCog(commands.Cog):
 
                 all_reqs = []
                 if appdata[platform_mapping[key]].get("minimum"):
-                    all_reqs.append(
-                        html2text(appdata[platform_mapping[key]]["minimum"]).replace("\n\n", "\n")
+                    embed.add_field(
+                        name="Minimum:",
+                        value=html2text(
+                            appdata[platform_mapping[key]]["minimum"]
+                        ).replace("\n\n", "\n"),
                     )
                 if appdata[platform_mapping[key]].get("recommended"):
                     embed.add_field(
@@ -263,6 +266,7 @@ class SteamCog(commands.Cog):
                         value=html2text(
                             appdata[platform_mapping[key]]["recommended"]
                         ).replace("\n\n", "\n"),
+                        inline=False,
                     )
                 embed.set_footer(text="Powered by Steam", icon_url="https://i.imgur.com/xxr2UBZ.png")
                 pages.append(embed)
