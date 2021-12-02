@@ -145,7 +145,7 @@ class SteamCog(commands.Cog):
         )
         embed.url = f"https://store.steampowered.com/app/{app_id}"
         embed.set_author(name="Steam", icon_url="https://i.imgur.com/xxr2UBZ.png")
-        embed.set_image(url=str(appdata.get("header_image")).replace("\\", ""))
+        embed.set_thumbnail(url=str(appdata.get("header_image")).replace("\\", ""))
         if appdata.get("price_overview"):
             embed.add_field(
                 name="Game Price",
@@ -246,26 +246,28 @@ class SteamCog(commands.Cog):
             "mac": "mac_requirements",
             "linux": "linux_requirements",
         }
+
+        def prettify(raw_text: str, header: str) -> str:
+            markdown_text = str(html2text(raw_text)).replace("\n\n", "\n")
+            to_parse = markdown_text.replace(header, "")
+            prettify = to_parse.replace("  *  **", "**`").replace(":**", ":`** ")
+
         for key, value in appdata.get("platforms").items():
             if value and appdata.get(platform_mapping[key]):
                 embed = discord.Embed(title=appdata["name"], colour=await ctx.embed_color())
                 embed.url = f"https://store.steampowered.com/app/{app_id}"
                 embed.set_author(name="Steam : System Requirements")
-
+                embed.set_thumbnail(url=str(appdata.get("header_image")).replace("\\", ""))
                 all_reqs = []
                 if appdata[platform_mapping[key]].get("minimum"):
                     embed.add_field(
-                        name="Minimum:",
-                        value=html2text(
-                            appdata[platform_mapping[key]]["minimum"]
-                        ).replace("\n\n", "\n"),
+                        name="\u200b",
+                        value=prettify(appdata[platform_mapping[key]]["minimum"]),
                     )
                 if appdata[platform_mapping[key]].get("recommended"):
                     embed.add_field(
-                        name="Recommended:",
-                        value=html2text(
-                            appdata[platform_mapping[key]]["recommended"]
-                        ).replace("\n\n", "\n"),
+                        name="\u200b",
+                        value=prettify(appdata[platform_mapping[key]]["recommended"]),
                         inline=False,
                     )
                 embed.set_footer(text="Powered by Steam", icon_url="https://i.imgur.com/xxr2UBZ.png")
