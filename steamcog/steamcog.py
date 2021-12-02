@@ -233,12 +233,6 @@ class SteamCog(commands.Cog):
             return await ctx.send("Operation timed out.")
 
         appdata = data[f"{app_id}"].get("data")
-        if not (
-            appdata.get("pc_requirements")
-            and appdata.get("mac_requirements")
-            and appdata.get("linux_requirements")
-        ):
-            return await ctx.send("Hmmm, no system requirements found for this game on Steam!")
 
         pages = []
         platform_mapping = {
@@ -274,7 +268,7 @@ class SteamCog(commands.Cog):
                 pages.append(embed)
 
         if not pages:
-            return await ctx.send("No results found.")
+            return await ctx.send("Hmmm, no system requirements found for this game on Steam!")
 
         controls = {"❌": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
         await menu(ctx, pages, controls=controls, timeout=60.0)
