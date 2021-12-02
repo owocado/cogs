@@ -256,12 +256,12 @@ class SteamCog(commands.Cog):
                 all_reqs = []
                 if appdata[platform_mapping[key]].get("minimum"):
                     embed.add_field(
-                        name="\u200b",
+                        name="Minimum:",
                         value=prettify(appdata[platform_mapping[key]]["minimum"], "**Minimum:**"),
                     )
                 if appdata[platform_mapping[key]].get("recommended"):
                     embed.add_field(
-                        name="\u200b",
+                        name="Recommended:",
                         value=prettify(appdata[platform_mapping[key]]["recommended"], "**Recommended:**"),
                         inline=False,
                     )
