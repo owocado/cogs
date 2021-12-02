@@ -256,12 +256,12 @@ class SteamCog(commands.Cog):
                 if appdata[platform_mapping[key]].get("minimum"):
                     embed.add_field(
                         name="\u200b",
-                        value=prettify(appdata[platform_mapping[key]]["minimum"]),
+                        value=prettify(appdata[platform_mapping[key]]["minimum"], "**Minimum:**"),
                     )
                 if appdata[platform_mapping[key]].get("recommended"):
                     embed.add_field(
                         name="\u200b",
-                        value=prettify(appdata[platform_mapping[key]]["recommended"]),
+                        value=prettify(appdata[platform_mapping[key]]["recommended"], "**Recommended:**"),
                         inline=False,
                     )
                 embed.set_footer(text="Powered by Steam", icon_url="https://i.imgur.com/xxr2UBZ.png")
