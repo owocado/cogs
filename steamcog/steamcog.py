@@ -247,9 +247,9 @@ class SteamCog(commands.Cog):
                 embed.set_thumbnail(url=str(appdata.get("header_image")).replace("\\", ""))
                 all_reqs = []
                 if appdata[platform_mapping[key]].get("minimum"):
-                    all_reqs.append(html2text(appdata[platform_mapping[key]]["minimum"]))
+                    all_reqs.append(html2text(appdata[platform_mapping[key]]["minimum"]).replace("\n\n", "\n"))
                 if appdata[platform_mapping[key]].get("recommended"):
-                    all_reqs.append(html2text(appdata[platform_mapping[key]]["recommended"]))
+                    all_reqs.append(html2text(appdata[platform_mapping[key]]["recommended"]).replace("\n\n", "\n"))
                 embed.description = "\n\n".join(all_reqs)
                 embed.set_footer(text="Powered by Steam", icon_url="https://i.imgur.com/xxr2UBZ.png")
                 pages.append(embed)
