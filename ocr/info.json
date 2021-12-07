@@ -1,8 +1,8 @@
 {
     "name": "OCR",
     "author": ["ow0x", "TrustyJAID"],
-    "short": "Detect text in images through OCR using Google Cloud Vision API.",
-    "description": "Detect text in images through OCR using Google Cloud Vision API.",
+    "short": "Detect text in images through OCR.",
+    "description": "Detect text in images through OCR.",
     "install_msg": "**NOTE FOR BOT OWNER:**\n\nThis cog uses free ocr.space API which may give subpar results.\n\n**`[OPTIONAL]`**\nThere is optional support for Google Cloud Vision OCR API for improved text detection.\n(requires you to have a Google cloud project with active enabled billing account).\nYou may read more on that over at:\n<https://gist.github.com/ow0x/a7f17deaea4612a7dba4ba707210f7d8>",
     "end_user_data_statement": "This cog does not persistently store any data or metadata about users.",
     "tags": ["ocr", "image to text"],
