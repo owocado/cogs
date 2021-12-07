@@ -11,12 +11,13 @@ from redbot.core import commands
 from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import bold, humanize_number
 from redbot.core.utils.menus import close_menu, menu, DEFAULT_CONTROLS
+# from redbot.core.utils.dpy2_menus import BaseMenu, ListPages
 
 from .stores import STORES
 
 USER_AGENT = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
+    "(KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36"
 }
 
 
@@ -24,7 +25,7 @@ class SteamCog(commands.Cog):
     """Get brief info about a Steam game and fetch cheap game deals for PC game(s)."""
 
     __author__ = "ow0x"
-    __version__ = "0.3.2"
+    __version__ = "0.3.3"
 
     async def red_delete_data_for_user(self, **kwargs):
         """Nothing to delete"""
@@ -117,7 +118,7 @@ class SteamCog(commands.Cog):
         else:
             return None
 
-    @commands.command(usage="<name of steam game>")
+    @commands.command(usage="name of steam game")
     @commands.bot_has_permissions(add_reactions=True, embed_links=True, read_message_history=True)
     async def steam(self, ctx: commands.Context, *, query: str):
         """Fetch some useful info about a Steam game all from the comfort of your Discord home."""
@@ -208,8 +209,9 @@ class SteamCog(commands.Cog):
             return await ctx.send(embed=pages[0])
         else:
             await menu(ctx, pages, DEFAULT_CONTROLS, timeout=90.0)
+            # await BaseMenu(ListPages(pages), timeout=90, ctx=ctx).start(ctx)
 
-    @commands.command(name="gamereqs", usage="<name of steam game>")
+    @commands.command(name="gamereqs", usage="name of steam game")
     @commands.bot_has_permissions(embed_links=True, read_message_history=True)
     async def game_system_requirements(self, ctx: commands.Context, *, query: str):
         """Fetch system requirements for a Steam game, both minimum and recommended if any."""
@@ -237,24 +239,6 @@ class SteamCog(commands.Cog):
             "linux": "linux_requirements",
         }
 
-        def prettify(raw_text: str, header: str) -> str:
-            pattern = re.compile(r"\*+[a-zA-Z0-9_ ]*:\*+", flags=re.IGNORECASE)
-            markdown_text = str(html2text(raw_text)).replace(header, "")
-            strings = markdown_text.split("\n\n")
-            joined_strings = ""
-            for line in strings:
-                # new_line = line.replace("  *  ", "").strip()
-                match = pattern.search(line)
-                if match:
-                    word = match.group(0)
-                    clean_word = word.replace("**", "").replace(":", "")
-                    substitute = re.sub(pattern, f"**`{clean_word:<12}:`**", line)
-                    joined_strings += f"{substitute}\n"
-                else:
-                    joined_strings += f"{line}\n"
-
-            return joined_strings
-
         for key, value in appdata.get("platforms").items():
             if value and appdata.get(platform_mapping[key]):
                 embed = discord.Embed(title=appdata["name"], colour=await ctx.embed_color())
@@ -263,16 +247,10 @@ class SteamCog(commands.Cog):
                 embed.set_thumbnail(url=str(appdata.get("header_image")).replace("\\", ""))
                 all_reqs = []
                 if appdata[platform_mapping[key]].get("minimum"):
-                    embed.add_field(
-                        name="Minimum:",
-                        value=prettify(appdata[platform_mapping[key]]["minimum"], "**Minimum:**"),
-                    )
+                    all_reqs.append(html2text(appdata[platform_mapping[key]]["minimum"]))
                 if appdata[platform_mapping[key]].get("recommended"):
-                    embed.add_field(
-                        name="Recommended:",
-                        value=prettify(appdata[platform_mapping[key]]["recommended"], "**Recommended:**"),
-                        inline=False,
-                    )
+                    all_reqs.append(html2text(appdata[platform_mapping[key]]["recommended"]))
+                embed.description = "\n\n".join(all_reqs)
                 embed.set_footer(text="Powered by Steam", icon_url="https://i.imgur.com/xxr2UBZ.png")
                 pages.append(embed)
 
@@ -281,6 +259,7 @@ class SteamCog(commands.Cog):
 
         controls = {"❌": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
         await menu(ctx, pages, controls=controls, timeout=60.0)
+        # await BaseMenu(ListPages(pages), timeout=90, ctx=ctx).start(ctx)
 
     async def fetch_deal_id(self, ctx, query: str):
         url = f"https://www.cheapshark.com/api/1.0/games?title={query}"
@@ -439,3 +418,4 @@ class SteamCog(commands.Cog):
             return await ctx.send(embed=pages[0])
         else:
             await menu(ctx, pages, DEFAULT_CONTROLS, timeout=90.0)
+            # await BaseMenu(ListPages(pages), timeout=90, ctx=ctx).start(ctx)
