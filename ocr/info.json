@@ -1,12 +1,12 @@
 {
     "name": "OCR",
-    "author": ["TrustyJAID", "ow0x"],
-    "short": "Detect text in images using Google Cloud Vision API.",
-    "description": "Detect text in images using Google Cloud Vision API.",
-    "install_msg": "This cog requires an API key for Google Cloud Vision API.\nGo to this link to enable the Cloud Vision API:\n<https://console.cloud.google.com/flows/enableapi?apiid=vision.googleapis.com>\n\nOnce you have enabled this API, go to Credentials section to create an API key:\n<https://console.cloud.google.com/apis/credentials>\n\nℹ The API key gives you free usage quota of 1000 requests per month. More on pricing here:\nhttps://cloud.google.com/vision/pricing\n\n\nOnce you have the API key, Copy it and set it in your red instance with:\n```[p]set api google_vision api_key <copied_api_key>```",
+    "author": ["ow0x", "TrustyJAID"],
+    "short": "Detect text in images through OCR using Google Cloud Vision API.",
+    "description": "Detect text in images through OCR using Google Cloud Vision API.",
+    "install_msg": "**NOTE FOR BOT OWNER:**\n\nThis cog uses free ocr.space API which may give subpar results.\n\n**`[OPTIONAL]`**\nThere is optional support for Google Cloud Vision OCR API for improved text detection.\n(requires you to have a Google cloud project with active enabled billing account).\nYou may read more on that over at:\n<https://gist.github.com/ow0x/a7f17deaea4612a7dba4ba707210f7d8>",
     "end_user_data_statement": "This cog does not persistently store any data or metadata about users.",
     "tags": ["ocr", "image to text"],
-    "min_bot_version": "3.4.8",
+    "min_bot_version": "3.4.12",
     "hidden": false,
     "disabled": false,
     "type": "COG"
