@@ -649,7 +649,7 @@ class Roleplay(commands.Cog):
                     people_with_no_creativity.append([action.lower(), sent, received])
 
         for act in self.possible_actions:
-            fucking_dumb_loop(act)
+            sravan_copies_ideas(act)
         dedupe_list = [x for i, x in enumerate(people_with_no_creativity, 1) if i % 2 != 0]
         table = tabulate(dedupe_list, headers=["Action", "Sent", "Received"], numalign="left")
         emb = discord.Embed(colour=await ctx.embed_colour(), description=box(table, "nim"))
@@ -673,7 +673,7 @@ class Roleplay(commands.Cog):
                     people_with_no_creativity.append([action.lower(), sent, received])
 
         for act in self.possible_actions:
-            fucking_dumb_loop(act)
+            sravan_copies_ideas(act)
         dedupe_list = [x for i, x in enumerate(people_with_no_creativity, 1) if i % 2 != 0]
         table = tabulate(dedupe_list, headers=["Action", "Sent", "Received"], numalign="left")
         emb = discord.Embed(colour=await ctx.embed_colour(), description=box(table, "nim"))
