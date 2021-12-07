@@ -4,7 +4,9 @@ import discord
 from redbot.core import Config, commands
 from redbot.core.bot import Red
 from redbot.core.commands import Context
-from redbot.core.utils.chat_formatting import bold, quote
+from redbot.core.utils.chat_formatting import box, bold, quote
+
+from tabulate import tabulate
 
 from .constants import *
 
@@ -13,10 +15,10 @@ class Roleplay(commands.Cog):
     """Do roleplay with your Discord friends or virtual strangers."""
 
     __author__ = "ow0x"
-    __version__ = "1.0.3"
-    
+    __version__ = "1.1.0"
+
     async def red_delete_data_for_user(self, **kwargs):
-        """ Nothing to delete """
+        """Nothing to delete"""
         pass
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
@@ -28,6 +30,23 @@ class Roleplay(commands.Cog):
         self.bot = bot
         self.config = Config.get_conf(self, 123456789987654321, force_registration=True)
         default_global = {"schema_version": 1}
+        self.possible_actions = [
+            "BAKAS",
+            "BULLY",
+            "CUDDLES",
+            "FEEDS",
+            "HIGHFIVES",
+            "HUGS",
+            "KILLS",
+            "KISSES",
+            "LICKS",
+            "NOMS",
+            "PATS",
+            "POKES",
+            "PUNCHES",
+            "SLAPS",
+            "TICKLES",
+        ]
         default_user = {
             "BAKAS_SENT": 0,
             "BAKAS_RECEIVED": 0,
@@ -77,10 +96,8 @@ class Roleplay(commands.Cog):
         """Call someone a BAKA with a GIF reaction!"""
         if member.id == ctx.me.id:
             return await ctx.send("**Ｎ Ｏ   Ｕ**")
-
         if member.id == ctx.author.id:
             return await ctx.send(f"{bold(ctx.author.name)}, you really are BAKA. Stupid!! 💩")
-
         await ctx.trigger_typing()
         baka_to = await self.config.member(ctx.author).BAKAS_SENT()
         baka_from = await self.config.member(member).BAKAS_RECEIVED()
@@ -109,12 +126,10 @@ class Roleplay(commands.Cog):
         """Bully someone in this server with a funny GIF!"""
         if member.id == ctx.me.id:
             return await ctx.send("**Ｎ Ｏ   Ｕ**")
-
         if member.id == ctx.author.id:
             return await ctx.send(
                 f"{ctx.author.mention} Self bullying doesn't make sense. Stop it, get some help."
             )
-
         await ctx.trigger_typing()
         bully_to = await self.config.member(ctx.author).BULLY_SENT()
         bully_from = await self.config.member(member).BULLY_RECEIVED()
@@ -166,7 +181,6 @@ class Roleplay(commands.Cog):
                 + "there is no way you can cuddle yourself! Go cuddle with "
                 + "someone... or a pillow, if you're lonely like me. 😔"
             )
-
         await ctx.trigger_typing()
         cuddle_to = await self.config.member(ctx.author).CUDDLES_SENT()
         cuddle_from = await self.config.member(member).CUDDLES_RECEIVED()
@@ -199,7 +213,6 @@ class Roleplay(commands.Cog):
         """Feed someone from this server virtually!"""
         if member.id == ctx.author.id:
             return await ctx.send(f"_{ctx.author.mention} eats {bold(choice(RECIPES))}!_")
-
         await ctx.trigger_typing()
         feed_to = await self.config.member(ctx.author).FEEDS_SENT()
         feed_from = await self.config.member(member).FEEDS_RECEIVED()
@@ -234,7 +247,6 @@ class Roleplay(commands.Cog):
             return await ctx.send(
                 f"_{ctx.author.mention} high-fives themselves in mirror, I guess?_"
             )
-
         await ctx.trigger_typing()
         h5_to = await self.config.member(ctx.author).HIGHFIVES_SENT()
         h5_from = await self.config.member(member).HIGHFIVES_RECEIVED()
@@ -270,7 +282,6 @@ class Roleplay(commands.Cog):
             return await ctx.send(
                 f"{ctx.author.mention} One dOEs NOt SiMplY hUg THeIR oWn sELF!!!!!"
             )
-
         await ctx.trigger_typing()
         hug_to = await self.config.member(ctx.author).HUGS_SENT()
         hug_from = await self.config.member(member).HUGS_RECEIVED()
@@ -303,10 +314,8 @@ class Roleplay(commands.Cog):
         """Virtually attempt to kill a server member with a GIF reaction!"""
         if member.id == ctx.me.id:
             return await ctx.send("**Ｎ Ｏ   Ｕ**")
-
         if member.id == ctx.author.id:
             return await ctx.send(f"{ctx.author.mention} Seppukku is not allowed on my watch. 💀")
-
         await ctx.trigger_typing()
         kill_to = await self.config.member(ctx.author).KILLS_SENT()
         kill_from = await self.config.member(member).KILLS_RECEIVED()
@@ -338,7 +347,6 @@ class Roleplay(commands.Cog):
             return await ctx.send(
                 f"Poggers {bold(ctx.author.name)}, you just kissed yourself! LOL!!! 💋"
             )
-
         await ctx.trigger_typing()
         kiss_to = await self.config.member(ctx.author).KISSES_SENT()
         kiss_from = await self.config.member(member).KISSES_RECEIVED()
@@ -373,7 +381,6 @@ class Roleplay(commands.Cog):
             return await ctx.send(
                 f"{ctx.author.mention} You wanna lick a bot? Very horny! Here, lick this: 🍆"
             )
-
         await ctx.trigger_typing()
         lick_to = await self.config.member(ctx.author).LICKS_SENT()
         lick_from = await self.config.member(member).LICKS_RECEIVED()
@@ -406,7 +413,6 @@ class Roleplay(commands.Cog):
         """Try to nom/bite a server member!"""
         if member.id == ctx.me.id:
             return await ctx.send(f"**OH NO!** _runs away_")
-
         message = (
             f"Waaaaaa! {bold(ctx.author.name)}, You bit yourself! Whyyyy?? 😭"
             if member.id == ctx.author.id
@@ -439,7 +445,6 @@ class Roleplay(commands.Cog):
         """Pat a server member with wholesome GIF!"""
         if member.id == ctx.author.id:
             return await ctx.send(f"{ctx.author.mention} _pats themselves, I guess? **yay**_ 🎉")
-
         await ctx.trigger_typing()
         pat_to = await self.config.member(ctx.author).PATS_SENT()
         pat_from = await self.config.member(member).PATS_RECEIVED()
@@ -473,7 +478,6 @@ class Roleplay(commands.Cog):
         """Poke your Discord friends or strangers!"""
         if member.id == ctx.author.id:
             return await ctx.send(f"{bold(ctx.author.name)} wants to play self poke huh?!")
-
         await ctx.trigger_typing()
         poke_to = await self.config.member(ctx.author).POKES_SENT()
         poke_from = await self.config.member(member).POKES_RECEIVED()
@@ -514,13 +518,11 @@ class Roleplay(commands.Cog):
             em = discord.Embed(colour=await ctx.embed_colour())
             em.set_image(url="https://i.imgur.com/iVgOijZ.gif")
             return await ctx.send(content=message, embed=em)
-
         if member.id == ctx.author.id:
             return await ctx.send(
                 f"I uh ..... **{ctx.author.name}**, self harm doesn't"
                 + " sound so fun. Stop it, get some help."
             )
-
         await ctx.trigger_typing()
         punch_to = await self.config.member(ctx.author).PUNCHES_SENT()
         punch_from = await self.config.member(member).PUNCHES_RECEIVED()
@@ -549,10 +551,8 @@ class Roleplay(commands.Cog):
         """Slap a server member!"""
         if member.id == ctx.me.id:
             return await ctx.send("**Ｎ Ｏ   Ｕ**")
-
         if member.id == ctx.author.id:
             return await ctx.send(f"{ctx.author.mention} Don't slap yourself, you're precious!")
-
         await ctx.trigger_typing()
         slap_to = await self.config.member(ctx.author).SLAPS_SENT()
         slap_from = await self.config.member(member).SLAPS_RECEIVED()
@@ -603,7 +603,6 @@ class Roleplay(commands.Cog):
                 f"{ctx.author.mention} tickling yourself is boring!"
                 + " Tickling others is more fun though, right? 😏"
             )
-
         await ctx.trigger_typing()
         tickle_to = await self.config.member(ctx.author).TICKLES_SENT()
         tickle_from = await self.config.member(member).TICKLES_RECEIVED()
@@ -628,3 +627,56 @@ class Roleplay(commands.Cog):
         embed.set_footer(text=footer)
 
         await ctx.send(content=quote(message), embed=embed)
+
+    # TODO: add server and global roleplay leaderboard
+
+    @commands.guild_only()
+    @commands.group(name="rpstats", invoke_without_command=True)
+    @commands.bot_has_permissions(embed_links=True)
+    @commands.cooldown(1, 5, commands.BucketType.member)
+    async def roleplay_stats(self, ctx: Context, *, member: discord.Member = None):
+        """Get your roleplay stats for this server."""
+        user = member or ctx.author
+        actions_data = await self.config.member(user).all()
+
+        people_with_no_creativity = []
+
+        def sravan_copies_ideas(action: str):
+            for key, value in actions_data.items():
+                if action in key:
+                    sent = actions_data.get(f"{action}_SENT", 0)
+                    received = actions_data.get(f"{action}_RECEIVED", 0)
+                    people_with_no_creativity.append([action.lower(), sent, received])
+
+        for act in self.possible_actions:
+            fucking_dumb_loop(act)
+        dedupe_list = [x for i, x in enumerate(people_with_no_creativity, 1) if i % 2 != 0]
+        table = tabulate(dedupe_list, headers=["Action", "Sent", "Received"], numalign="left")
+        emb = discord.Embed(colour=await ctx.embed_colour(), description=box(table, "nim"))
+        emb.set_author(name=f"Roleplay Stats | {user.name}", icon_url=user.avatar_url)
+        text = f"For your global roleplay stats, use: `{ctx.clean_prefix}rpstats global` command!"
+        await ctx.channel.send(text, embed=emb)
+
+    @roleplay_stats.command(name="global")
+    async def roleplay_stats_global(self, ctx: Context, *, member: discord.Member = None):
+        """Get your global roleplay stats for all servers you share with [botname]!"""
+        user = member or ctx.author
+        actions_data = await self.config.user(user).all()
+
+        people_with_no_creativity = []
+
+        def sravan_copies_ideas(action: str):
+            for key, value in actions_data.items():
+                if action in key:
+                    sent = actions_data.get(f"{action}_SENT", 0)
+                    received = actions_data.get(f"{action}_RECEIVED", 0)
+                    people_with_no_creativity.append([action.lower(), sent, received])
+
+        for act in self.possible_actions:
+            fucking_dumb_loop(act)
+        dedupe_list = [x for i, x in enumerate(people_with_no_creativity, 1) if i % 2 != 0]
+        table = tabulate(dedupe_list, headers=["Action", "Sent", "Received"], numalign="left")
+        emb = discord.Embed(colour=await ctx.embed_colour(), description=box(table, "nim"))
+        emb.set_author(name=f"Global Roleplay Stats | {user.name}", icon_url=user.avatar_url)
+        emb.set_footer(text=f"Requested by: {ctx.author}")
+        await ctx.channel.send(embed=emb)
