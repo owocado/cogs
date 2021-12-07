@@ -4,5 +4,4 @@ __red_end_user_data_statement__ = "This cog does not persistently store any PII 
 
 
 def setup(bot):
-    n = Roleplay(bot)
-    bot.add_cog(n)
+    bot.add_cog(Roleplay(bot))
