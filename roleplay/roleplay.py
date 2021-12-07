@@ -1,4 +1,3 @@
-from typing import Dict
 from random import choice
 
 import discord
@@ -640,18 +639,18 @@ class Roleplay(commands.Cog):
         user = member or ctx.author
         actions_data = await self.config.member(user).all()
 
-        actions = []
+        people_with_no_creativity = []
 
-        def fucking_dumb_loop(data: Dict[str, int], action: str):
-            for key, value in data.items():
+        def sravan_copies_ideas(action: str):
+            for key, value in actions_data.items():
                 if action in key:
-                    sent = data.get(f"{action}_SENT", 0)
-                    received = data.get(f"{action}_RECEIVED", 0)
-                    actions.append([action.lower(), sent, received])
+                    sent = actions_data.get(f"{action}_SENT", 0)
+                    received = actions_data.get(f"{action}_RECEIVED", 0)
+                    people_with_no_creativity.append([action.lower(), sent, received])
 
         for act in self.possible_actions:
-            fucking_dumb_loop(actions_data, act)
-        dedupe_list = [x for i, x in enumerate(actions, 1) if i % 2 != 0]
+            fucking_dumb_loop(act)
+        dedupe_list = [x for i, x in enumerate(people_with_no_creativity, 1) if i % 2 != 0]
         table = tabulate(dedupe_list, headers=["Action", "Sent", "Received"], numalign="left")
         emb = discord.Embed(colour=await ctx.embed_colour(), description=box(table, "nim"))
         emb.set_author(name=f"Roleplay Stats | {user.name}", icon_url=user.avatar_url)
@@ -664,18 +663,18 @@ class Roleplay(commands.Cog):
         user = member or ctx.author
         actions_data = await self.config.user(user).all()
 
-        actions = []
+        people_with_no_creativity = []
 
-        def fucking_dumb_loop(data: Dict[str, int], action: str):
-            for key, value in data.items():
+        def sravan_copies_ideas(action: str):
+            for key, value in actions_data.items():
                 if action in key:
-                    sent = data.get(f"{action}_SENT", 0)
-                    received = data.get(f"{action}_RECEIVED", 0)
-                    actions.append([action.lower(), sent, received])
+                    sent = actions_data.get(f"{action}_SENT", 0)
+                    received = actions_data.get(f"{action}_RECEIVED", 0)
+                    people_with_no_creativity.append([action.lower(), sent, received])
 
         for act in self.possible_actions:
-            fucking_dumb_loop(actions_data, act)
-        dedupe_list = [x for i, x in enumerate(actions, 1) if i % 2 != 0]
+            fucking_dumb_loop(act)
+        dedupe_list = [x for i, x in enumerate(people_with_no_creativity, 1) if i % 2 != 0]
         table = tabulate(dedupe_list, headers=["Action", "Sent", "Received"], numalign="left")
         emb = discord.Embed(colour=await ctx.embed_colour(), description=box(table, "nim"))
         emb.set_author(name=f"Global Roleplay Stats | {user.name}", icon_url=user.avatar_url)
