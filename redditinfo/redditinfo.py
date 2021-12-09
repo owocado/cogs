@@ -97,16 +97,16 @@ class RedditInfo(commands.Cog):
             return await ctx.send("That subreddit is marked NSFW. Search aborted in SFW channel.")
 
         em = discord.Embed(colour=discord.Colour.random())
-        em.title = data.get("url")
-        em.url = f"https://reddit.com{data.get('url')}"
+        em.set_author(name=data.get("url"), icon_url=data.get("icon_img", ""))
+        subreddit_link = f"https://reddit.com{data.get('url')}"
         em.description = data.get("public_description", "")
         if data.get("banner_img", "") != "":
             em.set_image(url=data.get("banner_img", ""))
         if data.get("community_icon", "") != "":
             em.set_thumbnail(url=data["community_icon"].split("?")[0])
         em.add_field(name="Created On", value=f"<t:{int(data.get('created_utc'))}:R>")
-        em.add_field(name="Subscribers", value=humanize_number(str(data.get("subscribers"))))
-        em.add_field(name="Active Users", value=humanize_number(str(data.get("active_user_count"))))
+        em.add_field(name="Subscribers", value=humanize_number(str(data.get("subscribers", 0))))
+        em.add_field(name="Active Users", value=humanize_number(str(data.get("active_user_count", 0))))
 
         extra_info = ""
         if more_info:
@@ -127,8 +127,9 @@ class RedditInfo(commands.Cog):
                 extra_info += "**Advertiser category:**  " + data["advertiser_category"] + "\n"
             if data.get("whitelist_status", "") != "":
                 extra_info += "**Advertising whitelist status:**  " + data["whitelist_status"] + "\n"
-        em.add_field(name="(Extra) Misc. Info:", value=extra_info, inline=False)
-        await ctx.send(embed=em)
+        if extra_info:
+            em.add_field(name="(Extra) Misc. Info:", value=extra_info, inline=False)
+        await ctx.send(subreddit_link, embed=em)
 
     @commands.command(name="rmeme")
     @commands.bot_has_permissions(embed_links=True)
