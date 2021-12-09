@@ -206,8 +206,9 @@ class RedditInfo(commands.Cog):
         emb.title = random_meme.get("title", "None")
         emb.url = f"https://old.reddit.com{random_meme['permalink']}"
         emb.set_image(url=random_meme.get("url"))
+        upvotes = humanize_number(random_meme.get("ups", 0))
         emb.set_footer(
-            text=f"{random_meme.get('ups')} upvotes • From /r/{random_meme.get('subreddit')}",
+            text=f"{upvotes} upvotes • From /r/{random_meme.get('subreddit')}",
             icon_url="https://cdn.discordapp.com/emojis/752439401123938304.gif",
         )
         await channel.send(embed=emb)
