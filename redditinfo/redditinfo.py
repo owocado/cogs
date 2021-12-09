@@ -1,35 +1,48 @@
-import aiohttp
+import asyncio
 import random
 
 from datetime import datetime
 
+import aiohttp
 import discord
-from redbot.core import commands
+from redbot.core import commands, Config
+from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import humanize_number
 
 
 class RedditInfo(commands.Cog):
     """Fetch hot memes or some info about Reddit user accounts and subreddits."""
 
-    __author__ = "឵឵ow0x"
-    __version__ = "0.3.0"
+    __author__ = "ow0x"
+    __version__ = "1.0.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
         pre_processed = super().format_help_for_context(ctx)
         return f"{pre_processed}\n\nAuthor: {self.__author__}\nCog Version: {self.__version__}"
 
+    def __init__(self, bot: Red):
+        self.bot = bot
+        self.session = aiohttp.ClientSession()
+        self.config = Config.get_conf(self, 357059159021060097, force_registration=True)
+
+    def cog_unload(self) -> None:
+        asyncio.create_task(self.session.close())
+
+    async def red_delete_data_for_user(self, **kwargs) -> None:
+        """Nothing to delete"""
+        pass
+
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 3, commands.BucketType.user)
-    async def reddituser(self, ctx: commands.Context, user: str, more_info: bool = False):
+    async def reddituser(self, ctx: commands.Context, username: str, more_info: bool = False):
         """Fetch basic info about a Reddit user account.
 
-        `more_info`: Shows more information when set to `True`.
-        Defaults to False.
+        `more_info`: Shows more information when set to `True`. Defaults to False.
         """
         await ctx.trigger_typing()
-        async with aiohttp.request("GET", f"https://old.reddit.com/user/{user}/about.json") as resp:
+        async with self.session.get(f"https://old.reddit.com/user/{username}/about.json") as resp:
             if resp.status != 200:
                 return await ctx.send(f"https://http.cat/{resp.status}")
             result = await resp.json()
@@ -39,80 +52,79 @@ class RedditInfo(commands.Cog):
             return await ctx.send("As per Reddit, that account has been suspended.")
 
         em = discord.Embed(colour=await ctx.embed_colour())
-        em.title = data.get("subreddit").get("display_name_prefixed")
-        em.url = f"https://reddit.com/user/{user}"
-        if data.get("subreddit").get("banner_img") != "":
-            em.set_image(url=str(data.get("subreddit").get("banner_img")).split("?")[0])
+        em.title = data.get("subreddit", {}).get("display_name_prefixed")
+        em.url = f"https://reddit.com/user/{username}"
+        if data.get("subreddit", {}).get("banner_img", "") != "":
+            em.set_image(url=data["subreddit"]["banner_img"].split("?")[0])
         em.set_thumbnail(url=str(data.get("icon_img")).split("?")[0])
-        cake_day = datetime.utcfromtimestamp(data.get("created_utc")).strftime('%b %d, %Y')
-        em.add_field(name="Cake day", value=str(cake_day))
+        em.add_field(name="Cake day", value=f"<t:{data.get('created_utc')}:R>")
         em.add_field(name="Total Karma", value=humanize_number(str(data.get("total_karma"))))
+        extra_info = ""
         if more_info:
-            em.add_field(name="Awardee Karma", value=humanize_number(str(data.get("awardee_karma"))))
-            em.add_field(name="Awarder Karma", value=humanize_number(str(data.get("awarder_karma"))))
-            em.add_field(name="Comment Karma", value=humanize_number(str(data.get("comment_karma"))))
-            em.add_field(name="Link Karma", value=humanize_number(str(data.get("link_karma"))))
-            em.add_field(name="has Reddit Premium?", value="Yes" if data.get("is_gold") else "No")
-            em.add_field(name="Verified Email?", value="Yes" if data.get("has_verified_email") else "No")
-            em.add_field(name="Is a subreddit mod?", value="Yes" if data.get("is_mod") else "No")
+            extra_info += "**Awardee Karma:**  " + humanize_number(str(data.get("awardee_karma", 0))) + "\n"
+            extra_info += "**Awarder Karma:**  " + humanize_number(str(data.get("awarder_karma", 0))) + "\n"
+            extra_info += "**Comment Karma:**  " + humanize_number(str(data.get("comment_karma", 0))) + "\n"
+            extra_info += "**Link Karma:**  " + humanize_number(str(data.get("link_karma", 0))) + "\n"
+            extra_info += "**has Reddit Premium?:**  " + ("✅" if data.get("is_gold") else "❌") + "\n"
+            extra_info += "**Verified Email?:**  " + ("✅" if data.get("has_verified_email") else "❌") + "\n"
+            extra_info += "**Is a subreddit mod?:**  " + ("✅" if data.get("is_mod") else "❌") + "\n"
             if data.get("is_employee"):
                 em.set_footer(text="This user is a Reddit employee.")
-
+        em.description = extra_info
         await ctx.send(embed=em)
 
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 3, commands.BucketType.user)
-    async def subrinfo(self, ctx: commands.Context, subr: str, more_info: bool = False):
+    async def subrinfo(self, ctx: commands.Context, subreddit: str, more_info: bool = False):
         """Fetch basic info about an existing subreddit.
 
-        `more_info`: Shows more information when set to `True`.
-        Defaults to False.
+        `more_info`: Shows more information when set to `True`. Defaults to False.
         """
         await ctx.trigger_typing()
-        async with aiohttp.request("GET", f"https://old.reddit.com/r/{subr}/about.json") as resp:
+        async with self.session.get(f"https://old.reddit.com/r/{subreddit}/about.json") as resp:
             if resp.status != 200:
                 return await ctx.send(f"https://http.cat/{resp.status}")
             result = await resp.json()
 
-        if result.get("data", {}).get("dist", None) == 0:
-            return await ctx.send("No results.")
         data = result.get("data")
+        if data and data.get("dist", 0) == 0:
+            return await ctx.send("No results found for given subreddit name.")
         if data.get("over18") and not ctx.channel.is_nsfw():
             return await ctx.send("That subreddit is marked NSFW. Search aborted in SFW channel.")
 
         em = discord.Embed(colour=discord.Colour.random())
         em.title = data.get("url")
         em.url = f"https://reddit.com{data.get('url')}"
-        em.description = data.get("public_description")
-        if data.get("banner_img") != "":
-            em.set_image(url=data.get("banner_img") or "")
-        if data.get("community_icon") != "":
-            em.set_thumbnail(url=str(data.get("community_icon")).split("?")[0])
-        cake_day = datetime.utcfromtimestamp(data.get("created_utc")).strftime('%b %d, %Y')
-        em.add_field(name="Created On", value=str(cake_day))
+        em.description = data.get("public_description", "")
+        if data.get("banner_img", "") != "":
+            em.set_image(url=data.get("banner_img", ""))
+        if data.get("community_icon", "") != "":
+            em.set_thumbnail(url=data["community_icon"].split("?")[0])
+        em.add_field(name="Created On", value=f"<t:{data.get('created_utc')}:R>")
         em.add_field(name="Subscribers", value=humanize_number(str(data.get("subscribers"))))
         em.add_field(name="Active Users", value=humanize_number(str(data.get("active_user_count"))))
 
+        extra_info = ""
         if more_info:
-            em.add_field(name="Wiki enabled?", value="Yes" if data.get("wiki_enabled") else "No")
-            em.add_field(name="Users can assign flairs?", value="Yes" if data.get("can_assign_user_flair") else "No")
-            em.add_field(name="Galleries allowed?", value="Yes" if data.get("allow_galleries") else "No")
-            em.add_field(name="Whether traffic statistics exposed to the public?", value="Yes" if data.get("public_traffic") else "No")
-            em.add_field(name="ADS hidden by admin?", value="Yes" if data.get("hide_ads") else "No")
-            em.add_field(name="Emojis enabled?", value="Yes" if data.get("emojis_enabled") else "No")
-            em.add_field(name="Is community reviewed?", value="Yes" if data.get("community_reviewed") else "No")
-            em.add_field(name="Spoilers enabled?", value="Yes" if data.get("spoilers_enabled") else "No")
-            em.add_field(name="Discoverable?", value="Yes" if data.get("allow_discovery") else "No")
-            em.add_field(name="Video uploads allowed?", value="Yes" if data.get("allow_videos") else "No")
-            em.add_field(name="Image uploads allowed?", value="Yes" if data.get("allow_images") else "No")
-            if data.get("submission_type") != "":
-                em.add_field(name="Submissions type", value=data.get("submission_type"))
-            if data.get("advertiser_category") != "":
-                em.add_field(name="Advertiser category", value=data.get("advertiser_category"))
-            if data.get("whitelist_status") != "":
-                em.add_field(name="Advertising whitelist status", value=data.get("whitelist_status"))
-
+            extra_info += "**Wiki enabled?:**  " + ("✅" if data.get("wiki_enabled") else "❌") + "\n"
+            extra_info += "**Users can assign flairs?:**  " + ("✅" if data.get("can_assign_user_flair") else "❌") + "\n"
+            extra_info += "**Galleries allowed?:**  " + ("✅" if data.get("allow_galleries") else "❌") + "\n"
+            extra_info += "**Is traffic stats exposed to public?:**  " + ("✅" if data.get("public_traffic") else "❌") + "\n"
+            extra_info += "**ADS hidden by admin?:**  " + ("✅" if data.get("hide_ads") else "❌") + "\n"
+            extra_info += "**Emojis enabled?:**  " + ("✅" if data.get("emojis_enabled") else "❌") + "\n"
+            extra_info += "**Is community reviewed?:**  " + ("✅" if data.get("community_reviewed") else "❌") + "\n"
+            extra_info += "**Spoilers enabled?:**  " + ("✅" if data.get("spoilers_enabled") else "❌") + "\n"
+            extra_info += "**Discoverable?:**  " + ("✅" if data.get("allow_discovery") else "❌") + "\n"
+            extra_info += "**Video uploads allowed?:**  " + ("✅" if data.get("allow_videos") else "❌") + "\n"
+            extra_info += "**Image uploads allowed?:**  " + ("✅" if data.get("allow_images") else "❌") + "\n"
+            if data.get("submission_type", "") != "":
+                extra_info += "**Submissions type:**  " + data["submission_type"] + "\n"
+            if data.get("advertiser_category", "") != "":
+                extra_info += "**Advertiser category:**  " + data["advertiser_category"] + "\n"
+            if data.get("whitelist_status", "") != "":
+                extra_info += "**Advertising whitelist status:**  " + data["whitelist_status"] + "\n"
+        em.add_field(name="(Extra) Misc. Info:", value=extra_info, inline=False)
         await ctx.send(embed=em)
 
     @commands.command(name="rmeme")
@@ -130,7 +142,7 @@ class RedditInfo(commands.Cog):
             "programmeranimemes",
         ]
         random_sub = random.choice(meme_subreddits)
-        async with aiohttp.request("GET", f"https://old.reddit.com/r/{random_sub}/hot.json") as resp:
+        async with self.session.get(f"https://old.reddit.com/r/{random_sub}/hot.json") as resp:
             if resp.status != 200:
                 return await ctx.send(f"Reddit API returned {resp.status} HTTP status code.")
             result = await resp.json()
@@ -166,5 +178,4 @@ class RedditInfo(commands.Cog):
             text=f"{random_meme.get('ups')} upvotes • From /r/{random_meme.get('subreddit')}",
             icon_url="https://cdn.discordapp.com/emojis/752439401123938304.gif",
         )
-
         await ctx.send(embed=emb)
