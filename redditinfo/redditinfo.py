@@ -14,7 +14,7 @@ class RedditInfo(commands.Cog):
     """Fetch hot memes or some info about Reddit user accounts and subreddits."""
 
     __author__ = "ow0x"
-    __version__ = "1.0.0"
+    __version__ = "1.0.1"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -27,7 +27,7 @@ class RedditInfo(commands.Cog):
         self.session = aiohttp.ClientSession()
         self.config = Config.get_conf(self, 357059159021060097, force_registration=True)
         default_guild = {"channel_id": None}
-        self.config.register_global(interval = 3)
+        self.config.register_global(interval = 5)
         self.config.register_guild(**default_guild)
         self._autopost_meme.start()
 
@@ -44,7 +44,7 @@ class RedditInfo(commands.Cog):
         """Nothing to delete"""
         pass
 
-    @tasks.loop(minutes=3)
+    @tasks.loop(minutes=5)
     async def _autopost_meme(self):
         all_config = await self.config.all_guilds()
         for guild_id, guild_data in all_config.items():
@@ -245,6 +245,7 @@ class RedditInfo(commands.Cog):
         Minimum allowed value is 1 minute and max. is 1440 minutes (1 day). Default is 5 minutes.
         """
         delay = max(min(minutes, 1440), 1)
+        self._autopost_meme.change_interval(minutes=delay)
         await self.config.interval.set(delay)
         await ctx.send(f"Memes will be auto posted every {delay} minutes from now!")
         await ctx.tick()
