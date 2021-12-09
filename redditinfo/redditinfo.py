@@ -52,13 +52,16 @@ class RedditInfo(commands.Cog):
             return await ctx.send("As per Reddit, that account has been suspended.")
 
         em = discord.Embed(colour=await ctx.embed_colour())
-        em.title = data.get("subreddit", {}).get("display_name_prefixed")
-        em.url = f"https://reddit.com/user/{username}"
+        em.set_author(
+            name=f"{data.get('subreddit', {}).get('title') or data.get('name')} ({data.get('subreddit', {}).get('display_name_prefixed')})",
+            icon_url="https://www.redditinc.com/assets/images/site/reddit-logo.png",
+        )
+        profile_url = f"https://reddit.com/user/{username}"
         if data.get("subreddit", {}).get("banner_img", "") != "":
             em.set_image(url=data["subreddit"]["banner_img"].split("?")[0])
         em.set_thumbnail(url=str(data.get("icon_img")).split("?")[0])
-        em.add_field(name="Cake day", value=f"<t:{int(data.get('created_utc'))}:R>")
-        em.add_field(name="Total Karma", value=humanize_number(str(data.get("total_karma"))))
+        em.add_field(name="Account created:", value=f"<t:{int(data.get('created_utc'))}:R>")
+        em.add_field(name="Total Karma:", value=humanize_number(str(data.get("total_karma"))))
         extra_info = ""
         if more_info:
             extra_info += "**Awardee Karma:**  " + humanize_number(str(data.get("awardee_karma", 0))) + "\n"
@@ -71,7 +74,7 @@ class RedditInfo(commands.Cog):
             if data.get("is_employee"):
                 em.set_footer(text="This user is a Reddit employee.")
         em.description = extra_info
-        await ctx.send(embed=em)
+        await ctx.send(profile_url, embed=em)
 
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
