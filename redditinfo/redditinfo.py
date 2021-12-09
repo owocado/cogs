@@ -23,14 +23,7 @@ class RedditInfo(commands.Cog):
 
     def __init__(self, bot: Red):
         self.bot = bot
-        self.meme_subreddits = [
-            "memes",
-            "dankmemes",
-            "gamingcirclejerk",
-            "meirl",
-            "programmerhumor",
-            "programmeranimemes",
-        ]
+        self.meme_subreddits = ["memes", "dankmemes", "meirl", "programmeranimemes"]
         self.session = aiohttp.ClientSession()
         self.config = Config.get_conf(self, 357059159021060097, force_registration=True)
         default_guild = {"channel_id": None}
@@ -207,6 +200,7 @@ class RedditInfo(commands.Cog):
             return await channel.send(random_meme.get("url"))
         emb = discord.Embed(colour=discord.Colour.random())
         emb.title = random_meme.get("title", "None")
+        emb.description = f"This meme was posted <t:{int(random_meme['created_utc'])}:R>"
         emb.url = f"https://old.reddit.com{random_meme['permalink']}"
         emb.set_image(url=random_meme.get("url"))
         upvotes = humanize_number(random_meme.get("ups", 0))
