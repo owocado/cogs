@@ -110,23 +110,23 @@ class RedditInfo(commands.Cog):
 
         extra_info = ""
         if more_info:
-            extra_info += "**Wiki enabled?:**  " + ("✅" if data.get("wiki_enabled") else "❌") + "\n"
-            extra_info += "**Users can assign flairs?:**  " + ("✅" if data.get("can_assign_user_flair") else "❌") + "\n"
-            extra_info += "**Galleries allowed?:**  " + ("✅" if data.get("allow_galleries") else "❌") + "\n"
-            extra_info += "**Is traffic stats exposed to public?:**  " + ("✅" if data.get("public_traffic") else "❌") + "\n"
-            extra_info += "**ADS hidden by admin?:**  " + ("✅" if data.get("hide_ads") else "❌") + "\n"
-            extra_info += "**Emojis enabled?:**  " + ("✅" if data.get("emojis_enabled") else "❌") + "\n"
-            extra_info += "**Is community reviewed?:**  " + ("✅" if data.get("community_reviewed") else "❌") + "\n"
-            extra_info += "**Spoilers enabled?:**  " + ("✅" if data.get("spoilers_enabled") else "❌") + "\n"
-            extra_info += "**Discoverable?:**  " + ("✅" if data.get("allow_discovery") else "❌") + "\n"
-            extra_info += "**Video uploads allowed?:**  " + ("✅" if data.get("allow_videos") else "❌") + "\n"
-            extra_info += "**Image uploads allowed?:**  " + ("✅" if data.get("allow_images") else "❌") + "\n"
+            extra_info += "Wiki enabled?:  " + ("✅" if data.get("wiki_enabled") else "❌") + "\n"
+            extra_info += "Users can assign flairs?:  " + ("✅" if data.get("can_assign_user_flair") else "❌") + "\n"
+            extra_info += "Galleries allowed?:  " + ("✅" if data.get("allow_galleries") else "❌") + "\n"
+            extra_info += "Is traffic stats exposed to public?:  " + ("✅" if data.get("public_traffic") else "❌") + "\n"
+            extra_info += "ADS hidden by admin?:  " + ("✅" if data.get("hide_ads") else "❌") + "\n"
+            extra_info += "Emojis enabled?:  " + ("✅" if data.get("emojis_enabled") else "❌") + "\n"
+            extra_info += "Is community reviewed?:  " + ("✅" if data.get("community_reviewed") else "❌") + "\n"
+            extra_info += "Spoilers enabled?:  " + ("✅" if data.get("spoilers_enabled") else "❌") + "\n"
+            extra_info += "Discoverable?:  " + ("✅" if data.get("allow_discovery") else "❌") + "\n"
+            extra_info += "Video uploads allowed?:  " + ("✅" if data.get("allow_videos") else "❌") + "\n"
+            extra_info += "Image uploads allowed?:  " + ("✅" if data.get("allow_images") else "❌") + "\n"
             if data.get("submission_type", "") != "":
-                extra_info += "**Submissions type:**  " + data["submission_type"] + "\n"
+                extra_info += "Submissions type:  " + data["submission_type"] + "\n"
             if data.get("advertiser_category", "") != "":
-                extra_info += "**Advertiser category:**  " + data["advertiser_category"] + "\n"
+                extra_info += "Advertiser category:  " + data["advertiser_category"] + "\n"
             if data.get("whitelist_status", "") != "":
-                extra_info += "**Advertising whitelist status:**  " + data["whitelist_status"] + "\n"
+                extra_info += "Advertising whitelist status:  " + data["whitelist_status"] + "\n"
         if extra_info:
             em.add_field(name="(Extra) Misc. Info:", value=extra_info, inline=False)
         await ctx.send(subreddit_link, embed=em)
