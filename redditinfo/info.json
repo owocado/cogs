@@ -1,19 +1,23 @@
 {
-    "author": ["<@306810730055729152>"],
-    "install_msg": "Fetch random hot meme or basic info about Reddit user accounts and existing subreddits.",
     "name": "RedditInfo",
-    "disabled": false,
     "short": "Fetch hot meme or basic info about Reddit user accounts and subreddits.",
     "description": "Fetch hot meme or basic info about Reddit user accounts and subreddits.",
-    "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
+    "install_msg": "Fetch or autopost random hot meme or basic info about Reddit user accounts and existing subreddits.",
+    "end_user_data_statement": "This cog does not persistently store any PII data or metadata about users.",
+    "author": ["ow0x (<@306810730055729152>)"],
     "tags": [
         "meme",
         "hot meme",
+        "auto meme",
+        "auto post meme",
+        "meme autopost",
         "reddit meme",
         "reddit",
+        "redditinfo",
         "subreddit"
     ],
-    "min_bot_version": "3.4.12",
+    "min_bot_version": "3.4.14",
+    "disabled": false,
     "hidden": false,
     "type": "COG"
 }
