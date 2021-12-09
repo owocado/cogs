@@ -91,7 +91,7 @@ class RedditInfo(commands.Cog):
             result = await resp.json()
 
         data = result.get("data")
-        if data and data.get("dist", 0) == 0:
+        if data and data.get("dist") == 0:
             return await ctx.send("No results found for given subreddit name.")
         if data.get("over18") and not ctx.channel.is_nsfw():
             return await ctx.send("That subreddit is marked NSFW. Search aborted in SFW channel.")
