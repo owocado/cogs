@@ -1,10 +1,10 @@
 import asyncio
 import random
-
 from datetime import datetime
 
 import aiohttp
 import discord
+from discord.ext import tasks
 from redbot.core import commands, Config
 from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import humanize_number
@@ -25,22 +25,47 @@ class RedditInfo(commands.Cog):
         self.bot = bot
         self.session = aiohttp.ClientSession()
         self.config = Config.get_conf(self, 357059159021060097, force_registration=True)
+        default_guild = {"interval": 5, "channel_id": None}
+        self.config.register_guild(**default_guild)
+        self._autopost_meme.start()
+
+    async def initialize(self):
+        guild_settings = await self.config.guild.all()
+        if guild_settings["interval"] != 5:
+            self._autopost_meme.change_interval(minutes=guild_settings["interval"])
 
     def cog_unload(self) -> None:
         asyncio.create_task(self.session.close())
+        self._autopost_meme.cancel()
 
     async def red_delete_data_for_user(self, **kwargs) -> None:
         """Nothing to delete"""
         pass
 
+    @tasks.loop(minutes=5)
+    async def _autopost_meme(self):
+        all_config = await self.config.all_guilds()
+        for guild_id, guild_data in all_config.items():
+            if guild_data["channel_id"]:
+                continue
+
+            guild = self.bot.get_guild(guild_id)
+            channel = self.bot.get_channel(guild_data["channel_id"])
+            bot_perms = channel.permissions_for(guild.me)
+            if not guild or channel or bot_perms.send_messages or bot_perms.embed_links:
+                continue
+
+            await self._fetch_meme(channel)
+
+    @_autopost_meme.before_loop
+    async def _before_autopost_meme(self):
+        await self.bot.wait_until_red_ready()
+
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 3, commands.BucketType.user)
     async def reddituser(self, ctx: commands.Context, username: str):
-        """Fetch basic info about a Reddit user account.
-
-        `more_info`: Shows more information when set to `True`. Defaults to False.
-        """
+        """Fetch basic info about a Reddit user account."""
         await ctx.trigger_typing()
         async with self.session.get(f"https://old.reddit.com/user/{username}/about.json") as resp:
             if resp.status != 200:
@@ -94,7 +119,7 @@ class RedditInfo(commands.Cog):
         if data and data.get("dist") == 0:
             return await ctx.send("No results found for given subreddit name.")
         if data.get("over18") and not ctx.channel.is_nsfw():
-            return await ctx.send("That subreddit is marked NSFW. Search aborted in SFW channel.")
+            return await ctx.send("That subreddit is marked as NSFW. Try again in NSFW channel.")
 
         em = discord.Embed(colour=discord.Colour.random())
         em.set_author(name=data.get("url"), icon_url=data.get("icon_img", ""))
@@ -137,6 +162,9 @@ class RedditInfo(commands.Cog):
     async def random_hot_meme(self, ctx: commands.Context):
         """Fetch a random hot meme, or a boring cringe one, I suppose!"""
         await ctx.trigger_typing()
+        await self._fetch_meme(ctx.channel)
+
+    async def _fetch_meme(self, channel):
         meme_subreddits = [
             "memes",
             "dankmemes",
@@ -148,21 +176,20 @@ class RedditInfo(commands.Cog):
         random_sub = random.choice(meme_subreddits)
         async with self.session.get(f"https://old.reddit.com/r/{random_sub}/hot.json") as resp:
             if resp.status != 200:
-                return await ctx.send(f"Reddit API returned {resp.status} HTTP status code.")
+                return await channel.send(f"Reddit API returned {resp.status} HTTP status code.")
             result = await resp.json()
-
         meme_array = result["data"]["children"]
         random_index = random.randint(0, len(meme_array) - 1)
         random_meme = meme_array[random_index]["data"]
         # make 3 attemps if nsfw meme found in sfw channel, shittalkers go brrr
-        if random_meme.get("over_18") and not ctx.channel.is_nsfw():
+        if random_meme.get("over_18") and not channel.is_nsfw():
             random_meme = meme_array[random.randint(0, len(meme_array) - 1)]["data"]
         # retrying again to get a sfw meme
-        if random_meme.get("over_18") and not ctx.channel.is_nsfw():
+        if random_meme.get("over_18") and not channel.is_nsfw():
             random_meme = meme_array[random.randint(0, len(meme_array) - 1)]["data"]
         # retrying last time to get sfw meme
-        if random_meme.get("over_18") and not ctx.channel.is_nsfw():
-            return await ctx.send("NSFW meme found. Aborted in SFW channel. Please try again.")
+        if random_meme.get("over_18") and not channel.is_nsfw():
+            return await channel.send("NSFW meme found. Aborted in SFW channel. Please try again.")
 
         img_types = ('jpg', "jpeg", 'png', 'gif')
         if (
@@ -170,7 +197,7 @@ class RedditInfo(commands.Cog):
             or (random_meme.get("url") and "v.redd.it" in random_meme.get("url"))
             or (random_meme.get("url") and not random_meme.get("url").endswith(img_types))
         ):
-            return await ctx.send(
+            return await channel.send(
                 "This meme is a video(?) type, which cannot be previewed in fancy "
                 f"embed, so here is it's direct link:\n{random_meme.get('url')}"
             )
@@ -182,4 +209,32 @@ class RedditInfo(commands.Cog):
             text=f"{random_meme.get('ups')} upvotes • From /r/{random_meme.get('subreddit')}",
             icon_url="https://cdn.discordapp.com/emojis/752439401123938304.gif",
         )
-        await ctx.send(embed=emb)
+        await channel.send(embed=emb)
+
+    @commands.group()
+    @commands.mod_or_permissions(manage_channels=True)
+    async def automemeset(self, ctx: commands.Context):
+        """Commands for auto meme posting in a channel."""
+        pass
+
+    @automemeset.command()
+    async def channel(self, ctx: commands.Context, channel: discord.TextChannel = None):
+        """Set a channel where random memes will be posted at set interval."""
+        if channel is None:
+            await self.config.guild(ctx.guild).channel_id.set(None)
+            return await ctx.send("automeme channel is successfully removed/reset.")
+
+        await self.config.guild(ctx.guild).channel_id.set(channel.id)
+        await ctx.send(f"Automeme channel has been set to {channel.mention}")
+        await ctx.tick()
+
+    @automemeset.command()
+    async def interval(self, ctx: commands.Context, minutes: int):
+        """Specify the time interval in minutes after when meme will be posted in set channel.
+        
+        Minimum allowed value is 1 minute and max. is 1440 minutes (1 day). Default is 5 minutes.
+        """
+        interval = max(min(minutes, 1440), 1)
+        await self.config.guild(ctx.guild).interval.set(interval)
+        await ctx.send(f"Memes will be auto posted every {interval} minutes from now!")
+        await ctx.tick()
