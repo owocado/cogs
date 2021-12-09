@@ -55,7 +55,7 @@ class RedditInfo(commands.Cog):
     async def _autopost_meme(self):
         all_config = await self.config.all_guilds()
         for guild_id, guild_data in all_config.items():
-            if guild_data["channel_id"]:
+            if guild_data["channel_id"] is None:
                 continue
 
             guild = self.bot.get_guild(guild_id)
