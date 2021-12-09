@@ -57,7 +57,7 @@ class RedditInfo(commands.Cog):
         if data.get("subreddit", {}).get("banner_img", "") != "":
             em.set_image(url=data["subreddit"]["banner_img"].split("?")[0])
         em.set_thumbnail(url=str(data.get("icon_img")).split("?")[0])
-        em.add_field(name="Cake day", value=f"<t:{data.get('created_utc')}:R>")
+        em.add_field(name="Cake day", value=f"<t:{int(data.get('created_utc'))}:R>")
         em.add_field(name="Total Karma", value=humanize_number(str(data.get("total_karma"))))
         extra_info = ""
         if more_info:
@@ -101,7 +101,7 @@ class RedditInfo(commands.Cog):
             em.set_image(url=data.get("banner_img", ""))
         if data.get("community_icon", "") != "":
             em.set_thumbnail(url=data["community_icon"].split("?")[0])
-        em.add_field(name="Created On", value=f"<t:{data.get('created_utc')}:R>")
+        em.add_field(name="Created On", value=f"<t:{int(data.get('created_utc'))}:R>")
         em.add_field(name="Subscribers", value=humanize_number(str(data.get("subscribers"))))
         em.add_field(name="Active Users", value=humanize_number(str(data.get("active_user_count"))))
 
