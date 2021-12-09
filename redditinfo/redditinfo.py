@@ -25,14 +25,15 @@ class RedditInfo(commands.Cog):
         self.bot = bot
         self.session = aiohttp.ClientSession()
         self.config = Config.get_conf(self, 357059159021060097, force_registration=True)
-        default_guild = {"interval": 5, "channel_id": None}
+        default_guild = {"channel_id": None}
+        self.config.register_global(interval = 5)
         self.config.register_guild(**default_guild)
         self._autopost_meme.start()
 
     async def initialize(self):
-        guild_settings = await self.config.guild.all()
-        if guild_settings["interval"] != 5:
-            self._autopost_meme.change_interval(minutes=guild_settings["interval"])
+        delay = await self.config.interval()
+        if delay != 5:
+            self._autopost_meme.change_interval(minutes=delay)
 
     def cog_unload(self) -> None:
         asyncio.create_task(self.session.close())
@@ -219,22 +220,26 @@ class RedditInfo(commands.Cog):
 
     @automemeset.command()
     async def channel(self, ctx: commands.Context, channel: discord.TextChannel = None):
-        """Set a channel where random memes will be posted at set interval."""
+        """Set a channel where random memes will be posted."""
         if channel is None:
             await self.config.guild(ctx.guild).channel_id.set(None)
             return await ctx.send("automeme channel is successfully removed/reset.")
 
         await self.config.guild(ctx.guild).channel_id.set(channel.id)
-        await ctx.send(f"Automeme channel has been set to {channel.mention}")
+        delay = await self.config.interval()
+        await ctx.send(
+            f"Automeme channel set to {channel.mention}. Memes will be posted every {delay} minutes."
+        )
         await ctx.tick()
 
+    @commands.is_owner()
     @automemeset.command()
-    async def interval(self, ctx: commands.Context, minutes: int):
-        """Specify the time interval in minutes after when meme will be posted in set channel.
+    async def delay(self, ctx: commands.Context, minutes: int):
+        """Specify the time delay in minutes after when meme will be posted in set channel.
         
         Minimum allowed value is 1 minute and max. is 1440 minutes (1 day). Default is 5 minutes.
         """
-        interval = max(min(minutes, 1440), 1)
-        await self.config.guild(ctx.guild).interval.set(interval)
-        await ctx.send(f"Memes will be auto posted every {interval} minutes from now!")
+        delay = max(min(minutes, 1440), 1)
+        await self.config.interval.set(delay)
+        await ctx.send(f"Memes will be auto posted every {delay} minutes from now!")
         await ctx.tick()
