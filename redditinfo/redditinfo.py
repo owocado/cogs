@@ -53,7 +53,7 @@ class RedditInfo(commands.Cog):
             guild = self.bot.get_guild(guild_id)
             channel = self.bot.get_channel(guild_data["channel_id"])
             bot_perms = channel.permissions_for(guild.me)
-            if not guild or channel or bot_perms.send_messages or bot_perms.embed_links:
+            if not (guild or channel or bot_perms.send_messages or bot_perms.embed_links):
                 continue
 
             await self._fetch_meme(channel)
@@ -231,6 +231,13 @@ class RedditInfo(commands.Cog):
         await ctx.send(
             f"Automeme channel set to {channel.mention}. Memes will be posted every {delay} minutes."
         )
+        await ctx.tick()
+
+    @automemeset.command(hidden=True)
+    async def force(self, ctx: commands.Context):
+        """Force post the auto meme, to check if it's working or not."""
+        await ctx.channel.trigger_typing()
+        await self._autopost_meme.coro(self)
         await ctx.tick()
 
     @commands.is_owner()
