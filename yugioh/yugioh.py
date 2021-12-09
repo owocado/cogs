@@ -71,15 +71,13 @@ class YGO(commands.Cog):
                     if data["type"] == "Link Monster"
                     else humanize_number(data["def"]),
                 )
-            card_sets = ""
             if data.get("card_sets"):
-                for count, sets in enumerate(data["card_sets"]):
-                    card_sets += "`[{}]` **{}** (${}) {}\n".format(
+                card_sets = "".join("`[{}]` **{}** (${}) {}\n".format(
                         str(count + 1).zfill(2),
                         sets["set_name"],
                         sets["set_price"],
                         sets["set_rarity_code"],
-                    )
+                    ) for count, sets in enumerate(data["card_sets"]))
                 embed.add_field(name="Card Sets", value=card_sets, inline=False)
             price_dict = data["card_prices"][0]
             card_prices = (

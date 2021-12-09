@@ -66,10 +66,11 @@ class BadgeTools(commands.Cog):
                 async for flag in AsyncIter(user.public_flags.all()):
                     count[flag.name] += 1
 
-            message = ""
             fill = len(str(len(guild.members))) - 1
-            for k, v in sorted(count.items(), key=lambda x: x[1], reverse=True):
-                message += f"**{self.badge_emoji(k)}\u2000`{str(v).zfill(fill)}`**\n"
+            message = "".join(
+                f"**{self.badge_emoji(k)}\u2000`{str(v).zfill(fill)}`**\n"
+                for k, v in sorted(count.items(), key=lambda x: x[1], reverse=True)
+            )
 
             embed = discord.Embed(colour=await ctx.embed_color())
             embed.set_author(name=str(guild.name), icon_url=str(guild.icon_url))
@@ -163,6 +164,4 @@ class BadgeTools(commands.Cog):
         hrs, mins, secs = (diff.hours, diff.minutes, diff.seconds)
 
         pretty = f"{yrs}y {mths}mo {days}d {hrs}h {mins}m {secs}s"
-        to_join = " ".join([x for x in pretty.split() if x[0] != "0"][:2])
-
-        return to_join
+        return " ".join([x for x in pretty.split() if x[0] != "0"][:2])

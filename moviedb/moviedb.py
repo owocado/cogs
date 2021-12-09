@@ -77,7 +77,7 @@ class MovieDB(commands.Cog):
                 content = msg.content
                 if (
                     content.isdigit()
-                    and int(content) in range(0, len(items) + 1)
+                    and int(content) in range(len(items) + 1)
                     and msg.author is ctx.author
                     and msg.channel is ctx.channel
                 ):
@@ -206,7 +206,7 @@ class MovieDB(commands.Cog):
                 content = msg.content
                 if (
                     content.isdigit()
-                    and int(content) in range(0, len(items) + 1)
+                    and int(content) in range(len(items) + 1)
                     and msg.author is ctx.author
                     and msg.channel is ctx.channel
                 ):
@@ -302,15 +302,13 @@ class MovieDB(commands.Cog):
             )
             embed.add_field(name="Production countries", value=production_countries, inline=False)
         avg_episode_runtime = f"Average episode runtime: {data.get('episode_run_time')[0]} minutes"
-        seasons_meta = ""
-        for i, obj in enumerate(data.get("seasons"), start=1):
-            seasons_meta += "**{}**. {} ({} episodes){}\n".format(
+        seasons_meta = "".join("**{}**. {} ({} episodes){}\n".format(
                 i,
                 obj.get("name", "N/A"),
                 obj.get("episode_count", 0),
                 f" ({self.get_timestamp(obj['air_date'])})"
                 if obj.get("air_date") and obj['air_date'] != "" else "",
-            )
+            ) for i, obj in enumerate(data.get("seasons"), start=1))
         embed.add_field(
             name="Seasons summary",
             value=f"{seasons_meta}\n{avg_episode_runtime}",

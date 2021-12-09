@@ -394,13 +394,10 @@ class Pokebase(commands.Cog):
             if not data.get("moves"):
                 return await ctx.send("No moves found for this Pokémon.")
 
-            moves_list = ""
-            for i, move in enumerate(data["moves"]):
-                moves_list += "`[{}]` **{}**\n".format(
+            moves_list = "".join("`[{}]` **{}**\n".format(
                     str(i + 1).zfill(2),
                     move["move"]["name"].title().replace("-", " "),
-                )
-
+                ) for i, move in enumerate(data["moves"]))
             pages = []
             all_pages = list(pagify(moves_list, page_length=400))
             for i, page in enumerate(all_pages, start=1):
@@ -489,10 +486,11 @@ class Pokebase(commands.Cog):
             if data.get("learned_by_pokemon"):
                 learned_by = [x.get("name").title() for x in data.get("learned_by_pokemon")]
                 embed.add_field(
-                    name=f"Learned by {str(len(learned_by))} Pokémons",
+                    name=f'Learned by {len(learned_by)} Pokémons',
                     value=", ".join(learned_by)[:500] + "... and more.",
                     inline=False,
                 )
+
             embed.set_footer(text="Powered by Poke API")
 
         await ctx.send(embed=embed)
@@ -535,8 +533,8 @@ class Pokebase(commands.Cog):
                     pkmn_ids.append(get_ids["id"])
 
             panel_ids = []
+            panel_url = "https://pokecharms.com/trainer-card-maker/pokemon-panels"
             for npn in pkmn_ids:
-                panel_url = "https://pokecharms.com/trainer-card-maker/pokemon-panels"
                 payload = aiohttp.FormData()
                 payload.add_field("number", npn)
                 payload.add_field("_xfResponseType", "json")
@@ -681,12 +679,9 @@ class Pokebase(commands.Cog):
                 return await ctx.send("No results.")
             embed = discord.Embed(colour=await ctx.embed_colour())
             embed.title = f"{category_data['name'].title().replace('-', ' ')}"
-            items_list = ""
-            for count, item in enumerate(category_data.get("items")):
-                items_list += "**{}.** {}\n".format(
+            items_list = "".join("**{}.** {}\n".format(
                     count + 1, item.get("name").title().replace("-", " ")
-                )
-
+                ) for count, item in enumerate(category_data.get("items")))
             embed.description = "__**List of items in this category:**__\n\n" + items_list
             embed.set_footer(text="Powered by Poke API!")
 

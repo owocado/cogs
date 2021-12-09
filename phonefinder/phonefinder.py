@@ -65,7 +65,7 @@ class PhoneFinder(commands.Cog):
             content = msg.content
             if (
                 content.isdigit()
-                and int(content) in range(0, len(items) + 1)
+                and int(content) in range(len(items) + 1)
                 and msg.author.id == ctx.author.id
                 and msg.channel.id == ctx.channel.id
             ):

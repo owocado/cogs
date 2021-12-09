@@ -412,7 +412,7 @@ class Roleplay(commands.Cog):
     async def nom(self, ctx: Context, *, member: discord.Member):
         """Try to nom/bite a server member!"""
         if member.id == ctx.me.id:
-            return await ctx.send(f"**OH NO!** _runs away_")
+            return await ctx.send('**OH NO!** _runs away_')
         message = (
             f"Waaaaaa! {bold(ctx.author.name)}, You bit yourself! Whyyyy?? 😭"
             if member.id == ctx.author.id

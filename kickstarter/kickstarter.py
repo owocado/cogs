@@ -114,6 +114,4 @@ class Kickstarter(commands.Cog):
         hrs, mins, secs = (diff.hours, diff.minutes, diff.seconds)
 
         pretty = f"{yrs}y {mths}mth {days}d {hrs}h {mins}m {secs}s"
-        to_join = " ".join([x for x in pretty.split() if x[0] != "0"][:2])
-
-        return to_join
+        return " ".join([x for x in pretty.split() if x[0] != "0"][:2])
