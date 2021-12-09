@@ -36,7 +36,7 @@ class RedditInfo(commands.Cog):
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 3, commands.BucketType.user)
-    async def reddituser(self, ctx: commands.Context, username: str, more_info: bool = False):
+    async def reddituser(self, ctx: commands.Context, username: str):
         """Fetch basic info about a Reddit user account.
 
         `more_info`: Shows more information when set to `True`. Defaults to False.
@@ -62,17 +62,17 @@ class RedditInfo(commands.Cog):
         em.set_thumbnail(url=str(data.get("icon_img")).split("?")[0])
         em.add_field(name="Account created:", value=f"<t:{int(data.get('created_utc'))}:R>")
         em.add_field(name="Total Karma:", value=humanize_number(str(data.get("total_karma"))))
-        extra_info = ""
-        if more_info:
-            extra_info += "**Awardee Karma:**  " + humanize_number(str(data.get("awardee_karma", 0))) + "\n"
-            extra_info += "**Awarder Karma:**  " + humanize_number(str(data.get("awarder_karma", 0))) + "\n"
-            extra_info += "**Comment Karma:**  " + humanize_number(str(data.get("comment_karma", 0))) + "\n"
-            extra_info += "**Link Karma:**  " + humanize_number(str(data.get("link_karma", 0))) + "\n"
-            extra_info += "**has Reddit Premium?:**  " + ("✅" if data.get("is_gold") else "❌") + "\n"
-            extra_info += "**Verified Email?:**  " + ("✅" if data.get("has_verified_email") else "❌") + "\n"
-            extra_info += "**Is a subreddit mod?:**  " + ("✅" if data.get("is_mod") else "❌") + "\n"
-            if data.get("is_employee"):
-                em.set_footer(text="This user is a Reddit employee.")
+        extra_info = (
+            f"Awardee Karma:  **{humanize_number(str(data.get('awardee_karma', 0)))}**\n"
+            f"Awarder Karma:  **{humanize_number(str(data.get('awarder_karma', 0)))}**\n"
+            f"Comment Karma:  **{humanize_number(str(data.get('comment_karma', 0)))}**\n"
+            f"Link Karma:  **{humanize_number(str(data.get('link_karma', 0)))}**\n"
+            f'has Reddit Premium?:  {"✅" if data.get("is_gold") else "❌"}\n'
+            f'Verified Email?:  {"✅" if data.get("has_verified_email") else "❌"}\n'
+            f'Is a subreddit mod?:  {"✅" if data.get("is_mod") else "❌"}\n'
+        )
+        if data.get("is_employee"):
+            em.set_footer(text="This user is a Reddit employee.")
         em.description = extra_info
         await ctx.send(profile_url, embed=em)
 
