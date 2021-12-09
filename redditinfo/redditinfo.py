@@ -23,10 +23,18 @@ class RedditInfo(commands.Cog):
 
     def __init__(self, bot: Red):
         self.bot = bot
+        self.meme_subreddits = [
+            "memes",
+            "dankmemes",
+            "gamingcirclejerk",
+            "meirl",
+            "programmerhumor",
+            "programmeranimemes",
+        ]
         self.session = aiohttp.ClientSession()
         self.config = Config.get_conf(self, 357059159021060097, force_registration=True)
         default_guild = {"channel_id": None}
-        self.config.register_global(interval = 5)
+        self.config.register_global(interval = 3)
         self.config.register_guild(**default_guild)
         self._autopost_meme.start()
 
@@ -43,7 +51,7 @@ class RedditInfo(commands.Cog):
         """Nothing to delete"""
         pass
 
-    @tasks.loop(minutes=5)
+    @tasks.loop(minutes=3)
     async def _autopost_meme(self):
         all_config = await self.config.all_guilds()
         for guild_id, guild_data in all_config.items():
@@ -55,8 +63,13 @@ class RedditInfo(commands.Cog):
             bot_perms = channel.permissions_for(guild.me)
             if not (guild or channel or bot_perms.send_messages or bot_perms.embed_links):
                 continue
+            random_sub = random.choice(self.meme_subreddits)
+            async with self.session.get(f"https://old.reddit.com/r/{random_sub}/hot.json") as resp:
+                if resp.status != 200:
+                    continue
+                data = await resp.json()
 
-            await self._fetch_meme(channel)
+            await self._fetch_meme(data, channel)
 
     @_autopost_meme.before_loop
     async def _before_autopost_meme(self):
@@ -163,22 +176,15 @@ class RedditInfo(commands.Cog):
     async def random_hot_meme(self, ctx: commands.Context):
         """Fetch a random hot meme, or a boring cringe one, I suppose!"""
         await ctx.trigger_typing()
-        await self._fetch_meme(ctx.channel)
-
-    async def _fetch_meme(self, channel):
-        meme_subreddits = [
-            "memes",
-            "dankmemes",
-            "gamingcirclejerk",
-            "meirl",
-            "programmerhumor",
-            "programmeranimemes",
-        ]
-        random_sub = random.choice(meme_subreddits)
+        random_sub = random.choice(self.meme_subreddits)
         async with self.session.get(f"https://old.reddit.com/r/{random_sub}/hot.json") as resp:
             if resp.status != 200:
-                return await channel.send(f"Reddit API returned {resp.status} HTTP status code.")
-            result = await resp.json()
+                return await ctx.send(f"Reddit API returned {resp.status} HTTP status code.")
+            data = await resp.json()
+        await self._fetch_meme(data, ctx.channel)
+
+    @staticmethod
+    async def _fetch_meme(result, channel):
         meme_array = result["data"]["children"]
         random_index = random.randint(0, len(meme_array) - 1)
         random_meme = meme_array[random_index]["data"]
@@ -190,7 +196,7 @@ class RedditInfo(commands.Cog):
             random_meme = meme_array[random.randint(0, len(meme_array) - 1)]["data"]
         # retrying last time to get sfw meme
         if random_meme.get("over_18") and not channel.is_nsfw():
-            return await channel.send("NSFW meme found. Aborted in SFW channel. Please try again.")
+            return await channel.send("NSFW meme found. Aborted in SFW channel.")
 
         img_types = ('jpg', "jpeg", 'png', 'gif')
         if (
@@ -198,10 +204,7 @@ class RedditInfo(commands.Cog):
             or (random_meme.get("url") and "v.redd.it" in random_meme.get("url"))
             or (random_meme.get("url") and not random_meme.get("url").endswith(img_types))
         ):
-            return await channel.send(
-                "This meme is a video(?) type, which cannot be previewed in fancy "
-                f"embed, so here is it's direct link:\n{random_meme.get('url')}"
-            )
+            return await channel.send(random_meme.get("url"))
         emb = discord.Embed(colour=discord.Colour.random())
         emb.title = random_meme.get("title", "None")
         emb.url = f"https://old.reddit.com{random_meme['permalink']}"
