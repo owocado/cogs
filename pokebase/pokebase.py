@@ -486,7 +486,7 @@ class Pokebase(commands.Cog):
             if data.get("learned_by_pokemon"):
                 learned_by = [x.get("name").title() for x in data.get("learned_by_pokemon")]
                 embed.add_field(
-                    name=f'Learned by {len(learned_by)} Pokémons',
+                    name=f"Learned by {len(learned_by)} Pokémons",
                     value=", ".join(learned_by)[:500] + "... and more.",
                     inline=False,
                 )
