@@ -1,28 +1,27 @@
-import aiohttp
 import asyncio
-import datetime
+from datetime import datetime, timezone
 
-from dateutil import relativedelta
-
+import aiohttp
 import discord
 from redbot.core import commands
 from redbot.core.utils.chat_formatting import humanize_number
-from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
+from redbot.core.utils.menus import close_menu, menu, DEFAULT_CONTROLS
 
 
 class Kickstarter(commands.Cog):
-    """Search for and get various info on a Kickstarter project."""
+    """Get various nerdy info on a Kickstarter project."""
 
-    __author__ = ["siu3334", "dragonfire535"]
-    __version__ = "0.0.3"
+    __authors__ = "ow0x, dragonfire535"
+    __version__ = "0.1.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
         pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\n\nAuthors: {', '.join(self.__author__)}\nCog Version: {self.__version__}"
-
-    def __init__(self, bot):
-        self.bot = bot
+        return f"{pre_processed}\n\nAuthors: {self.__authors__}\nCog Version: {self.__version__}"
+    
+    async def red_delete_data_for_user(self, **kwargs) -> None:
+        """Nothing to delete"""
+        pass
 
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
@@ -33,11 +32,10 @@ class Kickstarter(commands.Cog):
 
         await ctx.trigger_typing()
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(base_url) as response:
-                    if response.status != 200:
-                        return await ctx.send(f"https://http.cat/{response.status}")
-                    data = await response.json()
+            async with aiohttp.request("GET", base_url) as response:
+                if response.status != 200:
+                    return await ctx.send(f"https://http.cat/{response.status}")
+                data = await response.json()
         except asyncio.TimeoutError:
             return await ctx.send("Operation timed out.")
 
@@ -45,10 +43,11 @@ class Kickstarter(commands.Cog):
             return await ctx.send(f"Could not find any results. Did you mean `{data['suggestion']}`?")
 
         pages = []
-        for i, result in enumerate(data["projects"]):
+        for i, result in enumerate(data["projects"], start=1):
             embed = discord.Embed(colour=0x14E06E)
             embed.title = result.get("name")
-            embed.url = result.get("urls").get("web").get("project")
+            if result.get("urls", {}).get("web"):
+                embed.url = result.get("urls").get("web").get("project")
             embed.set_author(name="Kickstarter", icon_url="https://i.imgur.com/EHDlH5t.png")
             project_summary = result.get("blurb", "No summary.")
             if result.get("photo"):
@@ -63,55 +62,20 @@ class Kickstarter(commands.Cog):
             embed.add_field(name="Pledged", value=pretty_pledged)
             embed.add_field(name="Backers", value=humanize_number(result.get("backers_count")))
             creator = f"[{result.get('creator').get('name')}]({result['creator']['urls']['web']['user']})"
-            # embed.add_field(name="Creator", value=creator)
-            created_at = datetime.datetime.utcfromtimestamp(result.get("created_at"))
-            pretty_created = (
-                created_at.strftime("%d %b, %Y") + f"  ({self._accurate_timedelta(created_at)} ago)"
-            )
-            # embed.add_field(name="Creation Date", value=pretty_created)
-            launched_at = datetime.datetime.utcfromtimestamp(result.get("launched_at"))
-            pretty_launched = (
-                launched_at.strftime("%d %b, %Y") + f"  ({self._accurate_timedelta(launched_at)} ago)"
-            )
-            # embed.add_field(name="Launched Date", value=pretty_launched)
             deadline = datetime.datetime.utcfromtimestamp(result.get("deadline"))
-            utcnow = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-            past_or_future = "ago `**EXPIRED**`" if utcnow > deadline else "to go"
-            pretty_deadline = (
-                deadline.strftime("%d %b, %Y")
-                + f"  ({self._accurate_timedelta(deadline)} {past_or_future})"
-            )
+            past_or_future = "`**EXPIRED**`" if datetime.now(timezone.utc).replace(tzinfo=None) > deadline else ""
             embed.description = (
                 project_summary
                 + f"\n\n**Creator**: {creator}\n"
-                + f"**Creation Date**: {pretty_created}\n"
-                + f"**Launched Date**: {pretty_launched}\n"
-                + f"**Deadline**: {pretty_deadline}\n"
+                f"**Creation Date**: <t:{int(result.get('created_at'))}:R>\n"
+                f"**Launched Date**: <t:{int(result.get('launched_at'))}:R>\n"
+                f"**Deadline**: <t:{int(result.get('deadline'))}:R> {past_or_future}\n"
             )
-            # embed.add_field(name="Deadline", value=pretty_deadline)
-            footer = f"Page {i + 1} of {len(data['projects'])}"
+            footer = f"Page {i} of {len(data['projects'])}"
             if result.get("category"):
                 footer += f" | Category: {result.get('category').get('name')}"
             embed.set_footer(text=footer)
             pages.append(embed)
 
-        if len(pages) == 1:
-            return await ctx.send(embed=pages[0])
-        else:
-            await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
-
-    @staticmethod
-    def _accurate_timedelta(date_time):
-        dt1 = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-        dt2 = date_time
-
-        if dt1 > dt2:
-            diff = relativedelta.relativedelta(dt1, dt2)
-        else:
-            diff = relativedelta.relativedelta(dt2, dt1)
-
-        yrs, mths, days = (diff.years, diff.months, diff.days)
-        hrs, mins, secs = (diff.hours, diff.minutes, diff.seconds)
-
-        pretty = f"{yrs}y {mths}mth {days}d {hrs}h {mins}m {secs}s"
-        return " ".join([x for x in pretty.split() if x[0] != "0"][:2])
+        controls = {"❌": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
+        await menu(ctx, pages, controls=controls, timeout=90.0)
