@@ -1,4 +1,5 @@
 import asyncio
+from typing import Any, Dict, Optional
 
 import aiohttp
 import discord
@@ -10,7 +11,7 @@ from redbot.core.utils.menus import DEFAULT_CONTROLS, close_menu, menu
 class YGO(commands.Cog):
     """Responds with info on a Yu-Gi-Oh! card."""
 
-    __author__ = "ow0x (<@306810730055729152>)"
+    __authors__ = "ow0x (<@306810730055729152>), dragonfire535"
     __version__ = "0.1.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
@@ -22,7 +23,7 @@ class YGO(commands.Cog):
         """Nothing to delete"""
         pass
 
-    async def get(self, ctx, url: str):
+    async def get(self, ctx, url: str) -> Optional[Dict[str, Any]]:
         try:
             async with aiohttp.request("GET", url) as response:
                 if response.status != 200:
@@ -39,7 +40,6 @@ class YGO(commands.Cog):
         await ctx.trigger_typing()
         base_url = f"https://db.ygoprodeck.com/api/v7/cardinfo.php?fname={card_name}"
         card_data = await self.get(ctx, base_url)
-
         if not card_data["data"]:
             return await ctx.send("No results.")
 
@@ -50,39 +50,27 @@ class YGO(commands.Cog):
             embed.url = f"https://db.ygoprodeck.com/card/?search={data['id']}"
             embed.description = data["desc"]
             embed.set_author(
-                name="Yu-Gi-Oh!",
-                url="http://www.yugioh-card.com/en/",
-                icon_url="https://i.imgur.com/AJNBflD.png",
+                name="Yu-Gi-Oh!", url="http://www.yugioh-card.com/en/", icon_url="https://i.imgur.com/AJNBflD.png",
             )
             embed.set_image(url=str(data["card_images"][0]["image_url"]))
             race_or_spell = "Race" if "Monster" in data["type"] else "Spell Type"
-            # embed.add_field(name=race_or_spell, value=data["race"])
             if "Monster" in data["type"]:
                 embed.add_field(name="Attribute", value=str(data.get("attribute")))
+                embed.add_field(name="Attack (ATK)", value=humanize_number(str(data.get("atk"))))
                 embed.add_field(
-                    name="Attack (ATK)", value=humanize_number(str(data.get("atk")))
-                )
-                embed.add_field(
-                    name="Link Value" if data["type"] == "Link Monster"
-                    else "Defense (DEF)",
-                    value=str(data.get("linkval")) if data["type"] == "Link Monster"
-                    else humanize_number(data["def"]),
+                    name="Link Value" if data["type"] == "Link Monster" else "Defense (DEF)",
+                    value=str(data.get("linkval")) if data["type"] == "Link Monster" else humanize_number(data["def"]),
                 )
             if data.get("card_sets"):
-                card_sets = "".join("`[{}]` **{}** (${}) {}\n".format(
-                        str(count + 1).zfill(2),
-                        sets["set_name"],
-                        sets["set_price"],
-                        sets["set_rarity_code"],
-                    ) for count, sets in enumerate(data["card_sets"]))
+                card_sets = "".join(
+                    f"`[{str(i).zfill(2)}]` **{sets['set_name']}** (${sets['set_price']}) {sets['set_rarity_code']}\n"
+                    for i, sets in enumerate(data["card_sets"], 1)
+                )
                 embed.add_field(name="Card Sets", value=card_sets, inline=False)
             price_dict = data["card_prices"][0]
             card_prices = (
-                f"Cardmarket: **€{price_dict['cardmarket_price']}**\n"
-                f"TCGPlayer: **${price_dict['tcgplayer_price']}**\n"
-                f"eBay: **${price_dict['ebay_price']}**\n"
-                f"Amazon: **${price_dict['amazon_price']}**\n"
-                f"Coolstuff Inc.: **${price_dict['coolstuffinc_price']}**\n"
+                f"Cardmarket: **€{price_dict['cardmarket_price']}**\nTCGPlayer: **${price_dict['tcgplayer_price']}**\neBay: **${price_dict['ebay_price']}**\n"
+                f"Amazon: **${price_dict['amazon_price']}**\nCoolstuff Inc.: **${price_dict['coolstuffinc_price']}**\n"
             )
             embed.add_field(name="Prices", value=card_prices, inline=False)
             footer = f"Page {i} of {len(card_data['data'])} | Card Level: {data.get('level', 'N/A')} | {race_or_spell}: {data['race']}"
@@ -106,30 +94,22 @@ class YGO(commands.Cog):
         embed.url = f"https://db.ygoprodeck.com/card/?search={data['id']}"
         embed.description = data["desc"]
         embed.set_author(
-            name="Yu-Gi-Oh! Random Card",
-            url="http://www.yugioh-card.com/en/",
-            icon_url="https://i.imgur.com/AJNBflD.png",
+            name="Yu-Gi-Oh! Random Card", url="http://www.yugioh-card.com/en/", icon_url="https://i.imgur.com/AJNBflD.png",
         )
         embed.set_image(url=str(data["card_images"][0]["image_url"]))
         race_or_spell = "Race" if "Monster" in data["type"] else "Spell Type"
         # embed.add_field(name=race_or_spell, value=data["race"])
         if "Monster" in data["type"]:
             embed.add_field(name="Attribute", value=str(data.get("attribute")))
+            embed.add_field(name="Attack (ATK)", value=humanize_number(str(data.get("atk"))))
             embed.add_field(
-                name="Attack (ATK)", value=humanize_number(str(data.get("atk")))
-            )
-            embed.add_field(
-                name="Link Value" if data["type"] == "Link Monster"
-                else "Defense (DEF)",
-                value=str(data.get("linkval")) if data["type"] == "Link Monster"
-                else humanize_number(data["def"]),
+                name="Link Value" if data["type"] == "Link Monster" else "Defense (DEF)",
+                value=str(data.get("linkval")) if data["type"] == "Link Monster" else humanize_number(data["def"]),
             )
         price_dict = data["card_prices"][0]
         card_prices = (
-            f"Cardmarket: **€{price_dict['cardmarket_price']}**\n"
-            f"TCGPlayer: **${price_dict['tcgplayer_price']}**\n"
-            f"eBay: **${price_dict['ebay_price']}**\n"
-            f"Amazon: **${price_dict['amazon_price']}**\n"
+            f"Cardmarket: **€{price_dict['cardmarket_price']}**\nTCGPlayer: **${price_dict['tcgplayer_price']}**\n"
+            f"eBay: **${price_dict['ebay_price']}**\nAmazon: **${price_dict['amazon_price']}**\n"
         )
         embed.add_field(name="Prices", value=card_prices, inline=False)
         footer = f"ID: {data['id']} | Card Level: {data.get('level', 'N/A')} | {race_or_spell}: {data['race']}"
