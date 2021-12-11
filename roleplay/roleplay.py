@@ -5,6 +5,8 @@ from redbot.core import Config, commands
 from redbot.core.bot import Red
 from redbot.core.commands import Context
 from redbot.core.utils.chat_formatting import box, bold, quote
+from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
+# from redbot.core.utils.dpy2_menus import BaseMenu, ListPages
 
 from tabulate import tabulate
 
@@ -15,7 +17,7 @@ class Roleplay(commands.Cog):
     """Do roleplay with your Discord friends or virtual strangers."""
 
     __author__ = "ow0x"
-    __version__ = "1.1.0"
+    __version__ = "1.1.1"
 
     async def red_delete_data_for_user(self, **kwargs):
         """Nothing to delete"""
@@ -412,7 +414,7 @@ class Roleplay(commands.Cog):
     async def nom(self, ctx: Context, *, member: discord.Member):
         """Try to nom/bite a server member!"""
         if member.id == ctx.me.id:
-            return await ctx.send('**OH NO!** _runs away_')
+            return await ctx.send("**OH NO!** _runs away_")
         message = (
             f"Waaaaaa! {bold(ctx.author.name)}, You bit yourself! Whyyyy?? 😭"
             if member.id == ctx.author.id
@@ -506,7 +508,7 @@ class Roleplay(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 10, commands.BucketType.member)
+    @commands.cooldown(1, 60, commands.BucketType.member)
     async def punch(self, ctx: Context, *, member: discord.Member):
         """Punch someone on Discord with a GIF reaction!"""
         if member.id == ctx.me.id:
@@ -546,7 +548,7 @@ class Roleplay(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 10, commands.BucketType.member)
+    @commands.cooldown(1, 60, commands.BucketType.member)
     async def slap(self, ctx: Context, *, member: discord.Member):
         """Slap a server member!"""
         if member.id == ctx.me.id:
@@ -631,52 +633,46 @@ class Roleplay(commands.Cog):
     # TODO: add server and global roleplay leaderboard
 
     @commands.guild_only()
-    @commands.group(name="rpstats", invoke_without_command=True)
-    @commands.bot_has_permissions(embed_links=True)
+    @commands.command(name="rpstats")
+    @commands.bot_has_permissions(add_reactions=True, embed_links=True)
     @commands.cooldown(1, 5, commands.BucketType.member)
     async def roleplay_stats(self, ctx: Context, *, member: discord.Member = None):
         """Get your roleplay stats for this server."""
         user = member or ctx.author
+        await ctx.channel.trigger_typing()
         actions_data = await self.config.member(user).all()
+        global_actions_data = await self.config.user(user).all()
 
         people_with_no_creativity = []
-
-        def sravan_copies_ideas(action: str):
-            for key, value in actions_data.items():
+        global_actions_array = []
+        def sravan_copies_ideas(data, array, action: str):
+            for key, value in data.items():
                 if action in key:
-                    sent = actions_data.get(f"{action}_SENT", 0)
-                    received = actions_data.get(f"{action}_RECEIVED", 0)
-                    people_with_no_creativity.append([action.lower(), sent, received])
+                    sent = data.get(f"{action}_SENT", 0)
+                    received = data.get(f"{action}_RECEIVED", 0)
+                    array.append([action.lower(), sent, received])
 
         for act in self.possible_actions:
-            sravan_copies_ideas(act)
-        dedupe_list = [x for i, x in enumerate(people_with_no_creativity, 1) if i % 2 != 0]
-        table = tabulate(dedupe_list, headers=["Action", "Sent", "Received"], numalign="left")
-        emb = discord.Embed(colour=await ctx.embed_colour(), description=box(table, "nim"))
+            sravan_copies_ideas(actions_data, people_with_no_creativity, act)
+
+        pages = []
+        dedupe_list_1 = [x for i, x in enumerate(people_with_no_creativity, 1) if i % 2 != 0]
+        server_table = tabulate(dedupe_list_1, headers=["Action", "Sent", "Received"], numalign="left")
+        emb = discord.Embed(colour=await ctx.embed_colour(), description=box(server_table, "nim"))
         emb.set_author(name=f"Roleplay Stats | {user.name}", icon_url=user.avatar_url)
-        text = f"For your global roleplay stats, use: `{ctx.clean_prefix}rpstats global` command!"
-        await ctx.channel.send(text, embed=emb)
+        emb.set_footer(text="Go to next page to see your global roleplay stats!")
+        pages.append(emb)
 
-    @roleplay_stats.command(name="global")
-    async def roleplay_stats_global(self, ctx: Context, *, member: discord.Member = None):
-        """Get your global roleplay stats for all servers you share with [botname]!"""
-        user = member or ctx.author
-        actions_data = await self.config.user(user).all()
+        for action in self.possible_actions:
+            sravan_copies_ideas(global_actions_data, global_actions_array, action)
 
-        people_with_no_creativity = []
+        dedupe_list_2 = [x for i, x in enumerate(global_actions_array, 1) if i % 2 != 0]
+        global_table = tabulate(dedupe_list_2, headers=["Action", "Sent", "Received"], numalign="left")
+        embed = discord.Embed(colour=await ctx.embed_colour(), description=box(global_table, "nim"))
+        embed.set_author(name=f"Global Roleplay Stats | {user.name}", icon_url=user.avatar_url)
+        embed.set_footer(text=f"Requested by: {ctx.author}", icon_url=ctx.author.avatar_url)
+        pages.append(embed)
 
-        def sravan_copies_ideas(action: str):
-            for key, value in actions_data.items():
-                if action in key:
-                    sent = actions_data.get(f"{action}_SENT", 0)
-                    received = actions_data.get(f"{action}_RECEIVED", 0)
-                    people_with_no_creativity.append([action.lower(), sent, received])
-
-        for act in self.possible_actions:
-            sravan_copies_ideas(act)
-        dedupe_list = [x for i, x in enumerate(people_with_no_creativity, 1) if i % 2 != 0]
-        table = tabulate(dedupe_list, headers=["Action", "Sent", "Received"], numalign="left")
-        emb = discord.Embed(colour=await ctx.embed_colour(), description=box(table, "nim"))
-        emb.set_author(name=f"Global Roleplay Stats | {user.name}", icon_url=user.avatar_url)
-        emb.set_footer(text=f"Requested by: {ctx.author}")
-        await ctx.channel.send(embed=emb)
+        await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
+        # dpy2 button menus
+        # await BaseMenu(ListPages(pages), timeout=60, ctx=ctx).start(ctx)
