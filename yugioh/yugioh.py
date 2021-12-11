@@ -4,48 +4,47 @@ import aiohttp
 import discord
 from redbot.core import commands
 from redbot.core.utils.chat_formatting import humanize_number
-from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
+from redbot.core.utils.menus import DEFAULT_CONTROLS, close_menu, menu
 
 
 class YGO(commands.Cog):
     """Responds with info on a Yu-Gi-Oh! card."""
 
-    __author__ = "siu3334 (<@306810730055729152>)"
-    __version__ = "0.0.2"
+    __author__ = "ow0x (<@306810730055729152>)"
+    __version__ = "0.1.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
         pre_processed = super().format_help_for_context(ctx)
         return f"{pre_processed}\n\nAuthor: {self.__author__}\nCog Version: {self.__version__}"
 
-    def __init__(self, bot):
-        self.bot = bot
-        self.session = aiohttp.ClientSession()
+    async def red_delete_data_for_user(self, **kwargs) -> None:
+        """Nothing to delete"""
+        pass
 
-    def cog_unload(self):
-        self.bot.loop.create_task(self.session.close())
+    async def get(self, ctx, url: str):
+        try:
+            async with aiohttp.request("GET", url) as response:
+                if response.status != 200:
+                    return await ctx.send(f"https://http.cat/{response.status}")
+                return await response.json()
+        except asyncio.TimeoutError:
+            return await ctx.send("Operation timed out.")
 
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 3, commands.BucketType.member)
     async def ygocard(self, ctx: commands.Context, *, card_name: str):
         """Search for a Yu-Gi-Oh! card."""
-        base_url = f"https://db.ygoprodeck.com/api/v7/cardinfo.php?fname={card_name}"
-
         await ctx.trigger_typing()
-        try:
-            async with self.session.get(base_url) as response:
-                if response.status != 200:
-                    return await ctx.send(f"https://http.cat/{response.status}")
-                card_data = await response.json()
-        except asyncio.TimeoutError:
-            return await ctx.send("Operation timed out.")
+        base_url = f"https://db.ygoprodeck.com/api/v7/cardinfo.php?fname={card_name}"
+        card_data = await self.get(ctx, base_url)
 
         if not card_data["data"]:
             return await ctx.send("No results.")
 
         pages = []
-        for i, data in enumerate(card_data["data"]):
+        for i, data in enumerate(card_data["data"], start=1):
             embed = discord.Embed(colour=await ctx.embed_colour())
             embed.title = data["name"]
             embed.url = f"https://db.ygoprodeck.com/card/?search={data['id']}"
@@ -64,11 +63,9 @@ class YGO(commands.Cog):
                     name="Attack (ATK)", value=humanize_number(str(data.get("atk")))
                 )
                 embed.add_field(
-                    name="Link Value"
-                    if data["type"] == "Link Monster"
+                    name="Link Value" if data["type"] == "Link Monster"
                     else "Defense (DEF)",
-                    value=str(data.get("linkval"))
-                    if data["type"] == "Link Monster"
+                    value=str(data.get("linkval")) if data["type"] == "Link Monster"
                     else humanize_number(data["def"]),
                 )
             if data.get("card_sets"):
@@ -88,34 +85,21 @@ class YGO(commands.Cog):
                 f"Coolstuff Inc.: **${price_dict['coolstuffinc_price']}**\n"
             )
             embed.add_field(name="Prices", value=card_prices, inline=False)
-            footer = (
-                f"Page {i + 1} of {len(card_data['data'])} | "
-                f"Card Level: {data.get('level', 'N/A')} | "
-                f"{race_or_spell}: {data['race']}"
-            )
+            footer = f"Page {i} of {len(card_data['data'])} | Card Level: {data.get('level', 'N/A')} | {race_or_spell}: {data['race']}"
             embed.set_footer(text=footer)
             pages.append(embed)
 
-        if len(pages) == 1:
-            return await ctx.send(embed=pages[0])
-        else:
-            await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
+        controls = {"❌": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
+        await menu(ctx, pages, controls=controls, timeout=60.0)
 
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 3, commands.BucketType.member)
     async def randomcard(self, ctx: commands.Context):
         """Fetch a random Yu-Gi-Oh! card."""
-        base_url = "https://db.ygoprodeck.com/api/v7/randomcard.php"
-
         await ctx.trigger_typing()
-        try:
-            async with self.session.get(base_url) as response:
-                if response.status != 200:
-                    return await ctx.send(f"https://http.cat/{response.status}")
-                data = await response.json()
-        except asyncio.TimeoutError:
-            return await ctx.send("Operation timed out.")
+        base_url = "https://db.ygoprodeck.com/api/v7/randomcard.php"
+        data = await self.get(ctx, base_url)
 
         embed = discord.Embed(colour=await ctx.embed_colour())
         embed.title = data["name"]
@@ -135,11 +119,9 @@ class YGO(commands.Cog):
                 name="Attack (ATK)", value=humanize_number(str(data.get("atk")))
             )
             embed.add_field(
-                name="Link Value"
-                if data["type"] == "Link Monster"
+                name="Link Value" if data["type"] == "Link Monster"
                 else "Defense (DEF)",
-                value=str(data.get("linkval"))
-                if data["type"] == "Link Monster"
+                value=str(data.get("linkval")) if data["type"] == "Link Monster"
                 else humanize_number(data["def"]),
             )
         price_dict = data["card_prices"][0]
@@ -150,11 +132,6 @@ class YGO(commands.Cog):
             f"Amazon: **${price_dict['amazon_price']}**\n"
         )
         embed.add_field(name="Prices", value=card_prices, inline=False)
-        footer = (
-            f"ID: {data['id']} | Card Level: "
-            f"{data.get('level', 'N/A')} | "
-            f"{race_or_spell}: {data['race']}"
-        )
+        footer = f"ID: {data['id']} | Card Level: {data.get('level', 'N/A')} | {race_or_spell}: {data['race']}"
         embed.set_footer(text=footer)
-
         await ctx.send(embed=embed)
