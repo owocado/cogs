@@ -1,8 +1,7 @@
 from .kickstarter import Kickstarter
 
-__red_end_user_data_statement__ = "This cog does not persistently store data about users."
+__red_end_user_data_statement__ = "This cog does not persistently store any PII data about users."
 
 
-async def setup(bot):
-    n = Kickstarter(bot)
-    bot.add_cog(n)
+def setup(bot):
+    bot.add_cog(Kickstarter())
