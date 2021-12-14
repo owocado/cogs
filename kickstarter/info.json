@@ -5,12 +5,13 @@
     "install_msg": "Thanks for installing this MEH cog. 😔",
     "end_user_data_statement": "This cog does not persistently store any PII data or metadata about users.",
     "author": [
-        "ow0x (<@306810730055729152>)"
+        "ow0x (<@306810730055729152>)",
+        "dragonfire535"
     ],
     "required_cogs": {},
     "requirements": [],
     "tags": ["kickstarter"],
-    "min_bot_version": "3.4.12",
+    "min_bot_version": "3.4.14",
     "hidden": false,
     "disabled": false,
     "type": "COG"
