@@ -1,6 +1,5 @@
 import asyncio
 import contextlib
-import re
 from datetime import datetime
 from typing import Any, List, Optional
 
@@ -14,8 +13,7 @@ from redbot.core.utils.menus import close_menu, menu, DEFAULT_CONTROLS
 # from redbot.core.utils.dpy2_menus import BaseMenu, ListPages
 
 USER_AGENT = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36"
 }
 
 
@@ -71,12 +69,11 @@ class SteamCog(commands.Cog):
     # Attribution: https://github.com/TrustyJAID/Trusty-cogs/blob/master/notsobot/notsobot.py#L212
     async def fetch_steam_game_id(self, ctx: commands.Context, query: str) -> Optional[int]:
         url = "https://store.steampowered.com/api/storesearch"
-        params = {"cc": "us", "l": "en", "term": query}
-        data = await self.get(url, params)
+        data = await self.get(url, {"cc": "us", "l": "en", "term": query})
         if not data: return None
         if data.get("total", 0) == 0: return None
         elif data.get("total") == 1: return data.get("items")[0].get("id")
-        elif data.get("total") > 1:
+        else:
             # Attribution: https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
             items = "".join(f"**{i}.** {val.get('name')}\n" for i, val in enumerate(data.get("items"), 1))
             choices = f"Found multiple results for your query. Please select one from:\n\n{items}"
@@ -98,12 +95,9 @@ class SteamCog(commands.Cog):
                     await send_to_channel.edit("Operation cancelled.")
                 return None
             else:
-                choice = int(choice.content.strip()) - 1
-                app_id = data.get("items")[choice].get("id")
                 with contextlib.suppress(discord.NotFound, discord.HTTPException):
                     await send_to_channel.delete()
-                return app_id
-        else: return None
+                return data.get("items")[int(choice.content.strip()) - 1].get("id")
 
     @staticmethod
     def game_previews_embed(meta, data) -> discord.Embed:
@@ -116,8 +110,7 @@ class SteamCog(commands.Cog):
 
     def steam_embed(self, meta, app) -> discord.Embed:
         em = discord.Embed(
-            colour=meta[1], title=app["name"],
-            description=app.get("short_description", ""),
+            colour=meta[1], title=app["name"], description=app.get("short_description", ""),
         )
         em.url = f"https://store.steampowered.com/app/{meta[0]}"
         em.set_author(name="Steam", icon_url="https://i.imgur.com/xxr2UBZ.png")
@@ -169,14 +162,12 @@ class SteamCog(commands.Cog):
         app_id = await self.fetch_steam_game_id(ctx, query)
         if app_id is None: return await ctx.send("Could not find any results.")
         base_url = "https://store.steampowered.com/api/appdetails"
-        params = {"appids": app_id, "l": "en", "cc": "us", "json": 1}
-        data = await self.get(base_url, params)
+        data = await self.get(base_url, {"appids": app_id, "l": "en", "cc": "us", "json": 1})
         if not data: return await ctx.send("Something went wrong while querying Steam.")
         colour = await ctx.embed_colour()
         app_data = data[f"{app_id}"].get("data")
         pages = []
-        em = self.steam_embed((app_id, colour), app_data)
-        pages.append(em)
+        pages.append(self.steam_embed((app_id, colour), app_data))
         if app_data.get("screenshots"):
             for i, preview in enumerate(app_data["screenshots"], start=1):
                 meta = (i, len(app_data["screenshots"]), colour, app_id, app_data["name"])
