@@ -55,13 +55,12 @@ class MovieDB(commands.Cog):
     async def fetch_movie_id(self, ctx: commands.Context, query: str) -> Optional[int]:
         url = "https://api.themoviedb.org/3/search/movie"
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
-        params = {"api_key": api_key, "query": query}
-        data = await self.get(url, params)
+        data = await self.get(url, {"api_key": api_key, "query": query})
         if data is None: return None
 
         if not data.get("results") or len(data.get("results")) == 0: return None
         elif len(data.get("results")) == 1: return data.get("results")[0].get("id")
-        elif len(data.get("results")) > 1:
+        else:
             # Logic taken/modified from https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
             items = "\n".join(
                 f"**{i}.** {v.get('title', 'N/A')} ({self.tstamp(v.get('release_date', ''), 'D')})"
@@ -86,8 +85,6 @@ class MovieDB(commands.Cog):
             else:
                 await send_to_channel.delete()
                 return data["results"][int(choice.content.strip()) - 1].get("id")
-        else:
-            return None
 
     def movie_embed(self, meta, data) -> discord.Embed:
         embed = discord.Embed(
@@ -155,9 +152,11 @@ class MovieDB(commands.Cog):
         data = await self.get(url, params)
         if data is None: return None
 
-        if not data.get("results") or len(data.get("results")) == 0: return None
-        elif len(data.get("results")) == 1: return data.get("results")[0].get("id")
-        elif len(data.get("results")) > 1:
+        if not data.get("results") or len(data.get("results")) == 0:
+            return None
+        elif len(data.get("results")) == 1:
+            return data.get("results")[0].get("id")
+        else:
             # https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
             items = "\n".join(
                 f"**{i}.** {v.get('original_name', 'N/A')} ({self.tstamp(v.get('first_air_date', ''), 'D')})"
@@ -182,8 +181,6 @@ class MovieDB(commands.Cog):
             else:
                 await send_to_channel.delete()
                 return data.get("results")[int(choice.content.strip()) - 1].get("id")
-        else:
-            return None
 
     def tvshow_embed(self, meta, data) -> discord.Embed:
         embed = discord.Embed(title=data.get("name", ""), description=data.get("overview", ""), colour=meta)
@@ -224,9 +221,7 @@ class MovieDB(commands.Cog):
             for i, tv in enumerate(data.get("seasons"), start=1)
         )
         embed.add_field(
-            name="Seasons summary",
-            value=f"{seasons_meta.replace('()', '')}\n{avg_episode_runtime}",
-            inline=False,
+            name="Seasons summary", value=f"{seasons_meta.replace('()', '')}\n{avg_episode_runtime}", inline=False,
         )
         if data.get("next_episode_to_air"):
             next_ep = data["next_episode_to_air"]
@@ -295,7 +290,6 @@ class MovieDB(commands.Cog):
         if not output: return await ctx.send("Could not connect to TMDB API.")
         if not output.get("results"):
             return await ctx.send("No recommendations found for that movie. 🤔")
-
         pages = []
         for i, data in enumerate(output.get("results"), start=1):
             colour = await ctx.embed_colour()
@@ -337,7 +331,6 @@ class MovieDB(commands.Cog):
         if not output: return await ctx.send("Could not connect to TMDB API.")
         if not output.get("results"):
             return await ctx.send("No recommendations found for that movie. 🤔")
-
         pages = []
         for i, data in enumerate(output.get("results"), start=1):
             colour = await ctx.embed_colour()
