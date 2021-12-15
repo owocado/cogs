@@ -29,8 +29,11 @@ Then to add repo and install my cogs, do:
 * [Dragon Fire](https://github.com/dragonfire535) for being very humble, kind and helpful person and inspiring me to make these cogs.
 * [TrustyJAID](https://github.com/TrustyJAID) for providing moviepy logic.
 * [Fixator](https://github.com/fixator10) for helping me improve badgetools cog code.
-* [Red community](https://discord.gg/red).
+* only few good people from [Red](https://discord.gg/red), rest are just cynical saints desperate to rub their supreme divine authority on you poggers 🎉 🍿.
+* awwww red discord moderator sama, pwease punish me with youw orthodox divine sword of justice because I have used free speech to criticize youw tribe! 🥺 😳
+
+![I AM SO PROUD OF THIS COMMUNITY](https://c.tenor.com/noSAzWis3sIAAAAC/so-proud-of-this-community-proud.gif)
 
 
 ## Contact
-I have a [small discord server](https://discord.gg/YjFQSFqjJ3) if you need any help from me.
+I have a [Discord account](https://discord.com/users/306810730055729152) if you need any help from me.
