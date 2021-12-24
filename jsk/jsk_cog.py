@@ -1,14 +1,19 @@
-from jishaku.cog import STANDARD_FEATURES, OPTIONAL_FEATURES
+import jishaku
+from jishaku.cog import OPTIONAL_FEATURES, STANDARD_FEATURES
+
+jishaku.Flags.RETAIN = True
+jishaku.Flags.NO_UNDERSCORE = True
+jishaku.Flags.FORCE_PAGINATOR = True
+jishaku.Flags.NO_DM_TRACEBACK = True
 
 
 class Jishaku(*OPTIONAL_FEATURES, *STANDARD_FEATURES):
     """Jishaku, a debugging and testing cog for discord.py rewrite bots."""
-    pass
 
-    __version__ = "2.3.2"
-    __author__ = "Gorialis"
+
+    __author__, __version__ = ("Author: Gorialis", "Cog Version: 2.3.2")
 
     def format_help_for_context(self, ctx):
         """Thanks Sinbad."""
         pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\nAuthor: {self.__author__}\nCog Version: {self.__version__}"
+        return f"{pre_processed}\n{self.__author__}\n{self.__version__}"
