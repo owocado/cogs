@@ -17,7 +17,7 @@ class Roleplay(commands.Cog):
     """Do roleplay with your Discord friends or virtual strangers."""
 
     __author__ = "ow0x"
-    __version__ = "1.1.1"
+    __version__ = "1.1.2"
 
     async def red_delete_data_for_user(self, **kwargs):
         """Nothing to delete"""
@@ -89,6 +89,11 @@ class Roleplay(commands.Cog):
         # TODO: you can do better
         if self.bot.get_cog("General"):
             self.bot.remove_command("hug")
+
+    # @staticmethod
+    # async def temp_tip(ctx: commands.Context):
+    #     pre = ctx.clean_prefix
+    #     return await ctx.send(f"You can check your roleplay stats with `{pre}rpstats` command.", delete_after=10.0)
 
     @commands.command()
     @commands.guild_only()
@@ -642,32 +647,32 @@ class Roleplay(commands.Cog):
         await ctx.channel.trigger_typing()
         actions_data = await self.config.member(user).all()
         global_actions_data = await self.config.user(user).all()
-
+        colalign, header = (("left", "right", "right"), ["Action", "Received", "Sent"])
         people_with_no_creativity = []
         global_actions_array = []
-        def sravan_copies_ideas(data, array, action: str):
+        def parse_actions(data, array, action: str):
             for key, value in data.items():
                 if action in key:
-                    sent = data.get(f"{action}_SENT", 0)
-                    received = data.get(f"{action}_RECEIVED", 0)
-                    array.append([action.lower(), sent, received])
+                    sent = str(data.get(f"{action}_SENT", " ")).replace("0", " ")
+                    received = str(data.get(f"{action}_RECEIVED", " ")).replace("0", " ")
+                    array.append([action.lower(), received, sent])
 
         for act in self.possible_actions:
-            sravan_copies_ideas(actions_data, people_with_no_creativity, act)
+            parse_actions(actions_data, people_with_no_creativity, act)
 
         pages = []
         dedupe_list_1 = [x for i, x in enumerate(people_with_no_creativity, 1) if i % 2 != 0]
-        server_table = tabulate(dedupe_list_1, headers=["Action", "Sent", "Received"], numalign="left")
+        server_table = tabulate(dedupe_list_1, headers=header, colalign=colalign, tablefmt="psql")
         emb = discord.Embed(colour=await ctx.embed_colour(), description=box(server_table, "nim"))
         emb.set_author(name=f"Roleplay Stats | {user.name}", icon_url=user.avatar_url)
         emb.set_footer(text="Go to next page to see your global roleplay stats!")
         pages.append(emb)
 
         for action in self.possible_actions:
-            sravan_copies_ideas(global_actions_data, global_actions_array, action)
+            parse_actions(global_actions_data, global_actions_array, action)
 
         dedupe_list_2 = [x for i, x in enumerate(global_actions_array, 1) if i % 2 != 0]
-        global_table = tabulate(dedupe_list_2, headers=["Action", "Sent", "Received"], numalign="left")
+        global_table = tabulate(dedupe_list_2, headers=header, colalign=colalign, tablefmt="psql")
         embed = discord.Embed(colour=await ctx.embed_colour(), description=box(global_table, "nim"))
         embed.set_author(name=f"Global Roleplay Stats | {user.name}", icon_url=user.avatar_url)
         embed.set_footer(text=f"Requested by: {ctx.author}", icon_url=ctx.author.avatar_url)
