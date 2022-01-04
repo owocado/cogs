@@ -13,21 +13,27 @@ from redbot.core.utils.chat_formatting import humanize_number
 class RedditInfo(commands.Cog):
     """Fetch hot memes or some info about Reddit user accounts and subreddits."""
 
-    __author__ = "ow0x"
-    __version__ = "1.0.1"
+    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.1.1")
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
         pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\n\nAuthor: {self.__author__}\nCog Version: {self.__version__}"
+        return f"{pre_processed}\n\n{self.__author__}\n{self.__version__}"
 
     def __init__(self, bot: Red):
         self.bot = bot
-        self.meme_subreddits = ["memes", "dankmemes", "meirl", "programmeranimemes"]
+        self.meme_subreddits = [
+            "memes",
+            "dankmemes",
+            "meirl",
+            "programmeranimemes",
+            "bikinibottomtwitter",
+            "2meirl4meirl",
+        ]
         self.session = aiohttp.ClientSession()
         self.config = Config.get_conf(self, 357059159021060097, force_registration=True)
         default_guild = {"channel_id": None}
-        self.config.register_global(interval = 5)
+        self.config.register_global(interval=5)
         self.config.register_guild(**default_guild)
         self._autopost_meme.start()
 
@@ -85,20 +91,20 @@ class RedditInfo(commands.Cog):
 
         em = discord.Embed(colour=await ctx.embed_colour())
         em.set_author(
-            name=f"{data.get('subreddit', {}).get('title') or data.get('name')} ({data.get('subreddit', {}).get('display_name_prefixed')})",
+            name=f"{data.get('title') or data.get('name')} ({data.get('display_name_prefixed')})",
             icon_url="https://www.redditinc.com/assets/images/site/reddit-logo.png",
         )
         profile_url = f"https://reddit.com/user/{username}"
-        if data.get("subreddit", {}).get("banner_img", "") != "":
-            em.set_image(url=data["subreddit"]["banner_img"].split("?")[0])
+        if data.get("banner_img", "") != "":
+            em.set_image(url=data["banner_img"].split("?")[0])
         em.set_thumbnail(url=str(data.get("icon_img")).split("?")[0])
         em.add_field(name="Account created:", value=f"<t:{int(data.get('created_utc'))}:R>")
-        em.add_field(name="Total Karma:", value=humanize_number(str(data.get("total_karma"))))
+        em.add_field(name="Total Karma:", value=humanize_number(data.get("total_karma", 0)))
         extra_info = (
-            f"Awardee Karma:  **{humanize_number(str(data.get('awardee_karma', 0)))}**\n"
-            f"Awarder Karma:  **{humanize_number(str(data.get('awarder_karma', 0)))}**\n"
-            f"Comment Karma:  **{humanize_number(str(data.get('comment_karma', 0)))}**\n"
-            f"Link Karma:  **{humanize_number(str(data.get('link_karma', 0)))}**\n"
+            f"Awardee Karma:  **{humanize_number(data.get('awardee_karma', 0))}**\n"
+            f"Awarder Karma:  **{humanize_number(data.get('awarder_karma', 0))}**\n"
+            f"Comment Karma:  **{humanize_number(data.get('comment_karma', 0))}**\n"
+            f"Link Karma:  **{humanize_number(data.get('link_karma', 0))}**\n"
             f'has Reddit Premium?:  {"✅" if data.get("is_gold") else "❌"}\n'
             f'Verified Email?:  {"✅" if data.get("has_verified_email") else "❌"}\n'
             f'Is a subreddit mod?:  {"✅" if data.get("is_mod") else "❌"}\n'
@@ -132,13 +138,13 @@ class RedditInfo(commands.Cog):
         em.set_author(name=data.get("url"), icon_url=data.get("icon_img", ""))
         subreddit_link = f"https://reddit.com{data.get('url')}"
         em.description = data.get("public_description", "")
-        if data.get("banner_img", "") != "":
+        if data.get("banner_img"):
             em.set_image(url=data.get("banner_img", ""))
         if data.get("community_icon", "") != "":
             em.set_thumbnail(url=data["community_icon"].split("?")[0])
         em.add_field(name="Created On", value=f"<t:{int(data.get('created_utc'))}:R>")
-        em.add_field(name="Subscribers", value=humanize_number(str(data.get("subscribers", 0))))
-        em.add_field(name="Active Users", value=humanize_number(str(data.get("active_user_count", 0))))
+        em.add_field(name="Subscribers", value=humanize_number(data.get("subscribers", 0)))
+        em.add_field(name="Active Users", value=humanize_number(data.get("active_user_count", 0)))
 
         extra_info = ""
         if more_info:
@@ -163,7 +169,7 @@ class RedditInfo(commands.Cog):
             em.add_field(name="(Extra) Misc. Info:", value=extra_info, inline=False)
         await ctx.send(subreddit_link, embed=em)
 
-    @commands.command(name="rmeme")
+    @commands.command(name="meme")
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 3, commands.BucketType.user)
     async def random_hot_meme(self, ctx: commands.Context):
@@ -174,38 +180,52 @@ class RedditInfo(commands.Cog):
             if resp.status != 200:
                 return await ctx.send(f"Reddit API returned {resp.status} HTTP status code.")
             data = await resp.json()
-        await self._fetch_meme(data, ctx.channel)
+        await self._fetch_meme(data, ctx)
 
-    @staticmethod
-    async def _fetch_meme(result, channel):
+    async def _fetch_subreddit_icon(self, subreddit: str):
+        url = f"https://old.reddit.com/r/{subreddit}/about.json"
+        async with self.session.get(url) as resp:
+            if resp.status != 200:
+                return "https://i.imgur.com/DSBOK0P.png"
+            meta = await resp.json()
+        data = meta["data"]
+        if not (data.get("icon_img") or data.get("community_icon")):
+            return "https://i.imgur.com/DSBOK0P.png"
+        return data.get("icon_img") or data.get("community_icon").split("?")[0]
+
+    async def _fetch_meme(self, result, channel):
         meme_array = result["data"]["children"]
         random_index = random.randint(0, len(meme_array) - 1)
-        random_meme = meme_array[random_index]["data"]
+        meme = meme_array[random_index]["data"]
         # make 3 attemps if nsfw meme found in sfw channel, shittalkers go brrr
-        if random_meme.get("over_18") and not channel.is_nsfw():
-            random_meme = meme_array[random.randint(0, len(meme_array) - 1)]["data"]
+        if meme.get("over_18") and not channel.is_nsfw():
+            meme = meme_array[random.randint(0, len(meme_array) - 1)]["data"]
         # retrying again to get a sfw meme
-        if random_meme.get("over_18") and not channel.is_nsfw():
-            random_meme = meme_array[random.randint(0, len(meme_array) - 1)]["data"]
+        if meme.get("over_18") and not channel.is_nsfw():
+            meme = meme_array[random.randint(0, len(meme_array) - 1)]["data"]
         # retrying last time to get sfw meme
-        if random_meme.get("over_18") and not channel.is_nsfw():
+        if meme.get("over_18") and not channel.is_nsfw():
             return await channel.send("NSFW meme found. Aborted in SFW channel.")
 
-        img_types = ('jpg', "jpeg", 'png', 'gif')
+        img_types = ("jpg", "jpeg", "png", "gif")
         if (
-            random_meme.get("is_video")
-            or (random_meme.get("url") and "v.redd.it" in random_meme.get("url"))
-            or (random_meme.get("url") and not random_meme.get("url").endswith(img_types))
+            meme.get("is_video")
+            or (meme.get("url") and "v.redd.it" in meme.get("url"))
+            or (meme.get("url") and not meme.get("url").endswith(img_types))
         ):
-            return await channel.send(random_meme.get("url"))
+            return await channel.send(meme.get("url"))
         emb = discord.Embed(colour=discord.Colour.random())
-        emb.title = random_meme.get("title", "None")
-        emb.description = f"This meme was posted <t:{int(random_meme['created_utc'])}:R>"
-        emb.url = f"https://old.reddit.com{random_meme['permalink']}"
-        emb.set_image(url=random_meme.get("url"))
-        upvotes = humanize_number(random_meme.get("ups", 0))
+        emb.timestamp = datetime.utcfromtimestamp(int(meme["created_utc"]))
+        emb.set_author(
+            name=f'/r/{meme["subreddit"]}',
+            icon_url=await self._fetch_subreddit_icon(meme["subreddit"]),
+        )
+        emb.title = meme.get("title", "None")
+        emb.description = f"This meme was posted <t:{int(meme['created_utc'])}:R>"
+        emb.url = f"https://old.reddit.com{meme['permalink']}"
+        emb.set_image(url=meme.get("url") or "")
         emb.set_footer(
-            text=f"{upvotes} upvotes • From /r/{random_meme.get('subreddit')}",
+            text=f"{humanize_number(meme.get('ups', 0))} upvotes",
             icon_url="https://cdn.discordapp.com/emojis/752439401123938304.gif",
         )
         await channel.send(embed=emb)
@@ -225,9 +245,7 @@ class RedditInfo(commands.Cog):
 
         await self.config.guild(ctx.guild).channel_id.set(channel.id)
         delay = await self.config.interval()
-        await ctx.send(
-            f"Automeme channel set to {channel.mention}. Memes will be posted every {delay} minutes."
-        )
+        await ctx.send(f"Automeme channel set to {channel.mention}. Memes will be posted every {delay} minutes.")
         await ctx.tick()
 
     @automemeset.command(hidden=True)
@@ -241,7 +259,7 @@ class RedditInfo(commands.Cog):
     @automemeset.command()
     async def delay(self, ctx: commands.Context, minutes: int):
         """Specify the time delay in minutes after when meme will be posted in set channel.
-        
+
         Minimum allowed value is 1 minute and max. is 1440 minutes (1 day). Default is 5 minutes.
         """
         delay = max(min(minutes, 1440), 1)
