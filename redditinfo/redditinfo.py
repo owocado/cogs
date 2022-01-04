@@ -13,7 +13,7 @@ from redbot.core.utils.chat_formatting import humanize_number
 class RedditInfo(commands.Cog):
     """Fetch hot memes or some info about Reddit user accounts and subreddits."""
 
-    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.1.1")
+    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.1.2")
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -90,8 +90,10 @@ class RedditInfo(commands.Cog):
             return await ctx.send("As per Reddit, that account has been suspended.")
 
         em = discord.Embed(colour=await ctx.embed_colour())
+        username = data.get("display_name_prefixed")
+        prefixed_name = f" ({username})" if username else ""
         em.set_author(
-            name=f"{data.get('title') or data.get('name')} ({data.get('display_name_prefixed')})",
+            name=f"{data.get('title') or data.get('name')}{prefixed_name}",
             icon_url="https://www.redditinc.com/assets/images/site/reddit-logo.png",
         )
         profile_url = f"https://reddit.com/user/{username}"
@@ -180,7 +182,7 @@ class RedditInfo(commands.Cog):
             if resp.status != 200:
                 return await ctx.send(f"Reddit API returned {resp.status} HTTP status code.")
             data = await resp.json()
-        await self._fetch_meme(data, ctx)
+        await self._fetch_meme(data, ctx.channel)
 
     async def _fetch_subreddit_icon(self, subreddit: str):
         url = f"https://old.reddit.com/r/{subreddit}/about.json"
