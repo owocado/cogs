@@ -10,22 +10,15 @@ from redbot.core.utils.chat_formatting import box, pagify
 from .converter import ImageFinder
 
 
-def is_apikey_set():
-    async def predicate(ctx):
-        return bool(await ctx.bot.get_shared_api_tokens("google_vision"))
-    return commands.check(predicate)
-
-
 class OCR(commands.Cog):
-    """Detect text in images using (OCR) Google Cloud Vision API."""
+    """Detect text in images using ocr.space or Google Cloud Vision API."""
 
-    __authors__ = "ow0x, TrustyJAID"
-    __version__ = "0.1.0"
+    __authors__, __version__ = ("Authors: ow0x, TrustyJAID", "Cog Version: 0.3.0")
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
         pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\n\nAuthors: {self.__authors__}\nCog Version: {self.__version__}"
+        return f"{pre_processed}\n\n{self.__authors__}\n{self.__version__}"
 
     def __init__(self, bot: Red):
         self.bot = bot
@@ -40,12 +33,12 @@ class OCR(commands.Cog):
         pass
 
     @commands.command()
-    @commands.cooldown(1, 5, commands.BucketType.member)
+    @commands.cooldown(1, 5, commands.BucketType.user)
     @commands.bot_has_permissions(read_message_history=True)
     async def freeocr(self, ctx: commands.Context, *, image: ImageFinder = None):
-        """Detect text in an image through OCR.
+        """Detect text in an image through ocr.space API.
 
-        This utilises ocr.space API which usually gives poor or subpar results.
+        This usually gives poor or subpar results for non latin text in images.
         This also assumes the text in image will be in English language.
         """
         await ctx.trigger_typing()
@@ -57,10 +50,12 @@ class OCR(commands.Cog):
                 image = await ImageFinder().search_for_images(ctx)
         if not image:
             return await ctx.send("No images or direct image links were detected. 😢")
+        await self._free_ocr(ctx, image[0])
 
-        file_type = image[0].split(".").pop().upper()
+    async def _free_ocr(self, ctx: commands.Context, image: str):
+        file_type = image.split(".").pop().upper()
         data = {
-            "url": image[0],
+            "url": image,
             "apikey": self.sussy_string,
             "language": "eng",
             "isOverlayRequired": False,
@@ -74,11 +69,10 @@ class OCR(commands.Cog):
         if not result.get("ParsedResults"):
             return await ctx.send(box(json.dumps(result), "json"))
 
-        await ctx.send(result["ParsedResults"][0].get("ParsedText"))
+        return await ctx.send(result["ParsedResults"][0].get("ParsedText"))
 
     @commands.command()
-    @is_apikey_set()
-    @commands.cooldown(1, 3, commands.BucketType.member)
+    @commands.cooldown(1, 5, commands.BucketType.user)
     @commands.bot_has_permissions(read_message_history=True)
     async def ocr(
         self,
@@ -87,9 +81,10 @@ class OCR(commands.Cog):
         *,
         image: ImageFinder = None,
     ):
-        """Detect text in an image through OCR.
+        """Detect text in an image through Google OCR API.
 
-        This command utilises Google Cloud Vision API.
+        You may use it to run OCR on old messages which contains attachments/image links.
+        Simply reply to the said message with `[p]ocr` for detection to work.
         """
         api_key = (await ctx.bot.get_shared_api_tokens("google_vision")).get("api_key")
 
@@ -103,6 +98,8 @@ class OCR(commands.Cog):
         if not image:
             return await ctx.send("No images or direct image links were detected. 😢")
 
+        if not api_key:
+            return await self._free_ocr(ctx, image[0])
         base_url = f"https://vision.googleapis.com/v1/images:annotate?key={api_key}"
         headers = {"Content-Type": "application/json;charset=utf-8"}
         detect_type = "DOCUMENT_TEXT_DETECTION" if detect_handwriting else "TEXT_DETECTION"
@@ -116,28 +113,22 @@ class OCR(commands.Cog):
         }
 
         try:
-            async with self.session.post(
-                base_url, json=payload, headers=headers
-            ) as response:
+            async with self.session.post(base_url, json=payload, headers=headers) as response:
                 if response.status != 200:
                     return await ctx.send(f"https://http.cat/{response.status}")
                 data = await response.json()
         except asyncio.TimeoutError:
             return await ctx.send("Operation timed out.")
 
-        if data.get("responses")[0] == {}:
+        output = data.get("responses")
+        if output is None or output[0] == {}:
             return await ctx.send("No text detected.")
-        if (
-            data.get("responses")[0].get("error")
-            and data.get("responses")[0].get("error").get("message")
-        ):
+        if output[0].get("error") and output[0].get("error").get("message"):
             return await ctx.send(
-                f"API returned error: {data['responses'][0]['error']['message']}"
+                f"API returned error: {output[0]['error']['message']}"
             )
-        detected_text = (
-            data.get("responses")[0]
-            .get("textAnnotations")[0]
-            .get("description", "No text detected.")
-        )
+        detected_text = output[0].get("textAnnotations")[0].get("description")
+        if not detected_text:
+            return await ctx.send("No text was detected in the target image.")
 
         await ctx.send_interactive(pagify(detected_text), box_lang="")
