@@ -14,30 +14,29 @@ BASE_URL = "https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName={}"
 HEAD = {
     "Accept": "text/html,application/xhtml+xml,application/xml",
     "Accept-Encoding": "gzip, deflate, br",
-    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36",
 }
 
 
 class PhoneFinder(commands.Cog):
     """Fetch device specs for a (smart)phone model from GSMArena."""
 
-    __author__ = "ow0x"
-    __version__ = "1.0.0"
+    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.0.1")
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
         pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\n\nAuthor: {self.__author__}\nCog Version: {self.__version__}"
+        return f"{pre_processed}\n\n{self.__author__}\n{self.__version__}"
 
     def __init__(self, bot):
         self.bot = bot
         self.session = aiohttp.ClientSession()
 
     def cog_unload(self):
-        self.bot.loop.create_task(self.session.close())
+        asyncio.create_task(self.session.close())
 
     @cached(ttl=86400, cache=SimpleMemoryCache)
-    async def fetch_href(self, ctx, query: str):
+    async def _fetch_href(self, ctx: commands.Context, query: str):
         try:
             async with self.session.get(BASE_URL.format(query), headers=HEAD) as resp:
                 if resp.status != 200:
@@ -54,20 +53,17 @@ class PhoneFinder(commands.Cog):
         if len(makers) == 1:
             return makers[0].a["href"]
 
-        items = ""
-        for i, x in enumerate(makers, start=1):
-            items += f"`[{i}]` {x.span.get_text(separator=' ')}\n"
+        items = "\n".join(
+            f"`[{i}]` {x.span.get_text(separator=' ')}" for i, x in enumerate(makers, 1)
+        )
 
-        choices = f"Found below **{len(makers)}** result(s). Pick one from:\n\n" + items
+        choices = f"Found below **{len(makers)}** result(s). Pick one from:\n\n{items}"
         prompt = await ctx.send(choices)
 
         def check(msg):
-            content = msg.content
             if (
-                content.isdigit()
-                and int(content) in range(0, len(items) + 1)
-                and msg.author.id == ctx.author.id
-                and msg.channel.id == ctx.channel.id
+                msg.content.isdigit() and int(msg.content) in range(0, len(items) + 1)
+                and msg.author.id == ctx.author.id and msg.channel.id == ctx.channel.id
             ):
                 return True
 
@@ -92,7 +88,7 @@ class PhoneFinder(commands.Cog):
     @commands.bot_has_permissions(add_reactions=True, embed_links=True, read_message_history=True)
     async def phone(self, ctx: commands.Context, *, query: str):
         """Fetch device specs and other metadata about a (smart)phone model."""
-        endpoint = await self.fetch_href(ctx=ctx, query=quote(query))
+        endpoint = await self._fetch_href(ctx=ctx, query=quote(query))
         if endpoint == 0:
             return await ctx.send("OK! Operation cancelled.")
         if not endpoint:
@@ -167,6 +163,4 @@ class PhoneFinder(commands.Cog):
         embed.set_footer(
             text=f"Fans: {fans} • Popularity: 📈 +{hits.strong.text} ({hits.span.text})"
         )
-
-        controls = {"❌": close_menu}
-        await menu(ctx, [embed], controls=controls, timeout=90.0)
+        await menu(ctx, [embed], controls={"❌": close_menu}, timeout=90.0)
