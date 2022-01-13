@@ -16,8 +16,7 @@ from .constants import *
 class Roleplay(commands.Cog):
     """Do roleplay with your Discord friends or virtual strangers."""
 
-    __author__ = "ow0x"
-    __version__ = "1.1.2"
+    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.1.3")
 
     async def red_delete_data_for_user(self, **kwargs):
         """Nothing to delete"""
@@ -26,7 +25,7 @@ class Roleplay(commands.Cog):
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
         pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\n\nAuthor: {self.__author__}\nCog Version: {self.__version__}"
+        return f"{pre_processed}\n\n{self.__author__}\n{self.__version__}"
 
     def __init__(self, bot: Red):
         self.bot = bot
@@ -93,7 +92,10 @@ class Roleplay(commands.Cog):
     # @staticmethod
     # async def temp_tip(ctx: commands.Context):
     #     pre = ctx.clean_prefix
-    #     return await ctx.send(f"You can check your roleplay stats with `{pre}rpstats` command.", delete_after=10.0)
+    #     return await ctx.send(
+    #         f"You can check your roleplay stats with `{pre}rpstats` command.",
+    #         delete_after=10.0,
+    #     )
 
     @commands.command()
     @commands.guild_only()
@@ -119,10 +121,9 @@ class Roleplay(commands.Cog):
         embed.set_image(url=choice(BAKA))
         footer = (
             f"{ctx.author.name} used baka: {baka_to + 1} times so far.\n"
-            + f"{member.name} got called a BAKA: {baka_from + 1} times  so far."
+            f"{member.name} got called a BAKA: {baka_from + 1} times  so far."
         )
         embed.set_footer(text=footer)
-
         await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
@@ -150,12 +151,11 @@ class Roleplay(commands.Cog):
         message = f"_**{ctx.author.name}** bullies {member.mention}_ 🤡"
         embed.set_image(url=choice(BULLY))
         footer = (
-            f"{ctx.author.name} bullied: {bully_to + 1} times so far.\n{member.name} "
-            + f"got bullied: {bully_from + 1} times so far.\n"
-            + f"Someone call police to get {ctx.author.name} arrested."
+            f"{ctx.author.name} bullied: {bully_to + 1} times so far.\n"
+            f"{member.name} got bullied: {bully_from + 1} times so far.\n"
+            f"Someone call police to get {ctx.author.name} arrested."
         )
         embed.set_footer(text=footer)
-
         await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
@@ -173,7 +173,6 @@ class Roleplay(commands.Cog):
         embed.set_image(url=choice(CRY))
         footer = f"{ctx.author.name} has cried {cry_count + 1} times in this server so far."
         embed.set_footer(text=footer)
-
         await ctx.send(embed=embed)
 
     @commands.command()
@@ -185,8 +184,8 @@ class Roleplay(commands.Cog):
         if member.id == ctx.author.id:
             return await ctx.send(
                 f"{ctx.author.mention} According to all known laws of roleplay, "
-                + "there is no way you can cuddle yourself! Go cuddle with "
-                + "someone... or a pillow, if you're lonely like me. 😔"
+                "there is no way you can cuddle yourself! Go cuddle with "
+                "someone... or a pillow, if you're lonely like me. 😔"
             )
         await ctx.trigger_typing()
         cuddle_to = await self.config.member(ctx.author).CUDDLES_SENT()
@@ -205,11 +204,10 @@ class Roleplay(commands.Cog):
         embed.set_image(url=str(choice(CUDDLE)))
         footer = (
             f"{ctx.author.name} sent: {cuddle_to + 1} cuddles so far.\n"
-            + f"{'I' if member == ctx.me else member.name} "
-            + f"received: {cuddle_from + 1} cuddles so far."
+            f"{'I' if member == ctx.me else member.name} "
+            f"received: {cuddle_from + 1} cuddles so far."
         )
         embed.set_footer(text=footer)
-
         await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
@@ -237,11 +235,10 @@ class Roleplay(commands.Cog):
         embed.set_image(url=choice(FEED))
         footer = (
             f"{ctx.author.name} have fed others: {feed_to + 1} times so far.\n"
-            + f"{'I' if member == ctx.me else member.name} "
-            + f"received some food: {feed_from + 1} times so far."
+            f"{'I' if member == ctx.me else member.name} "
+            f"received some food: {feed_from + 1} times so far."
         )
         embed.set_footer(text=footer)
-
         await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
@@ -272,11 +269,10 @@ class Roleplay(commands.Cog):
             embed.set_image(url=choice(HIGHFIVE))
         footer = (
             f"{ctx.author.name} sent: {h5_to + 1} high-fives so far.\n"
-            + f"{'I' if member == ctx.me else member.name} "
-            + f"received: {h5_from + 1} high-fives so far."
+            f"{'I' if member == ctx.me else member.name} "
+            f"received: {h5_from + 1} high-fives so far."
         )
         embed.set_footer(text=footer)
-
         await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
@@ -306,11 +302,10 @@ class Roleplay(commands.Cog):
         embed.set_image(url=str(choice(HUG)))
         footer = (
             f"{ctx.author.name} gave: {hug_to + 1} hugs so far.\n"
-            + f"{'I' if member == ctx.me else member.name} "
-            + f"received: {hug_from + 1} hugs so far!"
+            f"{'I' if member == ctx.me else member.name} "
+            f"received: {hug_from + 1} hugs so far!"
         )
         embed.set_footer(text=footer)
-
         await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
@@ -337,10 +332,9 @@ class Roleplay(commands.Cog):
         embed.set_image(url=choice(KILL))
         footer = (
             f"{ctx.author.name} attempted: {kill_to + 1} kills so far.\n"
-            + f"{member.name} got killed: {kill_from + 1} times so far!"
+            f"{member.name} got killed: {kill_from + 1} times so far!"
         )
         embed.set_footer(text=footer)
-
         await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
@@ -371,10 +365,9 @@ class Roleplay(commands.Cog):
         embed.set_image(url=str(choice(KISS)))
         footer = (
             f"{ctx.author.name} sent: {kiss_to + 1} kisses so far.\n"
-            + f"{member.name} received: {kiss_from + 1} kisses so far!"
+            f"{member.name} received: {kiss_from + 1} kisses so far!"
         )
         embed.set_footer(text=footer)
-
         await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
@@ -406,10 +399,9 @@ class Roleplay(commands.Cog):
         embed.set_image(url=choice(LICK))
         footer = (
             f"{ctx.author.name} have licked others: {lick_to + 1} times so far.\n"
-            + f"{member.name} got licked: {lick_from + 1} times so far!"
+            f"{member.name} got licked: {lick_from + 1} times so far!"
         )
         embed.set_footer(text=footer)
-
         await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
@@ -438,10 +430,9 @@ class Roleplay(commands.Cog):
         embed.set_image(url=choice(BITE))
         footer = (
             f"{ctx.author.name} nom'd: {nom_to + 1} times so far.\n"
-            + f"{member.name} received: {nom_from + 1} noms so far!"
+            f"{member.name} received: {nom_from + 1} noms so far!"
         )
         embed.set_footer(text=footer)
-
         await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
@@ -470,11 +461,10 @@ class Roleplay(commands.Cog):
         embed.set_image(url=choice(PAT))
         footer = (
             f"{ctx.author.name} gave: {pat_to + 1} pats so far.\n"
-            + f"{'I' if member == ctx.me else member.name} "
-            + f"received: {pat_from + 1} pats so far!"
+            f"{'I' if member == ctx.me else member.name} "
+            f"received: {pat_from + 1} pats so far!"
         )
         embed.set_footer(text=footer)
-
         await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
@@ -503,11 +493,10 @@ class Roleplay(commands.Cog):
         embed.set_image(url=choice(POKE))
         footer = (
             f"{ctx.author.name} gave: {poke_to + 1} pokes so far.\n"
-            + f"{'I' if member == ctx.me else member.name} "
-            + f"received: {poke_from + 1} pokes so far!"
+            f"{'I' if member == ctx.me else member.name} "
+            f"received: {poke_from + 1} pokes so far!"
         )
         embed.set_footer(text=footer)
-
         await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
@@ -519,16 +508,16 @@ class Roleplay(commands.Cog):
         if member.id == ctx.me.id:
             message = (
                 f"{ctx.author.mention} tried to punch a bot but failed miserably,\n"
-                + "and they actually punched themselves instead.\n"
-                + "How disappointing LMFAO! 😂 😂 😂"
+                "and they actually punched themselves instead.\n"
+                "How disappointing LMFAO! 😂 😂 😂"
             )
             em = discord.Embed(colour=await ctx.embed_colour())
             em.set_image(url="https://i.imgur.com/iVgOijZ.gif")
             return await ctx.send(content=message, embed=em)
         if member.id == ctx.author.id:
             return await ctx.send(
-                f"I uh ..... **{ctx.author.name}**, self harm doesn't"
-                + " sound so fun. Stop it, get some help."
+                f"I uh ..... **{ctx.author.name}**, self harm does"
+                " not sound so fun. Stop it, get some help."
             )
         await ctx.trigger_typing()
         punch_to = await self.config.member(ctx.author).PUNCHES_SENT()
@@ -544,10 +533,9 @@ class Roleplay(commands.Cog):
         embed.set_image(url=choice(PUNCH))
         footer = (
             f"{ctx.author.name} sent: {punch_to + 1} punches so far.\n"
-            + f"{member.name} received: {punch_from + 1} punches so far!"
+            f"{member.name} received: {punch_from + 1} punches so far!"
         )
         embed.set_footer(text=footer)
-
         await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
@@ -574,10 +562,9 @@ class Roleplay(commands.Cog):
         embed.set_image(url=choice(SLAP))
         footer = (
             f"{ctx.author.name} gave: {slap_to + 1} slaps so far.\n"
-            + f"{member.name} received: {slap_from + 1} slaps so far!"
+            f"{member.name} received: {slap_from + 1} slaps so far!"
         )
         embed.set_footer(text=footer)
-
         await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
@@ -596,7 +583,6 @@ class Roleplay(commands.Cog):
         embed.set_image(url=choice(SMUG))
         footer = f"{ctx.author.name} has smugged {smug_count + 1} times in this server so far."
         embed.set_footer(text=footer)
-
         await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
@@ -608,7 +594,7 @@ class Roleplay(commands.Cog):
         if member.id == ctx.author.id:
             return await ctx.send(
                 f"{ctx.author.mention} tickling yourself is boring!"
-                + " Tickling others is more fun though, right? 😏"
+                " Tickling others is more fun though, right? 😏"
             )
         await ctx.trigger_typing()
         tickle_to = await self.config.member(ctx.author).TICKLES_SENT()
@@ -628,14 +614,17 @@ class Roleplay(commands.Cog):
             embed.set_image(url=choice(TICKLE))
         footer = (
             f"{ctx.author.name} tickled others: {tickle_to + 1} times so far.\n"
-            + f"{'I' if member == ctx.me else member.name} "
-            + f"received: {tickle_from + 1} tickles so far!"
+            f"{'I' if member == ctx.me else member.name} "
+            f"received: {tickle_from + 1} tickles so far!"
         )
         embed.set_footer(text=footer)
-
         await ctx.send(content=quote(message), embed=embed)
 
-    # TODO: add server and global roleplay leaderboard
+    @staticmethod
+    def _avatar(user: discord.Member) -> str:
+        if int(discord.__version__[0]) >= 2:
+            return user.display_avatar.url
+        return str(user.avatar_url)
 
     @commands.guild_only()
     @commands.command(name="rpstats")
@@ -664,7 +653,7 @@ class Roleplay(commands.Cog):
         dedupe_list_1 = [x for i, x in enumerate(people_with_no_creativity, 1) if i % 2 != 0]
         server_table = tabulate(dedupe_list_1, headers=header, colalign=colalign, tablefmt="psql")
         emb = discord.Embed(colour=await ctx.embed_colour(), description=box(server_table, "nim"))
-        emb.set_author(name=f"Roleplay Stats | {user.name}", icon_url=user.avatar_url)
+        emb.set_author(name=f"Roleplay Stats | {user.name}", icon_url=self._avatar(user))
         emb.set_footer(text="Go to next page to see your global roleplay stats!")
         pages.append(emb)
 
@@ -674,8 +663,8 @@ class Roleplay(commands.Cog):
         dedupe_list_2 = [x for i, x in enumerate(global_actions_array, 1) if i % 2 != 0]
         global_table = tabulate(dedupe_list_2, headers=header, colalign=colalign, tablefmt="psql")
         embed = discord.Embed(colour=await ctx.embed_colour(), description=box(global_table, "nim"))
-        embed.set_author(name=f"Global Roleplay Stats | {user.name}", icon_url=user.avatar_url)
-        embed.set_footer(text=f"Requested by: {ctx.author}", icon_url=ctx.author.avatar_url)
+        embed.set_author(name=f"Global Roleplay Stats | {user.name}", icon_url=self._avatar(user))
+        embed.set_footer(text=f"Requested by: {ctx.author}", icon_url=self._avatar(ctx.author))
         pages.append(embed)
 
         await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)

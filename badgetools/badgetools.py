@@ -14,13 +14,12 @@ from redbot.core.utils.menus import close_menu, menu, DEFAULT_CONTROLS
 class BadgeTools(commands.Cog):
     """Various commands to show the stats about users' profile badges."""
 
-    __author__ = "ow0x"
-    __version__ = "0.3.0"
+    __author__, __version__ = ("Author: ow0x", "Cog Version: 0.3.3")
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
         pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\n\nCog Version: {self.__version__}"
+        return f"{pre_processed}\n\n{self.__author__}\n{self.__version__}"
 
     def __init__(self, bot: Red):
         self.bot = bot
@@ -51,6 +50,12 @@ class BadgeTools(commands.Cog):
         else:
             return f"{cog.status_emojis.get('offline', '⚫')}  "
 
+    @staticmethod
+    def _icon(guild: discord.Guild) -> str:
+        if int(discord.__version__[0]) >= 2:
+            return guild.icon.url if guild.icon else ""
+        return guild.icon_url or ""
+
     @commands.command()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
@@ -64,13 +69,13 @@ class BadgeTools(commands.Cog):
                 async for flag in AsyncIter(user.public_flags.all()):
                     count[flag.name] += 1
 
-            fill = len(str(len(ctx.guild.members))) - 1
-            message = "".join(
-                f"**{self.badge_emoji(k)}\u2000`{str(v).zfill(fill)}`**\n"
+            fill = len(str(ctx.guild.member_count)) - 1
+            message = "\n".join(
+                f"**{self.badge_emoji(k)}\u2000`{str(v).zfill(fill)}`**"
                 for k, v in sorted(count.items(), key=lambda x: x[1], reverse=True)
             )
             embed = discord.Embed(colour=await ctx.embed_color())
-            embed.set_author(name=str(ctx.guild), icon_url=str(ctx.guild.icon_url))
+            embed.set_author(name=str(ctx.guild), icon_url=self._icon(ctx.guild))
             embed.description = message
 
         await ctx.send(embed=embed)
@@ -81,10 +86,8 @@ class BadgeTools(commands.Cog):
     async def hasbadge(self, ctx: commands.Context, *, badge: str):
         """Returns the list of users with X profile badge in the server."""
         badge = badge.replace(" ", "_").lower()
-        valid_flags = list(discord.PublicUserFlags.VALID_FLAGS.keys())
-        inform = "`{}` badge not found! It needs to be one of:\n\n{}".format(
-            badge, "\n".join([f"> `{x}`" for x in valid_flags])
-        )
+        valid_flags = "\n".join([f"> `{x}`" for x in list(discord.PublicUserFlags.VALID_FLAGS.keys())])
+        inform = f"`{badge}` badge not found! It needs to be one of:\n\n{valid_flags}"
         if badge not in valid_flags:
             return await ctx.send(inform)
 
@@ -99,7 +102,7 @@ class BadgeTools(commands.Cog):
         pages = []
         for page in pagify(output, ["\n"], page_length=1000):
             em = discord.Embed(colour=await ctx.embed_color(), description=page)
-            em.set_author(name=str(ctx.guild), icon_url=str(ctx.guild.icon_url))
+            em.set_author(name=str(ctx.guild), icon_url=self._icon(ctx.guild))
             footer = f"Found {len(list_of)} users with {badge.replace('_', ' ').title()} badge!"
             em.set_footer(text=footer)
             pages.append(em)
@@ -119,21 +122,15 @@ class BadgeTools(commands.Cog):
         if not ctx.guild.premium_subscribers:
             return await ctx.send(f"{ctx.guild} does not have any boost(er)s yet.")
 
-        b_list = "{status}`[since {since:>9}]`  {user_name_tag}"
-        all_boosters = [
-            b_list.format(
-                status=self.statusmoji(user),
-                since=self._relative_timedelta(user.premium_since),
-                user_name_tag=str(user),
-            )
+        output = "\n".join(
+            f"{self.statusmoji(user)}`[since {self._parse_time(user.premium_since):>9}]`  {user}"
             for user in sorted(ctx.guild.premium_subscribers, key=lambda x: x.premium_since)
-        ]
-        output = "\n".join(all_boosters)
+        )
         boosts, boosters = (ctx.guild.premium_subscription_count, len(ctx.guild.premium_subscribers))
         pages = []
         for page in pagify(output, ["\n"], page_length=1500):
             em = discord.Embed(colour=await ctx.embed_color(), description=page)
-            em.set_author(name=str(ctx.guild), icon_url=str(ctx.guild.icon_url))
+            em.set_author(name=str(ctx.guild), icon_url=self._icon(ctx.guild))
             em.set_footer(text=f"{boosts} boosts  •  {boosters} boosters!")
             pages.append(em)
 
@@ -143,7 +140,7 @@ class BadgeTools(commands.Cog):
         # await BaseMenu(ListPages(pages), ctx=ctx).start(ctx)
 
     @staticmethod
-    def _relative_timedelta(date_time):
+    def _parse_time(date_time):
         dt1 = datetime.now(timezone.utc).replace(tzinfo=None)
         diff = relativedelta.relativedelta(dt1, date_time)
 
