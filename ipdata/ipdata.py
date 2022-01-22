@@ -68,7 +68,7 @@ class IPData(commands.Cog):
                 f"{latitude}, {longitude}\n[See it on Google Maps]"
                 f"(https://www.google.com/maps?q={latitude},{longitude})"
             )
-            embed.add_field(name="Latitude/Longitude", value=lat_long_maps)
+            embed.add_field(name="Latitude/Longitude", value=maps_link)
         threat_info = ""
         if data.get("threat").get("is_anonymous"):
             threat_info += "✅ : IP is anonymous!\n"
