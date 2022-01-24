@@ -16,7 +16,7 @@ from .constants import *
 class Roleplay(commands.Cog):
     """Do roleplay with your Discord friends or virtual strangers."""
 
-    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.1.3")
+    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.1.4")
 
     async def red_delete_data_for_user(self, **kwargs):
         """Nothing to delete"""
@@ -338,7 +338,6 @@ class Roleplay(commands.Cog):
         await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
-    @commands.is_nsfw()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 10, commands.BucketType.member)
@@ -371,7 +370,6 @@ class Roleplay(commands.Cog):
         await ctx.send(content=quote(message), embed=embed)
 
     @commands.command()
-    @commands.is_nsfw()
     @commands.guild_only()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 10, commands.BucketType.member)
