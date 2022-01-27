@@ -9,21 +9,21 @@ from html2text import html2text
 from redbot.core import commands
 from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import bold, humanize_number
-from redbot.core.utils.menus import close_menu, menu, DEFAULT_CONTROLS
+from redbot.core.utils.menus import DEFAULT_CONTROLS, close_menu, menu
 # from redbot.core.utils.dpy2_menus import BaseMenu, ListPages
 
 from .stores import STORES
 
 USER_AGENT = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    " (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36"
 }
 
 
 class SteamCog(commands.Cog):
     """Get some info about a Steam game and fetch cheap game deals for PC game(s)."""
 
-    __author__ = "ow0x"
-    __version__ = "1.0.0"
+    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.0.1")
 
     async def red_delete_data_for_user(self, **kwargs) -> None:
         """Nothing to delete"""
@@ -32,8 +32,7 @@ class SteamCog(commands.Cog):
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
         pre_processed = super().format_help_for_context(ctx)
-        author = f"Author: {self.__author__}"
-        return f"{pre_processed}\n\n{author}\nCog Version: {self.__version__}"
+        return f"{pre_processed}\n\n{self.__author__}\n{self.__version__}"
 
     def __init__(self, bot: Red):
         self.bot = bot
@@ -162,7 +161,12 @@ class SteamCog(commands.Cog):
     async def steam(self, ctx: commands.Context, *, query: str) -> None:
         """Fetch some useful info about a Steam game all from the comfort of your Discord home."""
         await ctx.trigger_typing()
-        app_id = await self.fetch_steam_game_id(ctx, query)
+        # TODO: remove this temp fix once game is released
+        if query.lower() == "lost ark":
+            app_id = 1599340
+        else:
+            app_id = await self.fetch_steam_game_id(ctx, query)
+
         if app_id is None: return await ctx.send("Could not find any results.")
         base_url = "https://store.steampowered.com/api/appdetails"
         data = await self.get(base_url, {"appids": app_id, "l": "en", "cc": "us", "json": 1})
@@ -177,7 +181,7 @@ class SteamCog(commands.Cog):
                 embed = self.game_previews_embed(meta, preview)
                 pages.append(embed)
 
-        controls = {"": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
+        controls = {"\u274c": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
         await menu(ctx, pages, controls=controls, timeout=90.0)
         # await BaseMenu(ListPages(pages), timeout=90, ctx=ctx).start(ctx)
 
@@ -226,7 +230,7 @@ class SteamCog(commands.Cog):
         if not pages:
             return await ctx.send("Hmmm, no system requirements found for this game on Steam!")
 
-        controls = {"❌": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
+        controls = {"\u274c": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
         await menu(ctx, pages, controls=controls, timeout=60.0)
         # await BaseMenu(ListPages(pages), timeout=90, ctx=ctx).start(ctx)
 
@@ -367,6 +371,6 @@ class SteamCog(commands.Cog):
             em = self.latestdeals_embed(meta, STORES, data)
             pages.append(em)
 
-        controls = {"": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
+        controls = {"\u274c": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
         await menu(ctx, pages, controls=controls, timeout=90.0)
         # await BaseMenu(ListPages(pages), timeout=90, ctx=ctx).start(ctx)
