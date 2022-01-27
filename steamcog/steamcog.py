@@ -21,9 +21,9 @@ USER_AGENT = {
 
 
 class SteamCog(commands.Cog):
-    """Get some info about a Steam game and fetch cheap game deals for PC game(s)."""
+    """Get info about a Steam game and fetch cheap game deals for PC game(s)."""
 
-    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.0.1")
+    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.0.2")
 
     async def red_delete_data_for_user(self, **kwargs) -> None:
         """Nothing to delete"""
@@ -63,9 +63,9 @@ class SteamCog(commands.Cog):
     async def get(self, url: str, params) -> Optional[Any]:
         try:
             async with self.session.get(url, params=params, headers=USER_AGENT) as resp:
-                if resp.status != 200: return None
-                return await resp.json()
-        except asyncio.TimeoutError: return None
+                return None if resp.status != 200 else await resp.json()
+        except asyncio.TimeoutError:
+            return None
 
     # Attribution: https://github.com/TrustyJAID/Trusty-cogs/blob/master/notsobot/notsobot.py#L212
     # at least my parents taught to me to give credits where it is due, unlike a snowflake's LOL!
@@ -116,7 +116,7 @@ class SteamCog(commands.Cog):
         )
         em.url = f"https://store.steampowered.com/app/{meta[0]}"
         em.set_author(name="Steam", icon_url="https://i.imgur.com/xxr2UBZ.png")
-        em.set_thumbnail(url=str(app.get("header_image")).replace("\\", ""))
+        em.set_image(url=str(app.get("header_image")).replace("\\", ""))
         if app.get("price_overview"):
             em.add_field(name="Game Price", value=app["price_overview"].get("final_formatted"))
         if app.get("release_date").get("coming_soon"):
@@ -173,8 +173,7 @@ class SteamCog(commands.Cog):
         if not data: return await ctx.send("Something went wrong while querying Steam.")
         colour = await ctx.embed_colour()
         app_data = data[f"{app_id}"].get("data")
-        pages = []
-        pages.append(self.steam_embed((app_id, colour), app_data))
+        pages = [self.steam_embed((app_id, colour), app_data)]
         if app_data.get("screenshots"):
             for i, preview in enumerate(app_data["screenshots"], start=1):
                 meta = (i, len(app_data["screenshots"]), colour, app_id, app_data["name"])
@@ -216,7 +215,12 @@ class SteamCog(commands.Cog):
     async def game_system_requirements(self, ctx: commands.Context, *, query: str) -> None:
         """Fetch system requirements for a Steam game, both minimum and recommended if any."""
         await ctx.trigger_typing()
-        app_id = await self.fetch_steam_game_id(ctx, query)
+        # TODO: remove this temp fix once game is released
+        if query.lower() == "lost ark":
+            app_id = 1599340
+        else:
+            app_id = await self.fetch_steam_game_id(ctx, query)
+
         if app_id is None:
             return await ctx.send("Could not find any results.")
 
