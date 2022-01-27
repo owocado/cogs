@@ -63,8 +63,7 @@ class SteamCog(commands.Cog):
     async def get(self, url: str, params) -> Optional[Any]:
         try:
             async with self.session.get(url, params=params, headers=USER_AGENT) as resp:
-                if resp.status != 200: return None
-                return await resp.json()
+                return None if resp.status != 200 else await resp.json()
         except asyncio.TimeoutError: return None
 
     # Attribution: https://github.com/TrustyJAID/Trusty-cogs/blob/master/notsobot/notsobot.py#L212
@@ -173,8 +172,7 @@ class SteamCog(commands.Cog):
         if not data: return await ctx.send("Something went wrong while querying Steam.")
         colour = await ctx.embed_colour()
         app_data = data[f"{app_id}"].get("data")
-        pages = []
-        pages.append(self.steam_embed((app_id, colour), app_data))
+        pages = [self.steam_embed((app_id, colour), app_data)]
         if app_data.get("screenshots"):
             for i, preview in enumerate(app_data["screenshots"], start=1):
                 meta = (i, len(app_data["screenshots"]), colour, app_id, app_data["name"])
