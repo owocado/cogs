@@ -12,10 +12,11 @@ from redbot.core.utils.menus import DEFAULT_CONTROLS, close_menu, menu
 # from redbot.core.utils.dpy2_menus import BaseMenu, ListPages
 
 BASE_API_URL = "https://vocadb.net/api/songs"
+LANGUAGE_MAP = {"en": "English", "ja": "Japanese", "": "Romaji"}
 
 
 class VocaDB(commands.Cog):
-    """Search for a song on Vocaloid Database (VocaDB) through a query"""
+    """Search for song lyrics on Vocaloid Database (VocaDB)"""
 
     __author__, __version__ = ("Author: ow0x", "Cog Version: 0.1.0")
 
@@ -77,13 +78,12 @@ class VocaDB(commands.Cog):
         prompt = await ctx.send(choices)
 
         def check(msg: discord.Message) -> bool:
-            if (
-                msg.content.isdigit() and int(msg.content) in range(0, len(filtered_items) + 1)
-                and msg.author.id == ctx.author.id and msg.channel.id == ctx.channel.id
-            ):
-                return True
-            else:
-                return False
+            return bool(
+                msg.content.isdigit()
+                and int(msg.content) in range(len(filtered_items) + 1)
+                and msg.author.id == ctx.author.id
+                and msg.channel.id == ctx.channel.id
+            )
 
         try:
             choice = await self.bot.wait_for("message", timeout=60.0, check=check)
@@ -100,6 +100,45 @@ class VocaDB(commands.Cog):
                 await prompt.delete()
             return filtered_items[choice]
 
+    def _info_embed(self, colour, data: dict) -> discord.Embed:
+        """Create an embed with the song info"""
+        minutes = data.get("lengthSeconds", 0) // 60
+        seconds = data.get("lengthSeconds", 0) % 60
+        pub_date = self._parse_date(data.get("publishDate"))
+        all_artists = ", ".join(
+            f"[{x.get('name')}](https://vocadb.net/Ar/{x.get('id')}) ({x.get('categories')})"
+            for x in data.get("artists")
+        )
+        embed = discord.Embed(colour=colour)
+        embed.title = f"{data.get('defaultName')} - {data.get('artistString')}"
+        embed.url = f"https://vocadb.net/S/{data.get('id')}"
+        embed.set_thumbnail(url=data.get("thumbUrl", ""))
+        embed.add_field(name="Duration", value=f"{minutes} minutes, {seconds} seconds")
+        favorites, score = (data.get("favoritedTimes", 0), data.get("ratingScore", 0))
+        embed.add_field(name="Published On", value=pub_date)
+        embed.add_field(name="Statistics", value=f"{favorites} favourite(s), {score} total score")
+        embed.add_field(name="Artist(s)", value=all_artists)
+        embed.set_footer(text="Powered by VocaDB")
+        return embed
+
+    @staticmethod
+    def _lyrics_embed(colour, page: dict, data: dict) -> discord.Embed:
+        """Create an embed with the lyrics"""
+        title = [
+            x.get("value") for x in data.get("names")
+            if x.get("language") == LANGUAGE_MAP[page["cultureCode"]]
+        ]
+        em = discord.Embed(
+            title=title[0] if title else data.get("defaultName"), colour=colour,
+        )
+        em.set_thumbnail(url=data.get("thumbUrl") or "")
+        if data.get("id"):
+            em.url = f"https://vocadb.net/S/{data['id']}"
+        em.description = page.get("value", "")[:4090]
+        if page.get("source") and page.get("url"):
+            em.add_field(name="Source", value=f"[{page['source']}]({page['url']})")
+        return em
+
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
     async def vocadb(self, ctx: commands.Context, *, query: str):
@@ -110,47 +149,16 @@ class VocaDB(commands.Cog):
         if not data:
             return await ctx.send("No results found.")
 
+        await ctx.send(embed=self._info_embed(await ctx.embed_colour(), data))
         await ctx.trigger_typing()
-        minutes = data.get("lengthSeconds", 0) // 60
-        seconds = data.get("lengthSeconds", 0) % 60
-        pub_date = self._parse_date(data.get("publishDate"))
-        all_artists = ", ".join(
-            f"[{x.get('name')}](https://vocadb.net/Ar/{x.get('id')}) ({x.get('categories')})"
-            for x in data.get("artists")
-        )
-        lang_map = {"en": "English", "ja": "Japanese", "": "Romaji"}
-        embed = discord.Embed(colour=await ctx.embed_colour())
-        embed.title = f"{data.get('defaultName')} - {data.get('artistString')}"
-        embed.url = f"https://vocadb.net/S/{data.get('id')}"
-        embed.set_thumbnail(url=data.get("thumbUrl", ""))
-        embed.add_field(name="Duration", value=f"{minutes} minutes, {seconds} seconds")
-        favorites, score = (data.get("favoritedTimes", 0), data.get("ratingScore", 0))
-        embed.add_field(name="Published On", value=pub_date)
-        embed.add_field(name="Statistics", value=f"{favorites} favourite(s), {score} total score")
-        embed.add_field(name="Artist(s)", value=all_artists)
-        embed.set_footer(text=f"Powered by VocaDB")
-        await ctx.send(embed=embed)
+        await asyncio.sleep(2.0)
 
         embeds = []
         for i, page in enumerate(data["lyrics"], 1):
-            lyrics_type = lang_map[page["cultureCode"]]
-            title = [
-                x.get("value") for x in data.get("names") if x.get("language") == lyrics_type
-            ]
-            em = discord.Embed(
-                title=title[0] if title else data.get("defaultName"),
-                colour=await ctx.embed_colour(),
-            )
-            em.set_thumbnail(url=data.get("thumbUrl") or "")
-            if data.get("id"):
-                em.url = f"https://vocadb.net/S/{data['id']}"
-            em.description = page.get("value", "")[:4090]
-            if page.get("source") and page.get("url"):
-                em.add_field(name="Source", value=f"[{page['source']}]({page['url']})")
-            em.set_footer(
-                text=f"Language: {lyrics_type} • Page {i} of {len(data['lyrics'])}"
-            )
-            embeds.append(em)
+            language = f"Language: {LANGUAGE_MAP[page['cultureCode']]}"
+            emb = self._lyrics_embed(await ctx.embed_colour(), page, data)
+            emb.set_footer(text=f"{language} • Page {i} of {len(data['lyrics'])}")
+            embeds.append(emb)
 
         controls = {"\u274c": close_menu} if len(embeds) == 1 else DEFAULT_CONTROLS
         await menu(ctx, embeds, controls=controls, timeout=90.0)
