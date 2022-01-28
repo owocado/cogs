@@ -78,7 +78,7 @@ class SteamCog(commands.Cog):
         else:
             # Attribution: https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
             items = "\n".join(f"**{i}.** {val.get('name')}" for i, val in enumerate(data.get("items"), 1))
-            choices = f"Found below **{len(data['items']}** results. Select one within 60 seconds:\n\n{items}"
+            choices = f"Found below **{len(data['items'])}** results. Select one within 60 seconds:\n\n{items}"
             prompt = await ctx.send(choices)
 
             def check(msg) -> bool:
