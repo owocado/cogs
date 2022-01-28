@@ -18,7 +18,7 @@ LANGUAGE_MAP = {"en": "English", "ja": "Japanese", "": "Romaji"}
 class VocaDB(commands.Cog):
     """Search for song lyrics on Vocaloid Database (VocaDB)"""
 
-    __author__, __version__ = ("Author: ow0x", "Cog Version: 0.1.0")
+    __author__, __version__ = ("Author: ow0x", "Cog Version: 0.1.1")
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -74,7 +74,7 @@ class VocaDB(commands.Cog):
             f" (published: {self._parse_date(x.get('publishDate'))})"
             for i, x in enumerate(filtered_items, 1)
         )
-        choices = f"Found below **{len(filtered_items)}** result(s). Pick one from:\n\n{items}"
+        choices = f"Found below **{len(filtered_items)}** result(s). Pick one within 60 seconds:\n\n{items}"
         prompt = await ctx.send(choices)
 
         def check(msg: discord.Message) -> bool:
@@ -92,7 +92,7 @@ class VocaDB(commands.Cog):
 
         if choice is None or choice.content.strip() == "0":
             with contextlib.suppress(discord.NotFound, discord.HTTPException):
-                await prompt.edit("Cancelled.", delete_after=5.0)
+                await prompt.edit(content="Cancelled.", delete_after=5.0)
             return None
         else:
             choice = int(choice.content.strip()) - 1
