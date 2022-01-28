@@ -178,7 +178,7 @@ class SteamCog(commands.Cog):
             for i, preview in enumerate(app_data["screenshots"], start=1):
                 meta = (colour, app_id, app_data["name"])
                 embed = self.game_previews_embed(meta, preview.get("path_full", ""))
-                embed.set_footer(text=f"Preview {i} of {len(app_data["screenshots"])}")
+                embed.set_footer(text=f"Preview {i} of {len(app_data['screenshots'])}")
                 pages.append(embed)
 
         controls = {"\u274c": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
