@@ -77,13 +77,12 @@ class VocaDB(commands.Cog):
         prompt = await ctx.send(choices)
 
         def check(msg: discord.Message) -> bool:
-            if (
-                msg.content.isdigit() and int(msg.content) in range(0, len(filtered_items) + 1)
-                and msg.author.id == ctx.author.id and msg.channel.id == ctx.channel.id
-            ):
-                return True
-            else:
-                return False
+            return bool(
+                msg.content.isdigit()
+                and int(msg.content) in range(len(filtered_items) + 1)
+                and msg.author.id == ctx.author.id
+                and msg.channel.id == ctx.channel.id
+            )
 
         try:
             choice = await self.bot.wait_for("message", timeout=60.0, check=check)
@@ -128,7 +127,7 @@ class VocaDB(commands.Cog):
         embed.add_field(name="Published On", value=pub_date)
         embed.add_field(name="Statistics", value=f"{favorites} favourite(s), {score} total score")
         embed.add_field(name="Artist(s)", value=all_artists)
-        embed.set_footer(text=f"Powered by VocaDB")
+        embed.set_footer(text='Powered by VocaDB')
         await ctx.send(embed=embed)
 
         embeds = []
