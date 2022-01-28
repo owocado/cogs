@@ -1,7 +1,7 @@
 import asyncio
 import contextlib
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 import discord
@@ -16,14 +16,14 @@ from .stores import STORES
 
 USER_AGENT = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-    " (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36"
+    " (KHTML, like Gecko) Chrome/98.0.4758.66 Safari/537.36"
 }
 
 
 class SteamCog(commands.Cog):
     """Get info about a Steam game and fetch cheap game deals for PC game(s)."""
 
-    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.0.2")
+    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.0.4")
 
     async def red_delete_data_for_user(self, **kwargs) -> None:
         """Nothing to delete"""
@@ -34,12 +34,12 @@ class SteamCog(commands.Cog):
         pre_processed = super().format_help_for_context(ctx)
         return f"{pre_processed}\n\n{self.__author__}\n{self.__version__}"
 
-    def __init__(self, bot: Red):
+    def __init__(self, bot: Red) -> None:
         self.bot = bot
         self.session = aiohttp.ClientSession()
         self.emojis = self.bot.loop.create_task(self.init())
 
-    def cog_unload(self):
+    def cog_unload(self) -> None:
         if self.emojis:
             self.emojis.cancel()
         asyncio.create_task(self.session.close())
@@ -60,7 +60,7 @@ class SteamCog(commands.Cog):
             time_obj = datetime.strptime(date_string, "%d %b, %Y")
         return f"<t:{int(time_obj.timestamp())}:R>"
 
-    async def get(self, url: str, params) -> Optional[Any]:
+    async def get(self, url: str, params: Dict[str, str]) -> Optional[Any]:
         try:
             async with self.session.get(url, params=params, headers=USER_AGENT) as resp:
                 return None if resp.status != 200 else await resp.json()
@@ -77,16 +77,16 @@ class SteamCog(commands.Cog):
         elif data.get("total") == 1: return data.get("items")[0].get("id")
         else:
             # Attribution: https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
-            items = "".join(f"**{i}.** {val.get('name')}\n" for i, val in enumerate(data.get("items"), 1))
-            choices = f"Found multiple results for your query. Please select one from:\n\n{items}"
-            send_to_channel = await ctx.send(choices)
+            items = "\n".join(f"**{i}.** {val.get('name')}" for i, val in enumerate(data.get("items"), 1))
+            choices = f"Found below **{len(data['items']}** results. Select one within 60 seconds:\n\n{items}"
+            prompt = await ctx.send(choices)
 
-            def check(msg):
-                if (
+            def check(msg) -> bool:
+                return bool(
                     msg.content.isdigit() and int(msg.content) in range(len(items) + 1)
                     and msg.author.id == ctx.author.id and msg.channel.id == ctx.channel.id
-                ):
-                    return True
+                )
+
 
             try:
                 choice = await self.bot.wait_for("message", timeout=60.0, check=check)
@@ -94,23 +94,23 @@ class SteamCog(commands.Cog):
                 choice = None
             if choice is None or choice.content.strip() == "0":
                 with contextlib.suppress(discord.NotFound, discord.HTTPException):
-                    await send_to_channel.edit("Operation cancelled.")
+                    await prompt.edit(content="Cancelled.", delete_after=5.0)
                 return None
             else:
                 with contextlib.suppress(discord.NotFound, discord.HTTPException):
-                    await send_to_channel.delete()
-                return data.get("items")[int(choice.content.strip()) - 1].get("id")
+                    await prompt.delete()
+                return data["items"][int(choice.content.strip()) - 1].get("id")
 
     @staticmethod
-    def game_previews_embed(meta, data) -> discord.Embed:
-        embed = discord.Embed(colour=meta[2], title=meta[4])
-        embed.url = f"https://store.steampowered.com/app/{meta[3]}"
+    def game_previews_embed(meta: tuple, url: str) -> discord.Embed:
+        embed = discord.Embed(colour=meta[0], title=meta[2])
+        embed.url = f"https://store.steampowered.com/app/{meta[1]}"
         embed.set_author(name="Steam", icon_url="https://i.imgur.com/xxr2UBZ.png")
-        embed.set_image(url=data["path_full"])
-        embed.set_footer(text=f"Preview {meta[0]} of {meta[1]}")
+        embed.set_image(url=url)
+
         return embed
 
-    def steam_embed(self, meta, app) -> discord.Embed:
+    def steam_embed(self, meta: tuple, app: Dict[str, Any]) -> discord.Embed:
         em = discord.Embed(
             colour=meta[1], title=app["name"], description=app.get("short_description", ""),
         )
@@ -119,7 +119,7 @@ class SteamCog(commands.Cog):
         em.set_image(url=str(app.get("header_image")).replace("\\", ""))
         if app.get("price_overview"):
             em.add_field(name="Game Price", value=app["price_overview"].get("final_formatted"))
-        if app.get("release_date").get("coming_soon"):
+        if app.get("release_date", {}).get("coming_soon"):
             em.add_field(name="Release Date", value="Coming Soon")
         else:
             em.add_field(name="Release Date", value=self.timestamp(app["release_date"].get("date")))
@@ -159,7 +159,7 @@ class SteamCog(commands.Cog):
     @commands.command(usage="name of steam game")
     @commands.bot_has_permissions(add_reactions=True, embed_links=True, read_message_history=True)
     async def steam(self, ctx: commands.Context, *, query: str) -> None:
-        """Fetch some useful info about a Steam game all from the comfort of your Discord home."""
+        """Fetch basic info about a Steam game all from the comfort of your Discord home."""
         await ctx.trigger_typing()
         # TODO: remove this temp fix once game is released
         if query.lower() == "lost ark":
@@ -176,8 +176,9 @@ class SteamCog(commands.Cog):
         pages = [self.steam_embed((app_id, colour), app_data)]
         if app_data.get("screenshots"):
             for i, preview in enumerate(app_data["screenshots"], start=1):
-                meta = (i, len(app_data["screenshots"]), colour, app_id, app_data["name"])
-                embed = self.game_previews_embed(meta, preview)
+                meta = (colour, app_id, app_data["name"])
+                embed = self.game_previews_embed(meta, preview.get("path_full", ""))
+                embed.set_footer(text=f"Preview {i} of {len(app_data["screenshots"])}")
                 pages.append(embed)
 
         controls = {"\u274c": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
@@ -185,7 +186,7 @@ class SteamCog(commands.Cog):
         # await BaseMenu(ListPages(pages), timeout=90, ctx=ctx).start(ctx)
 
     @staticmethod
-    def gamereqs_embed(meta, app) -> List[discord.Embed]:
+    def gamereqs_embed(meta, app: Dict[str, Any]) -> List[discord.Embed]:
         pages = []
         platform_mapping = {
             "windows": "pc_requirements",
@@ -272,7 +273,7 @@ class SteamCog(commands.Cog):
                 return data[int(choice.content.strip()) - 1].get("cheapestDealID")
 
     @staticmethod
-    def gamedeal_embed(stores, deal_id, data) -> discord.Embed:
+    def gamedeal_embed(stores, deal_id, data: Dict[str, Any]) -> discord.Embed:
         game = data["gameInfo"]
         em = discord.Embed(colour=discord.Colour.blurple(), title=game.get("name", ""))
         if game.get("steamAppID"):
@@ -320,7 +321,7 @@ class SteamCog(commands.Cog):
         await ctx.send(embed=embed)
 
     @staticmethod
-    def latestdeals_embed(meta: tuple, stores, data) -> discord.Embed:
+    def latestdeals_embed(meta: tuple, stores, data: Dict[str, Any]) -> discord.Embed:
         em = discord.Embed(colour=meta[2])
         em.title = str(data["title"])
         if data.get("steamAppID"):
