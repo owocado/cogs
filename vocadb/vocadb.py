@@ -11,7 +11,7 @@ from redbot.core.bot import Red
 from redbot.core.utils.menus import DEFAULT_CONTROLS, close_menu, menu
 # from redbot.core.utils.dpy2_menus import BaseMenu, ListPages
 
-from .iso639-1 import LANGUAGE_MAP
+from .iso639 import LANGUAGE_MAP
 
 BASE_API_URL = "https://vocadb.net/api/songs"
 
@@ -19,7 +19,7 @@ BASE_API_URL = "https://vocadb.net/api/songs"
 class VocaDB(commands.Cog):
     """Search for song lyrics on Vocaloid Database (VocaDB)"""
 
-    __author__, __version__ = ("Author: ow0x", "Cog Version: 0.1.1")
+    __author__, __version__ = ("Author: ow0x", "Cog Version: 0.1.2")
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
