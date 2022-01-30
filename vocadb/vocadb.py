@@ -11,8 +11,9 @@ from redbot.core.bot import Red
 from redbot.core.utils.menus import DEFAULT_CONTROLS, close_menu, menu
 # from redbot.core.utils.dpy2_menus import BaseMenu, ListPages
 
+from .iso639-1 import LANGUAGE_MAP
+
 BASE_API_URL = "https://vocadb.net/api/songs"
-LANGUAGE_MAP = {"en": "English", "ja": "Japanese", "": "Romaji"}
 
 
 class VocaDB(commands.Cog):
@@ -126,7 +127,7 @@ class VocaDB(commands.Cog):
         """Create an embed with the lyrics"""
         title = [
             x.get("value") for x in data.get("names")
-            if x.get("language") == LANGUAGE_MAP[page["cultureCode"]]
+            if x.get("language") == LANGUAGE_MAP.get(page["cultureCode"])
         ]
         em = discord.Embed(
             title=title[0] if title else data.get("defaultName"), colour=colour,
@@ -135,8 +136,10 @@ class VocaDB(commands.Cog):
         if data.get("id"):
             em.url = f"https://vocadb.net/S/{data['id']}"
         em.description = page.get("value", "")[:4090]
-        if page.get("source") and page.get("url"):
-            em.add_field(name="Source", value=f"[{page['source']}]({page['url']})")
+        if page.get("url"):
+            em.add_field(
+                name="Source", value=f"[{page.get('source') or 'Source'}]({page['url']})"
+            )
         return em
 
     @commands.command()
@@ -155,7 +158,7 @@ class VocaDB(commands.Cog):
 
         embeds = []
         for i, page in enumerate(data["lyrics"], 1):
-            language = f"Language: {LANGUAGE_MAP[page['cultureCode']]}"
+            language = f"Language: {LANGUAGE_MAP.get(page.get('cultureCode', 'na'))}"
             emb = self._lyrics_embed(await ctx.embed_colour(), page, data)
             emb.set_footer(text=f"{language} • Page {i} of {len(data['lyrics'])}")
             embeds.append(emb)
