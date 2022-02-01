@@ -1,14 +1,14 @@
 {
     "name": "PhoneFinder",
-    "short": "Fetch various info about a smartphone from GSMArena.com",
-    "description": "Fetch various info about a smartphone from GSMArena.com",
+    "short": "Fetch device specs & metadata on a (smart)phone model.",
+    "description": "Fetch device specifications & metadata info for a (smart)phone model from GSMArena.",
     "end_user_data_statement": "This cog does not store any PII data or metadata about users.",
-    "install_msg": "Oh look. Another trash cog from \"human garbage\". Not my words though.",
+    "install_msg": "**Hope you will find this cog VERY BORING, made by** <@306810730055729152>.",
     "author": ["ow0x"],
     "required_cogs": {},
     "requirements": ["aiocache", "beautifulsoup4", "msgpack"],
     "tags": ["smartphone", "gsmarena", "phone specs", "phone lookup", "phone finder"],
-    "min_bot_version": "3.4.8",
+    "min_bot_version": "3.4.16",
     "hidden": false,
     "disabled": false,
     "type": "COG"
