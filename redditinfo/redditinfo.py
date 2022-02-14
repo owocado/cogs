@@ -11,9 +11,9 @@ from redbot.core.utils.chat_formatting import humanize_number
 
 
 class RedditInfo(commands.Cog):
-    """Fetch hot memes or some info about Reddit user accounts and subreddits."""
+    """Fetch hot memes or info about Reddit account or subreddit."""
 
-    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.1.2")
+    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.1.3")
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -63,7 +63,7 @@ class RedditInfo(commands.Cog):
             if not (guild or channel or bot_perms.send_messages or bot_perms.embed_links):
                 continue
             random_sub = random.choice(self.meme_subreddits)
-            async with self.session.get(f"https://old.reddit.com/r/{random_sub}/hot.json") as resp:
+            async with self.session.get(f"https://reddit.com/r/{random_sub}/hot.json") as resp:
                 if resp.status != 200:
                     continue
                 data = await resp.json()
@@ -80,14 +80,14 @@ class RedditInfo(commands.Cog):
     async def reddituser(self, ctx: commands.Context, username: str):
         """Fetch basic info about a Reddit user account."""
         await ctx.trigger_typing()
-        async with self.session.get(f"https://old.reddit.com/user/{username}/about.json") as resp:
+        async with self.session.get(f"https://reddit.com/user/{username}/about.json") as resp:
             if resp.status != 200:
                 return await ctx.send(f"https://http.cat/{resp.status}")
             result = await resp.json()
 
         data = result.get("data")
         if data.get("is_suspended"):
-            return await ctx.send("As per Reddit, that account has been suspended.")
+            return await ctx.send("According to Reddit, that account has been suspended.")
 
         em = discord.Embed(colour=await ctx.embed_colour())
         username = data.get("display_name_prefixed")
@@ -97,7 +97,7 @@ class RedditInfo(commands.Cog):
             icon_url="https://www.redditinc.com/assets/images/site/reddit-logo.png",
         )
         profile_url = f"https://reddit.com/user/{username}"
-        if data.get("banner_img", "") != "":
+        if data.get("banner_img"):
             em.set_image(url=data["banner_img"].split("?")[0])
         em.set_thumbnail(url=str(data.get("icon_img")).split("?")[0])
         em.add_field(name="Account created:", value=f"<t:{int(data.get('created_utc'))}:R>")
@@ -112,20 +112,20 @@ class RedditInfo(commands.Cog):
             f'Is a subreddit mod?:  {"✅" if data.get("is_mod") else "❌"}\n'
         )
         if data.get("is_employee"):
-            em.set_footer(text="This user is a Reddit employee.")
+            em.set_footer(text="\u2139  This user is a Reddit employee.")
         em.description = extra_info
         await ctx.send(profile_url, embed=em)
 
-    @commands.command()
+    @commands.command(aliases=("subinfo", "subrinfo"))
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 3, commands.BucketType.user)
-    async def subrinfo(self, ctx: commands.Context, subreddit: str, more_info: bool = False):
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def subredditinfo(self, ctx: commands.Context, subreddit: str, more_info: bool = False):
         """Fetch basic info about an existing subreddit.
 
-        `more_info`: Shows more information when set to `True`. Defaults to False.
+        `more_info`: Shows some more info available for the subreddit. Defaults to False.
         """
         await ctx.trigger_typing()
-        async with self.session.get(f"https://old.reddit.com/r/{subreddit}/about.json") as resp:
+        async with self.session.get(f"https://reddit.com/r/{subreddit}/about.json") as resp:
             if resp.status != 200:
                 return await ctx.send(f"https://http.cat/{resp.status}")
             result = await resp.json()
@@ -137,12 +137,12 @@ class RedditInfo(commands.Cog):
             return await ctx.send("That subreddit is marked as NSFW. Try again in NSFW channel.")
 
         em = discord.Embed(colour=discord.Colour.random())
-        em.set_author(name=data.get("url"), icon_url=data.get("icon_img", ""))
+        em.set_author(name=data.get("url"), icon_url=data.get("icon_img") or "")
         subreddit_link = f"https://reddit.com{data.get('url')}"
-        em.description = data.get("public_description", "")
+        em.description = f"**{data.get('title', '')}**\n\n{data.get('public_description', '')}"
         if data.get("banner_img"):
-            em.set_image(url=data.get("banner_img", ""))
-        if data.get("community_icon", "") != "":
+            em.set_image(url=data["banner_img"])
+        if data.get("community_icon"):
             em.set_thumbnail(url=data["community_icon"].split("?")[0])
         em.add_field(name="Created On", value=f"<t:{int(data.get('created_utc'))}:R>")
         em.add_field(name="Subscribers", value=humanize_number(data.get("subscribers", 0)))
@@ -161,11 +161,11 @@ class RedditInfo(commands.Cog):
             extra_info += "Discoverable?:  " + ("✅" if data.get("allow_discovery") else "❌") + "\n"
             extra_info += "Video uploads allowed?:  " + ("✅" if data.get("allow_videos") else "❌") + "\n"
             extra_info += "Image uploads allowed?:  " + ("✅" if data.get("allow_images") else "❌") + "\n"
-            if data.get("submission_type", "") != "":
+            if data.get("submission_type"):
                 extra_info += "Submissions type:  " + data["submission_type"] + "\n"
-            if data.get("advertiser_category", "") != "":
+            if data.get("advertiser_category"):
                 extra_info += "Advertiser category:  " + data["advertiser_category"] + "\n"
-            if data.get("whitelist_status", "") != "":
+            if data.get("whitelist_status"):
                 extra_info += "Advertising whitelist status:  " + data["whitelist_status"] + "\n"
         if extra_info:
             em.add_field(name="(Extra) Misc. Info:", value=extra_info, inline=False)
@@ -175,17 +175,17 @@ class RedditInfo(commands.Cog):
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 3, commands.BucketType.user)
     async def random_hot_meme(self, ctx: commands.Context):
-        """Fetch a random hot meme, or a boring cringe one, I suppose!"""
+        """Fetch a random hot meme, or a boring cringe one!"""
         await ctx.trigger_typing()
         random_sub = random.choice(self.meme_subreddits)
-        async with self.session.get(f"https://old.reddit.com/r/{random_sub}/hot.json") as resp:
+        async with self.session.get(f"https://reddit.com/r/{random_sub}/hot.json") as resp:
             if resp.status != 200:
                 return await ctx.send(f"Reddit API returned {resp.status} HTTP status code.")
             data = await resp.json()
         await self._fetch_meme(data, ctx.channel)
 
     async def _fetch_subreddit_icon(self, subreddit: str):
-        url = f"https://old.reddit.com/r/{subreddit}/about.json"
+        url = f"https://reddit.com/r/{subreddit}/about.json"
         async with self.session.get(url) as resp:
             if resp.status != 200:
                 return "https://i.imgur.com/DSBOK0P.png"
