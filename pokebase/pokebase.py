@@ -32,7 +32,7 @@ BULBAPEDIA_URL = "https://bulbapedia.bulbagarden.net/wiki"
 class Pokebase(commands.Cog):
     """Search for various info about a Pokémon and related data."""
 
-    __authors__, __version__ = ("Authors: ow0x, phalt", "Cog Version: 1.0.1")
+    __authors__, __version__ = ("Authors: ow0x, phalt", "Cog Version: 1.0.2")
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -635,6 +635,12 @@ class Pokebase(commands.Cog):
         poke_image.close()
         return temp
 
+    @staticmethod
+    def _avatar(user: discord.Member) -> str:
+        if discord.version_info.major > 1:
+            return user.display_avatar.url
+        return str(user.avatar_url)
+
     @commands.command()
     @commands.cooldown(1, 30, commands.BucketType.user)
     @commands.max_concurrency(1, commands.BucketType.channel)
@@ -708,8 +714,5 @@ class Pokebase(commands.Cog):
                     emb.title = "You took too many attempts! 😔 😮\u200d💨"
                     emb.colour = discord.Colour(0xFF0000)
                 emb.set_image(url=f"attachment://whosthatpokemon.png")
-                emb.set_footer(
-                    text=f"Requested by {ctx.author}",
-                    icon_url=str(ctx.author.avatar_url),
-                )
+                emb.set_footer(text=f"Requested by {ctx.author}", icon_url=self._avatar(ctx.author))
                 await ctx.send(embed=emb, file=revealed_img)
