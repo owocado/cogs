@@ -195,7 +195,7 @@ class Pokebase(commands.Cog):
             embed = self.base_stats_embed(embed, data)
             if species_data and species_data.get("evolution_chain"):
                 evo_url = species_data["evolution_chain"].get("url")
-                if_evolves = await self.evolution_embed(embed, evo_url)
+                if_evolves = await self.evolution_embed(evo_url)
                 if if_evolves:
                     embed.add_field(name="Evolution Chain", value=if_evolves, inline=False)
 
