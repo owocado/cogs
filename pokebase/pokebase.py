@@ -32,7 +32,7 @@ BULBAPEDIA_URL = "https://bulbapedia.bulbagarden.net/wiki"
 class Pokebase(commands.Cog):
     """Search for various info about a Pokémon and related data."""
 
-    __authors__, __version__ = ("Authors: ow0x, phalt", "Cog Version: 1.0.0")
+    __authors__, __version__ = ("Authors: ow0x, phalt", "Cog Version: 1.0.1")
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -155,7 +155,7 @@ class Pokebase(commands.Cog):
         embed.add_field(name="Base Stats (Base Form)", value=pretty_base_stats, inline=False)
         return embed
 
-    async def evolution_embed(self, embed, evo_url: str) -> discord.Embed:
+    async def evolution_embed(self, evo_url: str) -> discord.Embed:
         evo_data = (await self.get_data(evo_url)).get("chain")
         base_evo = evo_data["species"].get("name").title()
         evolves_to = ""
@@ -165,8 +165,7 @@ class Pokebase(commands.Cog):
             evolves_to += " -> " + "/".join(
                 x["species"].get("name").title() for x in evo_data["evolves_to"][0].get("evolves_to")
             )
-        if evolves_to != "":
-            embed.add_field(name="Evolution Chain", value=f"{base_evo} {evolves_to}", inline=False)
+        return f"{base_evo} {evolves_to}" if evolves_to else None
 
     @commands.command(aliases=["pokemon"])
     @commands.bot_has_permissions(embed_links=True)
@@ -191,12 +190,14 @@ class Pokebase(commands.Cog):
 
             if species_data:
                 with suppress(IndexError):
-                    pokemon_name = [x["name"] for x in data["names"] if x["language"]["name"] == "en"][0]
+                    pokemon_name = [x["name"] for x in species_data["names"] if x["language"]["name"] == "en"][0]
                 embed = self.species_embed(embed, species_data)
             embed = self.base_stats_embed(embed, data)
             if species_data and species_data.get("evolution_chain"):
                 evo_url = species_data["evolution_chain"].get("url")
-                embed = await self.evolution_embed(embed, evo_url)
+                if_evolves = await self.evolution_embed(embed, evo_url)
+                if if_evolves:
+                    embed.add_field(name="Evolution Chain", value=if_evolves, inline=False)
 
             type_effect_url = (
                 f"{BULBAPEDIA_URL}/{pokemon_name.replace(' ', '_')}_%28Pokémon%29#Type_effectiveness"
