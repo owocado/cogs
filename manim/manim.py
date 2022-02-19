@@ -7,8 +7,8 @@ import textwrap
 import traceback
 import re
 import io
-
 from pathlib import Path
+from typing import Any, Dict
 
 import discord
 from redbot.core import commands
@@ -29,8 +29,8 @@ dockerclient = docker.from_env()
 class Manim(commands.Cog):
     """A cog for interacting with Manim python animation engine."""
 
-    __author__ = "Manim Community Developers, ow0x"
-    __version__ = "0.11.0"
+    __author__ = "Manim Community Developervanity_url_codes, ow0x"
+    __version__ = "0.14.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -72,13 +72,12 @@ class Manim(commands.Cog):
                     "Operation timed out. No output received within 2 minutes."
                 )
 
-        try:
-            await ctx.reply(**reply_args)
-        except discord.HTTPException:
-            await ctx.send(**reply_args)
+        reply_args["reference"] = ctx.message.to_reference(fail_if_not_exists=False)
+        reply_args["mention_author"] = False
+        await ctx.send(**reply_args)
 
 
-    def construct_reply(self, script: str):
+    def construct_reply(self, script: str) -> Dict[str, Any]:
         if script.count("```") != 2:
             reply_args = {
                 "content": "Your message has to be properly formatted "
