@@ -29,7 +29,7 @@ dockerclient = docker.from_env()
 class Manim(commands.Cog):
     """A cog for interacting with Manim python animation engine."""
 
-    __author__ = "Manim Community Developervanity_url_codes, ow0x"
+    __author__ = "Manim Community Developers, ow0x"
     __version__ = "0.14.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
