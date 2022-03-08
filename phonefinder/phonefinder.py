@@ -22,14 +22,14 @@ HEAD = {
     "Accept": "text/html,application/xhtml+xml,application/xml",
     "Accept-Encoding": "gzip, deflate, br",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-    " (KHTML, like Gecko) Chrome/98.0.4758.66 Safari/537.36",
+    " (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
 }
 
 
 class PhoneFinder(commands.Cog):
     """Fetch device specs for a (smart)phone model from GSMArena."""
 
-    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.1.0")
+    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.1.1")
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -66,8 +66,9 @@ class PhoneFinder(commands.Cog):
             f"**`[{i}]`** {x.span.get_text(separator=' ')}" for i, x in enumerate(makers, 1)
         )
 
-        choices = f"Found below **{len(makers)}** result(s). Pick one within 60 seconds:\n\n{items}"
-        prompt = await ctx.send(choices)
+        choices = f"Found above {len(makers)} result(s). Pick one within 60 seconds!"
+        embed = discord.Embed(description=items).set_footer(text=choices)
+        prompt = await ctx.send(embed=embed)
 
         def check(msg) -> bool:
             return bool(
