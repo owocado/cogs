@@ -13,7 +13,8 @@ from .converter import ImageFinder
 class OCR(commands.Cog):
     """Detect text in images using ocr.space or Google Cloud Vision API."""
 
-    __authors__, __version__ = ("Authors: ow0x, TrustyJAID", "Cog Version: 0.3.0")
+    __authors__ = "Authors: <@306810730055729152>, TrustyJAID"
+    __version__ = "Cog Version: 0.3.3"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -61,11 +62,27 @@ class OCR(commands.Cog):
             "isOverlayRequired": False,
             "filetype": file_type
         }
-        async with self.session.post("https://api.ocr.space/parse/image", data=data) as resp:
-            if resp.status != 200:
-                return await ctx.send(f"https://http.cat/{resp.status}")
-            result = await resp.json()
+        try:
+            async with self.session.get(
+                "https://api.kaogurai.xyz/v1/ocr/image",
+                params={"url": image},
+            ) as resp:
+                if resp.status != 200:
+                    return await ctx.send(f"https://http.cat/{resp.status}")
+                result = await resp.json()
+        except Exception:
+            async with self.session.post(
+                "https://api.ocr.space/parse/image", data=data
+            ) as resp:
+                if resp.status != 200:
+                    return await ctx.send(f"https://http.cat/{resp.status}")
+                result = await resp.json()
 
+        temp_ = result.get("textAnnotations", [{}])
+        if temp_ and temp_[0].get("description"):
+            return await ctx.send_interactive(
+                pagify(temp_[0].get("description", "none")), box_lang=""
+            )
         if not result.get("ParsedResults"):
             return await ctx.send(box(json.dumps(result), "json"))
 
