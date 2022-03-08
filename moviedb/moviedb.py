@@ -14,8 +14,7 @@ from redbot.core.utils.menus import DEFAULT_CONTROLS, close_menu, menu
 class MovieDB(commands.Cog):
     """Get some info about a movie or TV show/series."""
 
-    __author__ = "ow0x"
-    __version__ = "1.0.0"
+    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.0.1")
 
     async def red_delete_data_for_user(self, **kwargs):
         """ Nothing to delete """
@@ -26,7 +25,7 @@ class MovieDB(commands.Cog):
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
         pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\n\nAuthor: {self.__author__}\nCog Version: {self.__version__}"
+        return f"{pre_processed}\n\n{self.__author__}\n{self.__version__}"
 
     def __init__(self, bot: Red):
         self.bot = bot
@@ -56,10 +55,13 @@ class MovieDB(commands.Cog):
         url = "https://api.themoviedb.org/3/search/movie"
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
         data = await self.get(url, {"api_key": api_key, "query": query})
-        if data is None: return None
+        if data is None:
+            return None
 
-        if not data.get("results") or len(data.get("results")) == 0: return None
-        elif len(data.get("results")) == 1: return data.get("results")[0].get("id")
+        if not data.get("results") or len(data.get("results")) == 0:
+            return None
+        elif len(data.get("results")) == 1:
+            return data.get("results")[0].get("id")
         else:
             # Logic taken/modified from https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
             items = "\n".join(
@@ -68,12 +70,12 @@ class MovieDB(commands.Cog):
             )
             choices = "Found multiple results. Please select one from below:\n\n"
             send_to_channel = await ctx.send(f"{choices}{items.replace('(<t::D>)', '')}")
-            def check(msg):
-                if (
+
+            def check(msg) -> bool:
+                return bool(
                     msg.content.isdigit() and int(msg.content) in range(len(items) + 1)
                     and msg.author.id == ctx.author.id and msg.channel.id == ctx.channel.id
-                ):
-                    return True
+                )
 
             try:
                 choice = await self.bot.wait_for("message", timeout=60, check=check)
@@ -150,7 +152,8 @@ class MovieDB(commands.Cog):
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
         params = {"api_key": api_key, "query": query}
         data = await self.get(url, params)
-        if data is None: return None
+        if data is None:
+            return None
 
         if not data.get("results") or len(data.get("results")) == 0:
             return None
@@ -164,12 +167,12 @@ class MovieDB(commands.Cog):
             )
             choices = "Found multiple results. Please select one from below:\n\n"
             send_to_channel = await ctx.send(f"{choices}{items.replace('(<t::D>)', '')}")
-            def check(msg):
-                if (
+
+            def check(msg) -> bool:
+                return bool(
                     msg.content.isdigit() and int(msg.content) in range(len(items) + 1)
                     and msg.author.id == ctx.author.id and msg.channel.id == ctx.channel.id
-                ):
-                    return True
+                )
 
             try:
                 choice = await self.bot.wait_for("message", timeout=60, check=check)
@@ -256,7 +259,8 @@ class MovieDB(commands.Cog):
 
         url, params = (f"https://api.themoviedb.org/3/tv/{tv_series_id}", {"api_key": api_key})
         data = await self.get(url, params)
-        if not data: return await ctx.send("Could not connect to TMDB API.")
+        if not data:
+            return await ctx.send("Could not connect to TMDB API.")
         embed = self.tvshow_embed(await ctx.embed_colour(), data)
         await ctx.send(embed=embed)
 
@@ -274,7 +278,7 @@ class MovieDB(commands.Cog):
         return embed
 
     @commands.command(usage="movie name")
-    @commands.bot_has_permissions(embed_links=True, read_message_history=True)
+    @commands.bot_has_permissions(add_reactions=True, embed_links=True, read_message_history=True)
     async def suggestmovies(self, ctx: commands.Context, *, query: str):
         """Get similar movies suggestions based on a movie title."""
         await ctx.trigger_typing()
@@ -315,7 +319,7 @@ class MovieDB(commands.Cog):
         return embed
 
     @commands.command(usage="tv series name/title")
-    @commands.bot_has_permissions(embed_links=True, read_message_history=True)
+    @commands.bot_has_permissions(add_reactions=True, embed_links=True, read_message_history=True)
     async def suggestshows(self, ctx: commands.Context, *, query: str):
         """Get similar TV show suggestions from a TV series title."""
         await ctx.trigger_typing()
