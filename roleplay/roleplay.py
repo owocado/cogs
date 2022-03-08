@@ -16,7 +16,7 @@ from .constants import *
 class Roleplay(commands.Cog):
     """Do roleplay with your Discord friends or virtual strangers."""
 
-    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.1.4")
+    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.1.5")
 
     async def red_delete_data_for_user(self, **kwargs):
         """Nothing to delete"""
@@ -204,7 +204,7 @@ class Roleplay(commands.Cog):
         embed.set_image(url=str(choice(CUDDLE)))
         footer = (
             f"{ctx.author.name} sent: {cuddle_to + 1} cuddles so far.\n"
-            f"{'I' if member == ctx.me else member.name} "
+            f"{'I' if member.id == ctx.me.id else member.name} "
             f"received: {cuddle_from + 1} cuddles so far."
         )
         embed.set_footer(text=footer)
@@ -235,7 +235,7 @@ class Roleplay(commands.Cog):
         embed.set_image(url=choice(FEED))
         footer = (
             f"{ctx.author.name} have fed others: {feed_to + 1} times so far.\n"
-            f"{'I' if member == ctx.me else member.name} "
+            f"{'I' if member.id == ctx.me.id else member.name} "
             f"received some food: {feed_from + 1} times so far."
         )
         embed.set_footer(text=footer)
@@ -269,7 +269,7 @@ class Roleplay(commands.Cog):
             embed.set_image(url=choice(HIGHFIVE))
         footer = (
             f"{ctx.author.name} sent: {h5_to + 1} high-fives so far.\n"
-            f"{'I' if member == ctx.me else member.name} "
+            f"{'I' if member.id == ctx.me.id else member.name} "
             f"received: {h5_from + 1} high-fives so far."
         )
         embed.set_footer(text=footer)
@@ -302,7 +302,7 @@ class Roleplay(commands.Cog):
         embed.set_image(url=str(choice(HUG)))
         footer = (
             f"{ctx.author.name} gave: {hug_to + 1} hugs so far.\n"
-            f"{'I' if member == ctx.me else member.name} "
+            f"{'I' if member.id == ctx.me.id else member.name} "
             f"received: {hug_from + 1} hugs so far!"
         )
         embed.set_footer(text=footer)
@@ -459,7 +459,7 @@ class Roleplay(commands.Cog):
         embed.set_image(url=choice(PAT))
         footer = (
             f"{ctx.author.name} gave: {pat_to + 1} pats so far.\n"
-            f"{'I' if member == ctx.me else member.name} "
+            f"{'I' if member.id == ctx.me.id else member.name} "
             f"received: {pat_from + 1} pats so far!"
         )
         embed.set_footer(text=footer)
@@ -491,7 +491,7 @@ class Roleplay(commands.Cog):
         embed.set_image(url=choice(POKE))
         footer = (
             f"{ctx.author.name} gave: {poke_to + 1} pokes so far.\n"
-            f"{'I' if member == ctx.me else member.name} "
+            f"{'I' if member.id == ctx.me.id else member.name} "
             f"received: {poke_from + 1} pokes so far!"
         )
         embed.set_footer(text=footer)
@@ -612,7 +612,7 @@ class Roleplay(commands.Cog):
             embed.set_image(url=choice(TICKLE))
         footer = (
             f"{ctx.author.name} tickled others: {tickle_to + 1} times so far.\n"
-            f"{'I' if member == ctx.me else member.name} "
+            f"{'I' if member.id == ctx.me.id else member.name} "
             f"received: {tickle_from + 1} tickles so far!"
         )
         embed.set_footer(text=footer)
