@@ -13,7 +13,7 @@ from redbot.core import commands
 try:
     from playwright.async_api import async_playwright
     PLAYWRIGHT = True
-except ModuleNotFoundError:
+except ImportError:
     PLAYWRIGHT = False
 
 BASE_URL = "https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName={}"
