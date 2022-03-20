@@ -16,7 +16,7 @@ from .constants import *
 class Roleplay(commands.Cog):
     """Do roleplay with your Discord friends or virtual strangers."""
 
-    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.1.5")
+    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.1.6")
 
     async def red_delete_data_for_user(self, **kwargs):
         """Nothing to delete"""
@@ -89,13 +89,13 @@ class Roleplay(commands.Cog):
         if self.bot.get_cog("General"):
             self.bot.remove_command("hug")
 
-    # @staticmethod
-    # async def temp_tip(ctx: commands.Context):
-    #     pre = ctx.clean_prefix
-    #     return await ctx.send(
-    #         f"You can check your roleplay stats with `{pre}rpstats` command.",
-    #         delete_after=10.0,
-    #     )
+    @staticmethod
+    async def temp_tip(ctx: commands.Context):
+        pre = ctx.clean_prefix
+        return await ctx.send(
+            f"You can check your roleplay stats with `{pre}rpstats` command.",
+            delete_after=10.0,
+        )
 
     @commands.command()
     @commands.guild_only()
@@ -618,16 +618,10 @@ class Roleplay(commands.Cog):
         embed.set_footer(text=footer)
         await ctx.send(content=quote(message), embed=embed)
 
-    @staticmethod
-    def _avatar(user: discord.Member) -> str:
-        if int(discord.__version__[0]) >= 2:
-            return user.display_avatar.url
-        return str(user.avatar_url)
-
     @commands.guild_only()
     @commands.command(name="rpstats")
-    @commands.bot_has_permissions(add_reactions=True, embed_links=True)
     @commands.cooldown(1, 5, commands.BucketType.member)
+    @commands.bot_has_permissions(add_reactions=True, embed_links=True)
     async def roleplay_stats(self, ctx: Context, *, member: discord.Member = None):
         """Get your roleplay stats for this server."""
         user = member or ctx.author
@@ -658,11 +652,16 @@ class Roleplay(commands.Cog):
         for action in self.possible_actions:
             parse_actions(global_actions_data, global_actions_array, action)
 
+        def get_avatar(user):
+            if discord.version_info.major >= 2:
+                return user.display_avatar.url
+            return str(user.avatar_url)
+
         dedupe_list_2 = [x for i, x in enumerate(global_actions_array, 1) if i % 2 != 0]
         global_table = tabulate(dedupe_list_2, headers=header, colalign=colalign, tablefmt="psql")
         embed = discord.Embed(colour=await ctx.embed_colour(), description=box(global_table, "nim"))
         embed.set_author(name=f"Global Roleplay Stats | {user.name}", icon_url=self._avatar(user))
-        embed.set_footer(text=f"Requested by: {ctx.author}", icon_url=self._avatar(ctx.author))
+        embed.set_footer(text=f"Requested by: {ctx.author}", icon_url=get_avatar(ctx.author))
         pages.append(embed)
 
         await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
