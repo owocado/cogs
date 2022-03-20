@@ -641,27 +641,27 @@ class Roleplay(commands.Cog):
         for act in self.possible_actions:
             parse_actions(actions_data, people_with_no_creativity, act)
 
+        def get_avatar(user):
+            if discord.version_info.major >= 2:
+                return user.display_avatar.url
+            return str(user.avatar_url)
+
         pages = []
         dedupe_list_1 = [x for i, x in enumerate(people_with_no_creativity, 1) if i % 2 != 0]
         server_table = tabulate(dedupe_list_1, headers=header, colalign=colalign, tablefmt="psql")
         emb = discord.Embed(colour=await ctx.embed_colour(), description=box(server_table, "nim"))
-        emb.set_author(name=f"Roleplay Stats | {user.name}", icon_url=self._avatar(user))
+        emb.set_author(name=f"Roleplay Stats | {user.name}", icon_url=get_avatar(user))
         emb.set_footer(text="Go to next page to see your global roleplay stats!")
         pages.append(emb)
 
         for action in self.possible_actions:
             parse_actions(global_actions_data, global_actions_array, action)
 
-        def get_avatar(user):
-            if discord.version_info.major >= 2:
-                return user.display_avatar.url
-            return str(user.avatar_url)
-
         dedupe_list_2 = [x for i, x in enumerate(global_actions_array, 1) if i % 2 != 0]
         global_table = tabulate(dedupe_list_2, headers=header, colalign=colalign, tablefmt="psql")
         embed = discord.Embed(colour=await ctx.embed_colour(), description=box(global_table, "nim"))
-        embed.set_author(name=f"Global Roleplay Stats | {user.name}", icon_url=self._avatar(user))
-        embed.set_footer(text=f"Requested by: {ctx.author}", icon_url=get_avatar(ctx.author))
+        embed.set_author(name=f"Global Roleplay Stats | {user.name}", icon_url=get_avatar(user))
+        embed.set_footer(text=f"Requester: {ctx.author}", icon_url=get_avatar(ctx.author))
         pages.append(embed)
 
         await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
