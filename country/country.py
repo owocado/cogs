@@ -67,8 +67,8 @@ class Country(commands.Cog):
         embed.add_field(name="Region / Continent", value=f"{data['subregion']} / {data.get('region', '')}")
         if data.get("topLevelDomain")[0] != "":
             embed.add_field(name="Top Level Domain", value=data["topLevelDomain"][0])
-        wikilink = "https://en.wikipedia.org/wiki/Gini_coefficient"
         if data.get("gini"):
+            wikilink = "https://en.wikipedia.org/wiki/Gini_coefficient"
             embed.add_field(name="GINI Index", value=f"[{data.get('gini')}]({wikilink})")
         if data.get("demonym"):
             embed.add_field(name="Demonym", value=data.get("demonym", "None"))
@@ -78,7 +78,7 @@ class Country(commands.Cog):
         if data.get("regionalBlocs"):
             trade_blocs = ", ".join([x.get("name") for x in data["regionalBlocs"]])
             embed.add_field(name="Part of Trade Bloc", value=trade_blocs)
-        if len(embed.fields) in [8, 11]:
+        if len(embed.fields) in {8, 11}:
             embed.add_field(name="\u200b", value="\u200b")
         description = ""
         if data.get("borders"):

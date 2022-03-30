@@ -161,7 +161,7 @@ class SteamCog(commands.Cog):
         if app.get("genres"):
             genres = ", ".join(m.get("description", "") for m in app["genres"])
             em.add_field(name="Genres", value=genres)
-        if len(em.fields) in (8, 11):
+        if len(em.fields) in {8, 11}:
             em.add_field(name="\u200b", value="\u200b")
         footer = "Click on reactions to browse through game previews\n"
         if app.get("content_descriptors").get("notes"):

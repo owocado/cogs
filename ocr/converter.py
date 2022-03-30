@@ -26,23 +26,22 @@ class ImageFinder(Converter):
         matches = IMAGE_LINKS.finditer(argument)
         urls = []
         if matches:
-            for match in matches:
-                urls.append(match.group(1))
+            urls.extend(match.group(1) for match in matches)
         if attachments:
-            for attachment in attachments:
-                match = IMAGE_LINKS.match(attachment.url)
-                if match:
-                    urls.append(match.group(1))
+            urls.extend(
+                match.group(1)
+                for attachment in attachments
+                if (match := IMAGE_LINKS.match(attachment.url))
+            )
+
         return urls
 
     async def find_images_in_replies(self, reference: discord.Message) -> List[str]:
         urls = []
-        match = IMAGE_LINKS.search(reference.content)
-        if match:
+        if match := IMAGE_LINKS.search(reference.content):
             urls.append(match.group(1))
         if reference.attachments:
-            match = IMAGE_LINKS.match(reference.attachments[0].url)
-            if match:
+            if match := IMAGE_LINKS.match(reference.attachments[0].url):
                 urls.append(match.group(1))
         if reference.embeds and reference.embeds[0].image:
             urls.append(reference.embeds[0].image.url)
@@ -54,11 +53,12 @@ class ImageFinder(Converter):
             if message.embeds and message.embeds[0].image:
                 urls.append(message.embeds[0].image.url)
             if message.attachments:
-                for attachment in message.attachments:
-                    match = IMAGE_LINKS.match(attachment.url)
-                    if match:
-                        urls.append(match.group(1))
-            match = IMAGE_LINKS.search(message.content)
-            if match:
+                urls.extend(
+                    match.group(1)
+                    for attachment in message.attachments
+                    if (match := IMAGE_LINKS.match(attachment.url))
+                )
+
+            if match := IMAGE_LINKS.search(message.content):
                 urls.append(match.group(1))
         return urls
