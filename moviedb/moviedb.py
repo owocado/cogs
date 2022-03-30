@@ -46,9 +46,7 @@ class MovieDB(commands.Cog):
     async def get(self, url: str, params: dict):
         try:
             async with self.session.get(url, params=params) as resp:
-                if resp.status != 200:
-                    return None
-                return await resp.json()
+                return None if resp.status != 200 else await resp.json()
         except asyncio.TimeoutError:
             return None
 
@@ -125,7 +123,7 @@ class MovieDB(commands.Cog):
         if data.get("production_companies"):
             production_companies = "\n".join([m.get("name") for m in data["production_companies"]])
             embed.add_field(name="Production compananies", value=production_companies)
-        if len(embed.fields) in [5, 8, 11]:
+        if len(embed.fields) in {5, 8, 11}:
             embed.add_field(name="\u200b", value="\u200b")
         if data.get("production_countries"):
             production_countries = ", ".join([m.get("name") for m in data["production_countries"]])

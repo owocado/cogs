@@ -29,7 +29,7 @@ class BadgeTools(commands.Cog):
         if cog is None:
             return f"{badge_name.replace('_', ' ').title()} :"
         emoji = str(cog.badge_emojis.get(badge_name))
-        if "848561838974697532" in str(emoji):
+        if "848561838974697532" in emoji:
             emoji = "<:verified_bot:848557763328344064>"
         return emoji
 
@@ -87,8 +87,8 @@ class BadgeTools(commands.Cog):
         """Returns the list of users with X profile badge in the server."""
         badge = badge.replace(" ", "_").lower()
         valid_flags = "\n".join([f"> `{x}`" for x in list(discord.PublicUserFlags.VALID_FLAGS.keys())])
-        inform = f"`{badge}` badge not found! It needs to be one of:\n\n{valid_flags}"
         if badge not in valid_flags:
+            inform = f"`{badge}` badge not found! It needs to be one of:\n\n{valid_flags}"
             return await ctx.send(inform)
 
         list_of = []
