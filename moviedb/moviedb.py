@@ -7,6 +7,7 @@ import aiohttp
 import discord
 from redbot.core import commands
 from redbot.core.bot import Red
+from redbot.core.utils.chat_formatting import pagify
 from redbot.core.utils.menus import DEFAULT_CONTROLS, close_menu, menu
 # from redbot.core.utils.dpy2_menus import BaseMenu, ListPages
 
@@ -23,7 +24,7 @@ class MovieDB(commands.Cog):
     """Get summarized info about a movie or TV show/series."""
 
     __author__ = "ow0x"
-    __version__ = "1.1.0"
+    __version__ = "1.2.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:  # Thanks Sinbad!
         return (
@@ -139,8 +140,6 @@ class MovieDB(commands.Cog):
             )
         if len(embed.fields) in {5, 8, 11}:
             embed.add_field(name="\u200b", value="\u200b")
-        if data.get("tagline"):
-            embed.add_field(name="Tagline", value=data.get("tagline"), inline=False)
         embed.set_footer(
             text="Click arrows to see more info!",
             icon_url="https://i.imgur.com/sSE7Usn.png",
@@ -154,33 +153,78 @@ class MovieDB(commands.Cog):
         """Show various info about a movie."""
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
 
-        await ctx.trigger_typing()
-        movie_id = await self.fetch_movie_id(ctx, api_key, query)
-        if movie_id == 0: # Cancelled
-            return
-        if not movie_id:
-            return await ctx.send("⛔ No results.")
+        async with ctx.channel.typing():
+            movie_id = await self.fetch_movie_id(ctx, api_key, query)
+            if movie_id == 0: # Cancelled
+                return
+            if not movie_id:
+                return await ctx.send("⛔ No such movie found from given query.")
 
-        data = await self.get(f"{API_BASE}/movie/{movie_id}", {"api_key": api_key})
-        if not data:
-            return await ctx.send("⛔ Something went wrong when contacting TMDB API.")
+            data = await self.get(f"{API_BASE}/movie/{movie_id}", {"api_key": api_key})
+            if not data:
+                return await ctx.send("⛔ Something went wrong when contacting TMDB API.")
 
-        emb1 = self.movie_embed(await ctx.embed_colour(), data)
-        emb2 = discord.Embed(colour=await ctx.embed_colour(), title=data.get("title") or "")
-        emb2.url = f"https://www.themoviedb.org/movie/{data.get('id', '')}"
-        emb2.set_image(url=f"{CDN_BASE}{data.get('backdrop_path', '/')}")
-        if data.get("production_companies"):
-            emb2.add_field(
-                name="Production Compananies",
-                value=", ".join([m.get("name") for m in data["production_companies"]]),
-            )
-        if data.get("production_countries"):
-            emb2.add_field(
-                name="Production Countries",
-                value=", ".join([m.get("name") for m in data["production_countries"]]),
-                inline=False,
-            )
+            emb1 = self.movie_embed(await ctx.embed_colour(), data)
+            emb2 = discord.Embed(colour=await ctx.embed_colour(), title=data.get("title") or "")
+            emb2.url = f"https://www.themoviedb.org/movie/{data.get('id', '')}"
+            emb2.set_image(url=f"{CDN_BASE}{data.get('backdrop_path', '/')}")
+            if data.get("production_companies"):
+                emb2.add_field(
+                    name="Production Companies",
+                    value=", ".join([m.get("name") for m in data["production_companies"]]),
+                )
+            if data.get("production_countries"):
+                emb2.add_field(
+                    name="Production Countries",
+                    value=", ".join([m.get("name") for m in data["production_countries"]]),
+                    inline=False,
+                )
+            if data.get("tagline"):
+                emb2.add_field(name="Tagline", value=data["tagline"], inline=False)
+
         await menu(ctx, [emb1, emb2], DEFAULT_CONTROLS, timeout=120)
+
+    @commands.command(usage="movie name or title")
+    @is_apikey_set()
+    @commands.bot_has_permissions(embed_links=True, read_message_history=True)
+    async def moviecast(self, ctx: commands.Context, *, query: str):
+        """Show the given movie's cast (list of actors)."""
+        api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
+
+        async with ctx.channel.typing():
+            movie_id = await self.fetch_movie_id(ctx, api_key, query)
+            if movie_id == 0: # Cancelled
+                return
+            if not movie_id:
+                return await ctx.send("⛔ No such movie found from given query.")
+
+            data = await self.get(f"{API_BASE}/movie/{movie_id}/credits", {"api_key": api_key})
+            if not data:
+                return await ctx.send("⛔ Could not fetch data from TMDB API.")
+            if not data.get("cast"):
+                return await ctx.send("⛔ No cast or actors data found for this movie.")
+
+            GENDERS_MAP = {"0": "", "1": "♀", "2": "♂"}
+            pretty_cast = "\n".join(
+                f"**`{i:>2}.`**  [{actor_obj.get('original_name')}]"
+                f"(https://www.themoviedb.org/person/{actor_obj.get('id')})"
+                f" {GENDERS_MAP[str(actor_obj.get('gender', 0))]}"
+                f" as **{actor_obj.get('character')}**"
+                for i, actor_obj in enumerate(data["cast"], start=1)
+            )
+
+            pages = []
+            all_pages = list(pagify(pretty_cast, page_length=1500))
+            for i, page in enumerate(all_pages, start=1):
+                emb = discord.Embed(colour=discord.Colour.random())
+                emb.description = page
+                emb.title = f"Movie Cast for {query.title()}"
+                emb.url = f"https://www.themoviedb.org/movie/{data.get('id', '')}"
+                emb.set_footer(text=f"Page {i} of {len(all_pages)}")
+                pages.append(emb)
+
+        controls = {"❌": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
+        await menu(ctx, pages, controls=controls, timeout=120)
 
     async def fetch_tv_series_id(
         self, ctx: commands.Context, api_key: str, query: str
@@ -291,9 +335,7 @@ class MovieDB(commands.Cog):
                 f"{next_ep.get('name', 'N/A')}**\n`next airing:` {next_airing}"
             )
             embed.add_field(name="Next episode info", value=next_episode_info, inline=False)
-        if data.get("tagline"):
-            embed.add_field(name="Tagline", value=data.get("tagline"))
-        in_production = f"In production? ✅ Yes • " if data.get('in_production') else ""
+        in_production = f"In production? ✅ Yes • " if data.get("in_production") else ""
         embed.set_footer(
             text=f"{in_production}Click on arrows to see more info!",
             icon_url="https://i.imgur.com/sSE7Usn.png",
@@ -307,34 +349,39 @@ class MovieDB(commands.Cog):
         """Show various info about a TV show/series."""
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
 
-        await ctx.trigger_typing()
-        tv_series_id = await self.fetch_tv_series_id(ctx, api_key, query)
-        if tv_series_id == 0: # Operation cancelled
-            return
-        if not tv_series_id:
-            return await ctx.send("⛔ No results.")
+        async with ctx.channel.typing():
+            tv_series_id = await self.fetch_tv_series_id(ctx, api_key, query)
+            if tv_series_id == 0: # Operation cancelled
+                return
+            if not tv_series_id:
+                return await ctx.send("⛔ No such TV show found from given query.")
 
-        data = await self.get(f"{API_BASE}/tv/{tv_series_id}", {"api_key": api_key})
-        if not data:
-            return await ctx.send("⛔ Could not connect to TMDB API.")
+            data = await self.get(f"{API_BASE}/tv/{tv_series_id}", {"api_key": api_key})
+            if not data:
+                return await ctx.send("⛔ Could not connect to TMDB API.")
 
-        emb1 = self.tvshow_embed(await ctx.embed_colour(), data)
-        emb2 = discord.Embed(colour=await ctx.embed_colour(), title=data.get("name") or "")
-        emb2.url = f"https://www.themoviedb.org/tv/{data.get('id')}"
-        if data.get("production_countries"):
-            emb2.add_field(
-                name="Production Countries",
-                value=", ".join([m.get("name") for m in data["production_countries"]]),
-            )
-        if data.get("production_companies"):
-            emb2.add_field(
-                name="Production Compananies",
-                value=", ".join([m.get("name") for m in data["production_companies"]]),
-                inline=False,
-            )
+            emb1 = self.tvshow_embed(await ctx.embed_colour(), data)
+            emb2 = discord.Embed(colour=await ctx.embed_colour(), title=data.get("name") or "")
+            emb2.url = f"https://www.themoviedb.org/tv/{data.get('id')}"
+            if data.get("production_countries"):
+                emb2.add_field(
+                    name="Production Countries",
+                    value=", ".join([m.get("name") for m in data["production_countries"]]),
+                )
+            if data.get("production_companies"):
+                emb2.add_field(
+                    name="Production Companies",
+                    value=", ".join([m.get("name") for m in data["production_companies"]]),
+                    inline=False,
+                )
+            if data.get("tagline"):
+                emb2.add_field(name="Tagline", value=data["tagline"], inline=False)
+
         await menu(ctx, [emb1, emb2], DEFAULT_CONTROLS, timeout=120)
 
-    def suggestmovies_embed(self, colour, footer, data) -> discord.Embed:
+    def suggestmovies_embed(
+        self, colour: discord.Colour, footer: str, data: Dict[str, Any]
+    ) -> discord.Embed:
         embed = discord.Embed(
             colour=colour,
             title=data.get("title") or "",
@@ -357,33 +404,37 @@ class MovieDB(commands.Cog):
     @is_apikey_set()
     @commands.bot_has_permissions(add_reactions=True, embed_links=True)
     async def suggestmovies(self, ctx: commands.Context, *, query: str):
-        """Get similar movies suggestions based on a movie title."""
-        await ctx.trigger_typing()
-        api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
+        """Get similar movies suggestions based on the given movie title query."""
+        async with ctx.channel.typing():
+            api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
 
-        movie_id = await self.fetch_movie_id(ctx, api_key, query)
-        if movie_id is None:
-            return await ctx.send(f"Movie `{query[:50]}` ... not found.")
+            movie_id = await self.fetch_movie_id(ctx, api_key, query)
+            if movie_id == 0: # Operation cancelled
+                return
+            if not movie_id:
+                return await ctx.send(f"Movie `{query[:50]}` ... not found.")
 
-        output = await self.get(
-            f"{API_BASE}/movie/{movie_id}/recommendations", {"api_key": api_key}
-        )
-        if not output:
-            return await ctx.send("⛔ Could not connect to TMDB API.")
-        if not output.get("results"):
-            return await ctx.send("No recommendations found related to that movie. 🤔")
+            output = await self.get(
+                f"{API_BASE}/movie/{movie_id}/recommendations", {"api_key": api_key}
+            )
+            if not output:
+                return await ctx.send("⛔ Could not connect to TMDB API.")
+            if not output.get("results"):
+                return await ctx.send("No recommendations found related to that movie.")
 
-        pages = []
-        for i, data in enumerate(output.get("results"), start=1):
-            colour = await ctx.embed_colour()
-            footer = f"Page {i} of {len(output['results'])}"
-            pages.append(self.suggestmovies_embed(colour, footer, data))
+            pages = []
+            for i, data in enumerate(output.get("results"), start=1):
+                colour = await ctx.embed_colour()
+                footer = f"Page {i} of {len(output['results'])}"
+                pages.append(self.suggestmovies_embed(colour, footer, data))
 
         controls = {"❌": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
         await menu(ctx, pages, controls=controls, timeout=120)
         # await BaseMenu(ListPages(pages), ctx=ctx).start(ctx)
 
-    def suggestshows_embed(self, colour, footer, data) -> discord.Embed:
+    def suggestshows_embed(
+        self, colour: discord.Colour, footer: str, data: Dict[str, Any]
+    ) -> discord.Embed:
         embed = discord.Embed(
             title=data.get("name") or "",
             description=data.get("overview") or "",
@@ -406,27 +457,29 @@ class MovieDB(commands.Cog):
     @is_apikey_set()
     @commands.bot_has_permissions(add_reactions=True, embed_links=True)
     async def suggestshows(self, ctx: commands.Context, *, query: str):
-        """Get similar TV show suggestions from a TV series title."""
-        await ctx.trigger_typing()
-        api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
+        """Get similar TV show suggestions from the given TV series title query."""
+        async with ctx.channel.typing():
+            api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
 
-        tv_series_id = await self.fetch_tv_series_id(ctx, api_key, query)
-        if tv_series_id is None:
-            return await ctx.send(f"TV show `{query[:50]}` ... not found.")
+            tv_series_id = await self.fetch_tv_series_id(ctx, api_key, query)
+            if tv_series_id == 0: # Operation cancelled
+                return
+            if tv_series_id is None:
+                return await ctx.send(f"TV show `{query[:50]}` ... not found.")
 
-        output = await self.get(
-            f"{API_BASE}/tv/{tv_series_id}/recommendations", {"api_key": api_key}
-        )
-        if not output:
-            return await ctx.send("⛔ Could not connect to TMDB API.")
-        if not output.get("results"):
-            return await ctx.send("No recommendations found related to that movie. 🤔")
+            output = await self.get(
+                f"{API_BASE}/tv/{tv_series_id}/recommendations", {"api_key": api_key}
+            )
+            if not output:
+                return await ctx.send("⛔ Could not connect to TMDB API.")
+            if not output.get("results"):
+                return await ctx.send("No recommendations found related to that TV show.")
 
-        pages = []
-        for i, data in enumerate(output["results"], start=1):
-            colour = await ctx.embed_colour()
-            footer = f"Page {i} of {len(output['results'])}"
-            pages.append(self.suggestshows_embed(colour, footer, data))
+            pages = []
+            for i, data in enumerate(output["results"], start=1):
+                colour = await ctx.embed_colour()
+                footer = f"Page {i} of {len(output['results'])}"
+                pages.append(self.suggestshows_embed(colour, footer, data))
 
         controls = {"❌": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
         await menu(ctx, pages, controls=controls, timeout=120)
