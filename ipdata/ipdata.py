@@ -4,18 +4,21 @@ import aiohttp
 import discord
 from redbot.core import commands
 from redbot.core.utils.menus import DEFAULT_CONTROLS, close_menu, menu
-# from redbot.core.utils.dpy2_menus import BaseMenu, ListPages
 
 
 class IPData(commands.Cog):
     """Get basic geolocation info on a public IP address."""
 
-    __author__, __version__ = ("Author: ow0x", "Cog Version: 0.2.0")
+    __authors__ = ["ow0x"]
+    __version__ = "1.0.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
-        """Thanks Sinbad!"""
-        pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\n\n{self.__author__}\n{self.__version__}"
+        """Thanks Sinbad."""
+        return (
+            f"{super().format_help_for_context(ctx)}\n\n"
+            f"Authors:  {', '.join(self.__authors__)}\n"
+            f"Cog version:  v{self.__version__}"
+        )
 
     def __init__(self, bot) -> None:
         self.bot = bot
@@ -95,12 +98,12 @@ class IPData(commands.Cog):
         """Fetch basic geolocation data on a public IPv4 address."""
         api_key = (await ctx.bot.get_shared_api_tokens("ipdata")).get("api_key")
 
-        await ctx.trigger_typing()
-        data = await self._get_ip_data(ip_address, api_key)
-        if data is None:
-            return await ctx.send("Something went wrong while fetching data.")
-        elif type(data) is str:
-            return await ctx.send(data)
+        async with ctx.typing():
+            data = await self._get_ip_data(ip_address, api_key)
+            if data is None:
+                return await ctx.send("Something went wrong while fetching data.")
+            elif type(data) is str:
+                return await ctx.send(data)
 
         embed = self._make_embed(await ctx.embed_colour(), data)
         await menu(ctx, [embed], controls={"\u274c": close_menu}, timeout=90.0)
@@ -119,25 +122,24 @@ class IPData(commands.Cog):
         """
         api_key = (await ctx.bot.get_shared_api_tokens("ipdata")).get("api_key")
 
-        await ctx.trigger_typing()
-        if not ip_addresses: return await ctx.send_help()
-        if len(ip_addresses) > 20:
-            await ctx.send(
-                "Only first 20 IPs will be processed since you provided more than 20.",
-                delete_after=10.0,
-            )
+        async with ctx.typing():
+            if not ip_addresses: return await ctx.send_help()
+            if len(ip_addresses) > 20:
+                await ctx.send(
+                    "Only first 20 IPs is queried since you provided more than 20.",
+                    delete_after=10.0,
+                )
 
-        embeds = []
-        for i, ip_addr in enumerate(ip_addresses[:20], 1):
-            data = await self._get_ip_data(ip_addr, api_key)
-            if data is None or type(data) is str:
-                continue
-            embed = self._make_embed(await ctx.embed_colour(), data)
-            embed.set_footer(text=f"Page {i} of {len(ip_addresses)}")
-            embeds.append(embed)
+            embeds = []
+            for i, ip_addr in enumerate(ip_addresses[:20], 1):
+                data = await self._get_ip_data(ip_addr, api_key)
+                if data is None or type(data) is str:
+                    continue
+                embed = self._make_embed(await ctx.embed_colour(), data)
+                embed.set_footer(text=f"Page {i} of {len(ip_addresses)}")
+                embeds.append(embed)
 
-        if not embeds:
-            return await ctx.send("Sad trombone. No results. \U0001f626")
+            if not embeds:
+                return await ctx.send("Sad trombone. No results. \U0001f626")
 
         await menu(ctx, embeds, DEFAULT_CONTROLS, timeout=90.0)
-        # await BaseMenu(ListPages(embeds), timeout=90).start(ctx)

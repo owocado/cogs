@@ -1,7 +1,7 @@
-from redbot.core import commands
+from redbot.core.bot import Red
 
 from .jsk_cog import Jishaku
 
 
-def setup(bot: commands.Bot):
-    bot.add_cog(Jishaku(bot=bot))
+async def setup(bot: Red):
+    await bot.add_cog(Jishaku(bot=bot))

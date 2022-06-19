@@ -19,7 +19,6 @@ from redbot.core.bot import Red
 from redbot.core.data_manager import bundled_data_path
 from redbot.core.utils.chat_formatting import bold, humanize_number, pagify
 from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
-# from redbot.core.utils.dpy2_menus import BaseMenu, ListPages
 
 from .utils import BADGES, INTRO_GEN, INTRO_GAMES, STYLES, TRAINERS, Generation, get_generation
 
@@ -32,15 +31,18 @@ BULBAPEDIA_URL = "https://bulbapedia.bulbagarden.net/wiki"
 class Pokebase(commands.Cog):
     """Search for various info about a Pokémon and related data."""
 
-    __authors__, __version__ = ("Authors: ow0x, phalt", "Cog Version: 1.0.2")
+    __authors__ = ["ow0x", "phalt"]
+    __version__ = "1.1.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
-        """Thanks Sinbad!"""
-        pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\n\n{self.__authors__}\n{self.__version__}"
+        """Thanks Sinbad."""
+        return (
+            f"{super().format_help_for_context(ctx)}\n\n"
+            f"Authors:  {', '.join(self.__authors__)}\n"
+            f"Cog version:  v{self.__version__}"
+        )
 
-    def __init__(self, bot: Red) -> None:
-        self.bot = bot
+    def __init__(self) -> None:
         self.session = aiohttp.ClientSession()
 
     async def red_delete_data_for_user(self, **kwargs) -> None:
@@ -284,8 +286,6 @@ class Pokebase(commands.Cog):
                 embed.set_footer(text=f"Page {i} of {len(all_pages)}")
                 pages.append(embed)
         await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
-        # nice button menu for my dpy2 bot
-        # await BaseMenu(ListPages(pages), ctx=ctx).start(ctx)
 
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
@@ -483,38 +483,39 @@ class Pokebase(commands.Cog):
         """Fetch Pokémon cards based on Pokémon Trading Card Game (a.k.a Pokémon TCG)."""
         api_key = (await ctx.bot.get_shared_api_tokens("pokemontcg")).get("api_key")
         headers = {"X-Api-Key": api_key} if api_key else None
-        await ctx.trigger_typing()
-        base_url = f"https://api.pokemontcg.io/v2/cards?q=name:{query}"
-        try:
-            async with self.session.get(base_url, headers=headers) as response:
-                if response.status != 200:
-                    await ctx.send(f"https://http.cat/{response.status}")
-                    return
-                output = await response.json()
-        except asyncio.TimeoutError:
-            return await ctx.send("Operation timed out.")
+        async with ctx.typing():
+            base_url = f"https://api.pokemontcg.io/v2/cards?q=name:{query}"
+            try:
+                async with self.session.get(base_url, headers=headers) as response:
+                    if response.status != 200:
+                        await ctx.send(f"https://http.cat/{response.status}")
+                        return
+                    output = await response.json()
+            except asyncio.TimeoutError:
+                return await ctx.send("Operation timed out.")
 
-        if not output["data"]:
-            return await ctx.send("No results.")
+            if not output["data"]:
+                return await ctx.send("No results.")
 
-        pages = []
-        for i, data in enumerate(output["data"], 1):
-            embed = discord.Embed(colour=await ctx.embed_colour())
-            embed.title = data["name"]
-            embed.description = "**Rarity:** " + str(data.get("rarity"))
-            embed.add_field(name="Artist:", value=str(data.get("artist")))
-            embed.add_field(name="Belongs to Set:", value=str(data["set"]["name"]), inline=False)
-            embed.add_field(name="Set Release Date:", value=str(data["set"]["releaseDate"]))
-            embed.set_thumbnail(url=str(data["set"]["images"]["logo"]))
-            embed.set_image(url=str(data["images"]["large"]))
-            embed.set_footer(text=f"Page {i} of {len(output['data'])} • Powered by Pokémon TCG API!")
-            pages.append(embed)
+            pages = []
+            for i, data in enumerate(output["data"], 1):
+                embed = discord.Embed(colour=await ctx.embed_colour())
+                embed.title = data["name"]
+                embed.description = "**Rarity:** " + str(data.get("rarity"))
+                embed.add_field(name="Artist:", value=str(data.get("artist")))
+                embed.add_field(name="Belongs to Set:", value=str(data["set"]["name"]), inline=False)
+                embed.add_field(name="Set Release Date:", value=str(data["set"]["releaseDate"]))
+                embed.set_thumbnail(url=str(data["set"]["images"]["logo"]))
+                embed.set_image(url=str(data["images"]["large"]))
+                embed.set_footer(
+                    text=f"Page {i} of {len(output['data'])} • Powered by Pokémon TCG API!"
+                )
+                pages.append(embed)
 
         if len(pages) == 1:
             return await ctx.send(embed=pages[0])
-        else:
-            await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
-            # await BaseMenu(ListPages(pages), ctx=ctx).start(ctx)
+
+        await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
 
     @commands.command()
     @cached(ttl=86400, cache=SimpleMemoryCache)
@@ -655,7 +656,7 @@ class Pokebase(commands.Cog):
         """
         poke_id = generation or randint(1, 898)
         if_guessed_right = False
-        await ctx.channel.trigger_typing()
+
         temp = await self.generate_image(str(poke_id).zfill(3), True)
         if temp is None:
             return await ctx.send("Failed to generate whosthatpokemon card image.")
@@ -677,7 +678,7 @@ class Pokebase(commands.Cog):
         attempts = 0
         while attempts != 3:
             try:
-                guess = await self.bot.wait_for("message", timeout=30.0, check=check)
+                guess = await ctx.bot.wait_for("message", timeout=30.0, check=check)
             except asyncio.TimeoutError:
                 attempts = 3
                 with suppress(discord.NotFound, discord.HTTPException):

@@ -29,16 +29,16 @@ dockerclient = docker.from_env()
 class Manim(commands.Cog):
     """A cog for interacting with Manim python animation engine."""
 
-    __author__ = "Manim Community Developers, ow0x"
-    __version__ = "0.14.0"
+    __authors__ = ["Manim Community Developers", "ow0x"]
+    __version__ = "0.15.2"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
-        """Thanks Sinbad!"""
-        pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\n\nAuthor: {self.__author__}\nCog Version: {self.__version__}"
-
-    def __init__(self, bot: Red):
-        self.bot = bot
+        """Thanks Sinbad."""
+        return (
+            f"{super().format_help_for_context(ctx)}\n\n"
+            f"Authors:  {', '.join(self.__authors__)}\n"
+            f"Cog version:  v{self.__version__}"
+        )
 
     @commands.is_owner()
     @commands.command(aliases=["manimate"])
@@ -64,7 +64,7 @@ class Manim(commands.Cog):
         """
         async with ctx.typing():
             fake_task = functools.partial(self.construct_reply, snippet)
-            task = self.bot.loop.run_in_executor(None, fake_task)
+            task = ctx.bot.loop.run_in_executor(None, fake_task)
             try:
                 reply_args = await asyncio.wait_for(task, timeout=120)
             except asyncio.TimeoutError:

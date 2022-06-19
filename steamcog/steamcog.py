@@ -9,7 +9,6 @@ from html2text import html2text
 from redbot.core import commands
 from redbot.core.bot import Red
 from redbot.core.utils.menus import DEFAULT_CONTROLS, close_menu, menu
-# from redbot.core.utils.dpy2_menus import BaseMenu, ListPages
 
 from .stores import STORES
 
@@ -23,21 +22,25 @@ USER_AGENT = {
 class SteamCog(commands.Cog):
     """Get info about a Steam game and fetch cheap game deals for PC game(s)."""
 
-    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.1.0")
+    __authors__ = ["ow0x"]
+    __version__ = "1.2.0"
+
+    def format_help_for_context(self, ctx: commands.Context) -> str:
+        """Thanks Sinbad."""
+        return (
+            f"{super().format_help_for_context(ctx)}\n\n"
+            f"Authors:  {', '.join(self.__authors__)}\n"
+            f"Cog version:  v{self.__version__}"
+        )
 
     async def red_delete_data_for_user(self, **kwargs) -> None:
         """Nothing to delete"""
         pass
 
-    def format_help_for_context(self, ctx: commands.Context) -> str:
-        """Thanks Sinbad!"""
-        pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\n\n{self.__author__}\n{self.__version__}"
-
     def __init__(self, bot: Red) -> None:
         self.bot = bot
         self.session = aiohttp.ClientSession()
-        self.emojis = self.bot.loop.create_task(self.init())
+        self.emojis = asyncio.create_task(self.init())
 
     def cog_unload(self) -> None:
         if self.emojis:
@@ -95,7 +98,7 @@ class SteamCog(commands.Cog):
                 )
 
             try:
-                choice = await self.bot.wait_for("message", timeout=60.0, check=check)
+                choice = await ctx.bot.wait_for("message", timeout=60.0, check=check)
             except asyncio.TimeoutError:
                 choice = None
             if choice is None or choice.content.strip() == "0":
@@ -173,33 +176,34 @@ class SteamCog(commands.Cog):
     @commands.bot_has_permissions(add_reactions=True, embed_links=True, read_message_history=True)
     async def steam(self, ctx: commands.Context, *, query: str) -> None:
         """Fetch basic info about a Steam game all from the comfort of your Discord home."""
-        await ctx.trigger_typing()
-        # TODO: remove this temp fix once game is released
-        if query.lower() == "lost ark":
-            app_id = 1599340
-        else:
-            app_id = await self.fetch_steam_game_id(ctx, query)
+        async with ctx.typing():
+            # TODO: remove this temp fix once game is released
+            if query.lower() == "lost ark":
+                app_id = 1599340
+            else:
+                app_id = await self.fetch_steam_game_id(ctx, query)
 
-        if app_id is None:
-            return await ctx.send("Could not find any results.")
-        base_url = "https://store.steampowered.com/api/appdetails"
-        data = await self.get(base_url, {"appids": str(app_id), "l": "en", "cc": "us", "json": 1})
-        if not data:
-            return await ctx.send("Something went wrong while querying Steam.")
-        colour = await ctx.embed_colour()
-        app_data = data[f"{app_id}"].get("data")
+            if app_id is None:
+                return await ctx.send("Could not find any results.")
+            base_url = "https://store.steampowered.com/api/appdetails"
+            data = await self.get(
+                base_url, {"appids": str(app_id), "l": "en", "cc": "us", "json": 1}
+            )
+            if not data:
+                return await ctx.send("Something went wrong while querying Steam.")
+            colour = await ctx.embed_colour()
+            app_data = data[f"{app_id}"].get("data")
 
-        pages: PageType = [self.steam_embed((app_id, colour), app_data)]
-        if app_data.get("screenshots"):
-            for i, preview in enumerate(app_data["screenshots"], start=1):
-                meta = (colour, app_id, app_data["name"])
-                embed = self.game_previews_embed(meta, preview.get("path_full", ""))
-                embed.set_footer(text=f"Preview {i} of {len(app_data['screenshots'])}")
-                pages.append(embed)
+            pages: PageType = [self.steam_embed((app_id, colour), app_data)]
+            if app_data.get("screenshots"):
+                for i, preview in enumerate(app_data["screenshots"], start=1):
+                    meta = (colour, app_id, app_data["name"])
+                    embed = self.game_previews_embed(meta, preview.get("path_full", ""))
+                    embed.set_footer(text=f"Preview {i} of {len(app_data['screenshots'])}")
+                    pages.append(embed)
 
         controls = {"\u274c": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
         await menu(ctx, pages, controls=controls, timeout=90.0)
-        # await BaseMenu(ListPages(pages), timeout=90, ctx=ctx).start(ctx)
 
     @staticmethod
     def gamereqs_embed(meta, app: Dict[str, Any]) -> PageType:
@@ -233,30 +237,31 @@ class SteamCog(commands.Cog):
     @commands.bot_has_permissions(embed_links=True, read_message_history=True)
     async def game_system_requirements(self, ctx: commands.Context, *, query: str) -> None:
         """Fetch system requirements for a Steam game, both minimum and recommended if any."""
-        await ctx.trigger_typing()
-        # TODO: remove this temp fix once game is released
-        if query.lower() == "lost ark":
-            app_id = 1599340
-        else:
-            app_id = await self.fetch_steam_game_id(ctx, query)
+        async with ctx.typing():
+            # TODO: remove this temp fix once game is released
+            if query.lower() == "lost ark":
+                app_id = 1599340
+            else:
+                app_id = await self.fetch_steam_game_id(ctx, query)
 
-        if app_id is None:
-            return await ctx.send("Could not find any results.")
+            if app_id is None:
+                return await ctx.send("Could not find any results.")
 
-        base_url = "https://store.steampowered.com/api/appdetails"
-        data = await self.get(base_url, {"appids": str(app_id), "l": "en", "cc": "us", "json": 1})
-        if not data:
-            return await ctx.send("Something went wrong while querying Steam.")
+            base_url = "https://store.steampowered.com/api/appdetails"
+            data = await self.get(
+                base_url, {"appids": str(app_id), "l": "en", "cc": "us", "json": 1}
+            )
+            if not data:
+                return await ctx.send("Something went wrong while querying Steam.")
 
-        app_data = data[f"{app_id}"].get("data")
-        meta = (app_id, await ctx.embed_colour())
-        pages: PageType = self.gamereqs_embed(meta, app_data)
-        if not pages:
-            return await ctx.send("Hmmm, no system requirements found for this game on Steam!")
+            app_data = data[f"{app_id}"].get("data")
+            meta = (app_id, await ctx.embed_colour())
+            pages: PageType = self.gamereqs_embed(meta, app_data)
+            if not pages:
+                return await ctx.send("Hmmm, no system requirements found for this game on Steam!")
 
         controls = {"\u274c": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
         await menu(ctx, pages, controls=controls, timeout=60.0)
-        # await BaseMenu(ListPages(pages), timeout=90, ctx=ctx).start(ctx)
 
     async def fetch_deal_id(self, ctx: commands.Context, query: str) -> Optional[int]:
         url = f"https://www.cheapshark.com/api/1.0/games?title={query}"
@@ -283,7 +288,7 @@ class SteamCog(commands.Cog):
                 )
 
             try:
-                choice = await self.bot.wait_for("message", timeout=60.0, check=check)
+                choice = await ctx.bot.wait_for("message", timeout=60.0, check=check)
             except asyncio.TimeoutError:
                 choice = None
 
@@ -332,19 +337,19 @@ class SteamCog(commands.Cog):
         if deal_id is None:
             return await ctx.send("No results.")
 
-        await ctx.trigger_typing()
-        deal_url = f"https://www.cheapshark.com/api/1.0/deals?id={deal_id}"
-        data = await self.get(deal_url, None)
-        if not data:
-            return await ctx.send("\u26d4 Something went wrong while querying CheapShark API!")
+        async with ctx.typing():
+            deal_url = f"https://www.cheapshark.com/api/1.0/deals?id={deal_id}"
+            data = await self.get(deal_url, None)
+            if not data:
+                return await ctx.send("\u26d4 Could not query CheapShark API!")
 
-        all_stores = await self.get("https://www.cheapshark.com/api/1.0/stores", None)
-        if all_stores:
-            STORES = {x["storeID"]: x["storeName"] for x in all_stores}
-        if data["gameInfo"].get("salePrice") == data["gameInfo"].get("retailPrice"):
-            return await ctx.send("This game currently has no cheaper deals.")
-        embed = self.gamedeal_embed(STORES, deal_id, data)
-        await ctx.send(embed=embed)
+            all_stores = await self.get("https://www.cheapshark.com/api/1.0/stores", None)
+            if all_stores:
+                STORES = {x["storeID"]: x["storeName"] for x in all_stores}
+            if data["gameInfo"].get("salePrice") == data["gameInfo"].get("retailPrice"):
+                return await ctx.send("This game currently has no cheaper deals.")
+            embed = self.gamedeal_embed(STORES, deal_id, data)
+            return await ctx.send(embed=embed)
 
     @staticmethod
     def latestdeals_embed(meta: tuple, stores, data: Dict[str, Any]) -> discord.Embed:
@@ -399,21 +404,20 @@ class SteamCog(commands.Cog):
             return await ctx.send(f"`sort_by` can only be one of `{', '.join(allowed_sorts)}`")
 
         base_url = f"https://www.cheapshark.com/api/1.0/deals?sortBy={sort_by}"
-        await ctx.trigger_typing()
-        results = await self.get(base_url, None)
-        all_stores = await self.get("https://www.cheapshark.com/api/1.0/stores", None)
-        if all_stores:
-            STORES = {x["storeID"]: x["storeName"] for x in all_stores}
+        async with ctx.typing():
+            results = await self.get(base_url, None)
+            all_stores = await self.get("https://www.cheapshark.com/api/1.0/stores", None)
+            if all_stores:
+                STORES = {x["storeID"]: x["storeName"] for x in all_stores}
 
-        if not results:
-            return await ctx.send("\u26d4 Something went wrong while querying CheapShark API!")
+            if not results:
+                return await ctx.send("\u26d4 Could not query CheapShark API!")
 
-        pages: PageType = []
-        for i, data in enumerate(results, 1):
-            meta = (i, len(results), await ctx.embed_color())
-            em = self.latestdeals_embed(meta, STORES, data)
-            pages.append(em)
+            pages: PageType = []
+            for i, data in enumerate(results, 1):
+                meta = (i, len(results), await ctx.embed_color())
+                em = self.latestdeals_embed(meta, STORES, data)
+                pages.append(em)
 
         controls = {"\u274c": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
         await menu(ctx, pages, controls=controls, timeout=90.0)
-        # await BaseMenu(ListPages(pages), timeout=90, ctx=ctx).start(ctx)

@@ -2,31 +2,39 @@ import aiohttp
 import asyncio
 
 from io import BytesIO
-from typing import Optional
+from typing import Literal, Optional
 
 import discord
 from redbot.core import commands
+
+MAP_TYPES = ["roadmap", "satellite", "terrain", "hybrid"]
 
 
 class Maps(commands.Cog):
     """Fetch a Google map of a specific location."""
 
-    __author__ = "siu3334 (<@306810730055729152>)"
-    __version__ = "1.0.1"
+    __authors__ = ["ow0x"]
+    __version__ = "1.0.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
-        """Thanks Sinbad!"""
-        pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\n\nAuthor: {self.__author__}\nCog Version: {self.__version__}"
-
-    def __init__(self, bot):
-        self.bot = bot
-        self.maptypes = ["roadmap", "satellite", "terrain", "hybrid"]
+        """Thanks Sinbad."""
+        return (
+            f"{super().format_help_for_context(ctx)}\n\n"
+            f"Authors:  {', '.join(self.__authors__)}\n"
+            f"Cog version:  v{self.__version__}"
+        )
 
     @commands.command()
     @commands.is_owner()
     @commands.bot_has_permissions(attach_files=True)
-    async def map(self, ctx: commands.Context, zoom: Optional[int], maptype: str, *, location: str):
+    async def map(
+        self,
+        ctx: commands.Context,
+        zoom: Optional[int],
+        maptype: Literal["roadmap", "satellite", "terrain", "hybrid"],
+        *,
+        location: str
+    ):
         """Fetch a Google map of a specific location in various modes.
 
         `zoom` parameter accepts values between 1 and 20
@@ -57,7 +65,7 @@ class Maps(commands.Cog):
             return await ctx.send_help()
 
         zoom = zoom if (zoom and 1 <= zoom <= 20) else 12
-        maptype = "roadmap" if maptype not in self.maptypes else maptype
+        maptype = "roadmap" if maptype not in MAP_TYPES else maptype
 
         async with ctx.typing():
             base_url = "https://maps.googleapis.com/maps/api/staticmap"

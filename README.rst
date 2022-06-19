@@ -56,4 +56,4 @@ Credits
 Contact
 -------
 
-My discord tag is ``òwó#0055`` if you want to DM. I have a `Discord server <https://discord.gg/2kEJ3tFmaQ>`_ if you need any help from me.
+I have a `Discord server <https://discord.gg/2kEJ3tFmaQ>`_ if you need any help from me.

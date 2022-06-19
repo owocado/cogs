@@ -13,16 +13,18 @@ from .converter import ImageFinder
 class OCR(commands.Cog):
     """Detect text in images using ocr.space or Google Cloud Vision API."""
 
-    __authors__ = "Authors: <@306810730055729152>, TrustyJAID"
-    __version__ = "Cog Version: 0.3.3"
+    __authors__ = ["TrustyJAID", "ow0x"]
+    __version__ = "1.0.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
-        """Thanks Sinbad!"""
-        pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\n\n{self.__authors__}\n{self.__version__}"
+        """Thanks Sinbad."""
+        return (
+            f"{super().format_help_for_context(ctx)}\n\n"
+            f"Authors:  {', '.join(self.__authors__)}\n"
+            f"Cog version:  v{self.__version__}"
+        )
 
-    def __init__(self, bot: Red):
-        self.bot = bot
+    def __init__(self):
         self.sussy_string = "7d3306461d88957"
         self.session = aiohttp.ClientSession()
 
@@ -32,26 +34,6 @@ class OCR(commands.Cog):
     async def red_delete_data_for_user(self, **kwargs) -> None:
         """Nothing to delete"""
         pass
-
-    @commands.command()
-    @commands.cooldown(1, 5, commands.BucketType.user)
-    @commands.bot_has_permissions(read_message_history=True)
-    async def freeocr(self, ctx: commands.Context, *, image: ImageFinder = None):
-        """Detect text in an image through ocr.space API.
-
-        This usually gives poor or subpar results for non latin text in images.
-        This also assumes the text in image will be in English language.
-        """
-        await ctx.trigger_typing()
-        if image is None:
-            if ctx.message.reference:
-                message = ctx.message.reference.resolved
-                image = await ImageFinder().find_images_in_replies(message)
-            else:
-                image = await ImageFinder().search_for_images(ctx)
-        if not image:
-            return await ctx.send("No images or direct image links were detected. 😢")
-        await self._free_ocr(ctx, image[0])
 
     async def _free_ocr(self, ctx: commands.Context, image: str):
         file_type = image.split(".").pop().upper()
@@ -88,7 +70,7 @@ class OCR(commands.Cog):
 
         return await ctx.send(result["ParsedResults"][0].get("ParsedText"))
 
-    @commands.command()
+    @commands.command(aliases=["freeocr"])
     @commands.cooldown(1, 5, commands.BucketType.user)
     @commands.bot_has_permissions(read_message_history=True)
     async def ocr(
@@ -105,37 +87,38 @@ class OCR(commands.Cog):
         """
         api_key = (await ctx.bot.get_shared_api_tokens("google_vision")).get("api_key")
 
-        await ctx.trigger_typing()
-        if image is None:
-            if ctx.message.reference:
-                message = ctx.message.reference.resolved
-                image = await ImageFinder().find_images_in_replies(message)
-            else:
-                image = await ImageFinder().search_for_images(ctx)
-        if not image:
-            return await ctx.send("No images or direct image links were detected. 😢")
+        async with ctx.typing():
+            if image is None:
+                if ctx.message.reference:
+                    message = ctx.message.reference.resolved
+                    image = await ImageFinder().find_images_in_replies(message)
+                else:
+                    image = await ImageFinder().search_for_images(ctx)
+            if not image:
+                return await ctx.send("No images or direct image links were detected. 😢")
 
-        if not api_key:
-            return await self._free_ocr(ctx, image[0])
-        base_url = f"https://vision.googleapis.com/v1/images:annotate?key={api_key}"
-        headers = {"Content-Type": "application/json;charset=utf-8"}
-        detect_type = "DOCUMENT_TEXT_DETECTION" if detect_handwriting else "TEXT_DETECTION"
-        payload = {
-            "requests": [
-                {
-                    "image": {"source": {"imageUri": image[0]}},
-                    "features": [{"type": detect_type}],
-                }
-            ]
-        }
+            if not api_key:
+                return await self._free_ocr(ctx, image[0])
 
-        try:
-            async with self.session.post(base_url, json=payload, headers=headers) as response:
-                if response.status != 200:
-                    return await ctx.send(f"https://http.cat/{response.status}")
-                data = await response.json()
-        except asyncio.TimeoutError:
-            return await ctx.send("Operation timed out.")
+            base_url = f"https://vision.googleapis.com/v1/images:annotate?key={api_key}"
+            headers = {"Content-Type": "application/json;charset=utf-8"}
+            detect_type = "DOCUMENT_TEXT_DETECTION" if detect_handwriting else "TEXT_DETECTION"
+            payload = {
+                "requests": [
+                    {
+                        "image": {"source": {"imageUri": image[0]}},
+                        "features": [{"type": detect_type}],
+                    }
+                ]
+            }
+
+            try:
+                async with self.session.post(base_url, json=payload, headers=headers) as response:
+                    if response.status != 200:
+                        return await ctx.send(f"https://http.cat/{response.status}")
+                    data = await response.json()
+            except asyncio.TimeoutError:
+                return await ctx.send("Operation timed out.")
 
         output = data.get("responses")
         if output is None or output[0] == {}:

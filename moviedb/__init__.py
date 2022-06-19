@@ -1,4 +1,4 @@
-import discord
+from discord.utils import maybe_coroutine
 from redbot.core.bot import Red
 
 from .moviedb import MovieDB
@@ -7,4 +7,4 @@ __red_end_user_data_statement__ = "This cog does not persistently store data abo
 
 
 async def setup(bot: Red):
-    await discord.utils.maybe_coroutine(bot.add_cog, MovieDB())
+    await maybe_coroutine(bot.add_cog, MovieDB())

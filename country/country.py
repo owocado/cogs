@@ -6,7 +6,6 @@ import discord
 from redbot.core import commands
 from redbot.core.utils.chat_formatting import humanize_number
 from redbot.core.utils.menus import DEFAULT_CONTROLS, close_menu, menu
-# from redbot.core.utils.dpy2_menus import BaseMenu, ListPages
 
 from .iso3166 import ALPHA3_CODES
 
@@ -14,39 +13,44 @@ from .iso3166 import ALPHA3_CODES
 class Country(commands.Cog):
     """Shows basic statistics and info about a country."""
 
-    __author__ , __version__ = ("Author: ow0x", "Cog Version: 0.1.0")
+    __authors__ = ["ow0x"]
+    __version__ = "1.0.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
-        """Thanks Sinbad!"""
-        pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\n\n{self.__author__}\n{self.__version__}"
+        """Thanks Sinbad."""
+        return (
+            f"{super().format_help_for_context(ctx)}\n\n"
+            f"Authors:  {', '.join(self.__authors__)}\n"
+            f"Cog version:  v{self.__version__}"
+        )
 
     @commands.command()
     @commands.bot_has_permissions(embed_links=True, add_reactions=True)
     async def country(self, ctx: commands.Context, *, name: str):
         """Fetch some basic statistics and info about a country."""
-        await ctx.trigger_typing()
-        try:
-            async with aiohttp.request("GET", f"https://restcountries.com/v2/name/{name}") as resp:
-                    if resp.status != 200:
-                        return await ctx.send(f"https://http.cat/{resp.status}")
-                    result = await resp.json()
-        except asyncio.TimeoutError:
-            return await ctx.send("Operation timed out.")
+        async with ctx.typing():
+            try:
+                async with aiohttp.request(
+                    "GET", f"https://restcountries.com/v2/name/{name}"
+                ) as resp:
+                        if resp.status != 200:
+                            return await ctx.send(f"https://http.cat/{resp.status}")
+                        result = await resp.json()
+            except asyncio.TimeoutError:
+                return await ctx.send("Operation timed out.")
 
-        if isinstance(result, dict):
-            return await ctx.send(f"{result['status']} {result['message']}")
+            if isinstance(result, dict):
+                return await ctx.send(f"{result['status']} {result['message']}")
 
-        pages = []
-        for i, data in enumerate(result, start=1):
-            colour = await ctx.embed_colour()
-            footer = f"Page {i} of {len(result)} • Powered by restcountries.com"
-            embed = self.country_embed(colour, footer, data)
-            pages.append(embed)
+            pages = []
+            for i, data in enumerate(result, start=1):
+                colour = await ctx.embed_colour()
+                footer = f"Page {i} of {len(result)} • Powered by restcountries.com"
+                embed = self.country_embed(colour, footer, data)
+                pages.append(embed)
 
         controls = {"": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
         await menu(ctx, pages, controls=controls, timeout=90.0)
-        # await BaseMenu(ListPages(pages), ctx=ctx).start(ctx)
 
     @staticmethod
     def country_embed(colour, footer, data):

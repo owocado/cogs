@@ -1,13 +1,12 @@
 {
     "name": "Jishaku",
-    "short": "Jishaku v2.3.2 ported for Red-DiscordBot.",
-    "description": "Jishaku v2.3.2, a debugging and testing cog for discord.py rewrite bots, ported for Red.",
+    "short": "Jishaku by Gorialis ported for Red-DiscordBot.",
+    "description": "Jishaku, a debugging and testing cog for discord.py rewrite bots, ported for Red.",
     "install_msg": "This is a port of Jishaku module for Red; originally made by Gorialis over at <https://github.com/Gorialis/jishaku>\n Uninstall this cog if you do not know what this cog or Jishaku does.\n\n**With great power comes great responsibilities. Use this wisely or feel pain.**",
-    "author": ["Gorialis"],
-    "required_cogs": {},
+    "author": ["Gorialis", "ow0x"],
     "requirements": ["git+https://github.com/ow0x/jishaku"],
     "tags": ["jishaku", "jsk"],
-    "min_bot_version": "3.4.12",
+    "min_bot_version": "3.5.0",
     "hidden": false,
     "disabled": false,
     "type": "COG"

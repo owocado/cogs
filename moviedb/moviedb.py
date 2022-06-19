@@ -9,7 +9,6 @@ from redbot.core import commands
 from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import pagify
 from redbot.core.utils.menus import DEFAULT_CONTROLS, close_menu, menu
-# from redbot.core.utils.dpy2_menus import BaseMenu, ListPages
 
 API_BASE = "https://api.themoviedb.org/3"
 CDN_BASE = "https://image.tmdb.org/t/p/original"
@@ -430,7 +429,6 @@ class MovieDB(commands.Cog):
 
         controls = {"❌": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
         await menu(ctx, pages, controls=controls, timeout=120)
-        # await BaseMenu(ListPages(pages), ctx=ctx).start(ctx)
 
     def suggestshows_embed(
         self, colour: discord.Colour, footer: str, data: Dict[str, Any]
@@ -483,4 +481,3 @@ class MovieDB(commands.Cog):
 
         controls = {"❌": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
         await menu(ctx, pages, controls=controls, timeout=120)
-        # await BaseMenu(ListPages(pages), ctx=ctx).start(ctx)

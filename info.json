@@ -1,7 +1,7 @@
 {
     "author" : ["ow0x (<@306810730055729152>)"],
-    "install_msg" : "Hi, thanks for adding my repo. If you find my cogs enjoying and useful, please star my cog repo on GitHub. 🙂 🙏🏼",
+    "install_msg" : "Hi, thanks for adding my repo. If you find my cogs useful, maybe star my cog repo on GitHub. 🙂 🙏🏼",
     "name" : "owo-cogs",
-    "short" : "Some fun and useful utility cogs for Red Discord Bot",
-    "description" : "Some fun and useful utility cogs for Red Discord Bot"
+    "short" : "Some fun and utility cogs for Red-DiscordBot",
+    "description" : "Some fun and utility cogs for Red-DiscordBot"
 }

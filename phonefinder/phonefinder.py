@@ -22,22 +22,25 @@ HEAD = {
     "Accept": "text/html,application/xhtml+xml,application/xml",
     "Accept-Encoding": "gzip, deflate, br",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-    " (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
+    " (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
 }
 
 
 class PhoneFinder(commands.Cog):
     """Fetch device specs for a (smart)phone model from GSMArena."""
 
-    __author__, __version__ = ("Author: ow0x", "Cog Version: 1.1.1")
+    __authors__ = ["ow0x"]
+    __version__ = "1.2.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
-        """Thanks Sinbad!"""
-        pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\n\n{self.__author__}\n{self.__version__}"
+        """Thanks Sinbad."""
+        return (
+            f"{super().format_help_for_context(ctx)}\n\n"
+            f"Authors:  {', '.join(self.__authors__)}\n"
+            f"Cog version:  v{self.__version__}"
+        )
 
-    def __init__(self, bot) -> None:
-        self.bot = bot
+    def __init__(self) -> None:
         self.session = aiohttp.ClientSession()
 
     def cog_unload(self) -> None:
@@ -101,84 +104,85 @@ class PhoneFinder(commands.Cog):
         if not endpoint:
             return await ctx.send("No results found for your query.")
 
-        await ctx.trigger_typing()
-        url = f"https://www.gsmarena.com/{endpoint}"
+        async with ctx.typing():
+            url = f"https://www.gsmarena.com/{endpoint}"
 
-        try:
-            async with self.session.get(url, headers=HEAD) as response:
-                if response.status != 200:
-                    return await ctx.send(f"https://http.cat/{response.status}")
-                html = await response.text()
-        except asyncio.TimeoutError:
-            return await ctx.send("Operation timed out.")
+            try:
+                async with self.session.get(url, headers=HEAD) as response:
+                    if response.status != 200:
+                        return await ctx.send(f"https://http.cat/{response.status}")
+                    html = await response.text()
+            except asyncio.TimeoutError:
+                return await ctx.send("Operation timed out.")
 
-        soup = bsp(html, features="html.parser")
-        html_title = soup.find_all("title")[0].text
+            soup = bsp(html, features="html.parser")
+            html_title = soup.find_all("title")[0].text
 
-        # You probably got temporary IP banned by GSM Arena
-        if "Too" in html_title:
-            return await ctx.send(html_title)
+            # You probably got temporary IP banned by GSM Arena
+            if "Too" in html_title:
+                return await ctx.send(html_title)
 
-        def get_spec(query: str, key: str = "data-spec", class_: str = "td"):
-            result = soup.find(class_, {key: query})
-            return result.text if result else "N/A"
+            def get_spec(query: str, key: str = "data-spec", class_: str = "td"):
+                result = soup.find(class_, {key: query})
+                return result.text if result else "N/A"
 
-        embed = discord.Embed(colour=await ctx.embed_colour())
-        embed.title = str(get_spec("specs-phone-name-title", "class", "h1"))
-        embed.url = url
-        embed.set_author(name="GSM Arena", icon_url="https://i.imgur.com/lYfT1kn.png")
-        phone_thumb = cast(element.Tag, soup.find("div", {"class": "specs-photo-main"}))
-        if phone_thumb:
-            embed.set_thumbnail(url=str(phone_thumb.img.get("src")))
+            embed = discord.Embed(colour=await ctx.embed_colour())
+            embed.title = str(get_spec("specs-phone-name-title", "class", "h1"))
+            embed.url = url
+            embed.set_author(name="GSM Arena", icon_url="https://i.imgur.com/lYfT1kn.png")
+            phone_thumb = cast(element.Tag, soup.find("div", {"class": "specs-photo-main"}))
+            if phone_thumb:
+                embed.set_thumbnail(url=str(phone_thumb.img.get("src")))
 
-        overview = (
-            f"🗓 › **{get_spec('released-hl', class_='span')}**\n\n"
-            f"📱  **OS**: {get_spec('os-hl', class_='span')}\n"
-            f"•  **Body**: {get_spec('body-hl', class_='span')}\n"
-            f"•  **Internal**: {get_spec('internalmemory')}\n"
-            f"•  **Storage Type**: {get_spec('memoryother')}\n\n"
-            f"•  **Chipset:** {get_spec('chipset')}\n"
-            f"•  **CPU**: {get_spec('cpu')}\n"
-            f"•  **GPU**: {get_spec('gpu')}\n"
-            f"•  **Battery**: {get_spec('batdescription1')}\n\n"
-        )
-        display = (
-            f"**Type:** {get_spec('displaytype')}\n"
-            f"**Size:** {get_spec('displaysize')}\n"
-            f"**Resolution:** {get_spec('displayresolution')}\n"
-            f"**Protection:** {get_spec('displayprotection')}\n"
-        )
-        mode = get_spec("cam1modules").replace("\n", " »  ")
-        main_camera = (
-            f"**Mode**: {mode}\n"
-            f"**Features**: {get_spec('cam1features')}\n"
-            f"**Video**: {get_spec('cam1video')}\n\n"
-        )
-        selfie_camera = (
-            f"**Mode**: {get_spec('cam2modules')}\n"
-            f"**Features**: {get_spec('cam2features')}\n"
-            f"**Video**: {get_spec('cam2video')}\n\n"
-        )
-        misc_comms = (
-            f"**WLAN**: {get_spec('wlan')}\n"
-            f"**Bluetooth**: {get_spec('bluetooth')}\n"
-            f"**GPS**: {get_spec('gps')}\n"
-            f"**USB**: {get_spec('usb')}\n"
-            f"**NFC**: {get_spec('nfc')}\n"
-            f"**Sensors**: {get_spec('sensors')}\n\n"
-        )
-        sar = f"• **SAR US**: {get_spec('sar-us')}\n" + f"• **SAR EU**: {get_spec('sar-eu')}"
+            overview = (
+                f"🗓 › **{get_spec('released-hl', class_='span')}**\n\n"
+                f"📱  **OS**: {get_spec('os-hl', class_='span')}\n"
+                f"•  **Body**: {get_spec('body-hl', class_='span')}\n"
+                f"•  **Internal**: {get_spec('internalmemory')}\n"
+                f"•  **Storage Type**: {get_spec('memoryother')}\n\n"
+                f"•  **Chipset:** {get_spec('chipset')}\n"
+                f"•  **CPU**: {get_spec('cpu')}\n"
+                f"•  **GPU**: {get_spec('gpu')}\n"
+                f"•  **Battery**: {get_spec('batdescription1')}\n\n"
+            )
+            display = (
+                f"**Type:** {get_spec('displaytype')}\n"
+                f"**Size:** {get_spec('displaysize')}\n"
+                f"**Resolution:** {get_spec('displayresolution')}\n"
+                f"**Protection:** {get_spec('displayprotection')}\n"
+            )
+            mode = get_spec("cam1modules").replace("\n", " »  ")
+            main_camera = (
+                f"**Mode**: {mode}\n"
+                f"**Features**: {get_spec('cam1features')}\n"
+                f"**Video**: {get_spec('cam1video')}\n\n"
+            )
+            selfie_camera = (
+                f"**Mode**: {get_spec('cam2modules')}\n"
+                f"**Features**: {get_spec('cam2features')}\n"
+                f"**Video**: {get_spec('cam2video')}\n\n"
+            )
+            misc_comms = (
+                f"**WLAN**: {get_spec('wlan')}\n"
+                f"**Bluetooth**: {get_spec('bluetooth')}\n"
+                f"**GPS**: {get_spec('gps')}\n"
+                f"**USB**: {get_spec('usb')}\n"
+                f"**NFC**: {get_spec('nfc')}\n"
+                f"**Sensors**: {get_spec('sensors')}\n\n"
+            )
+            sar = f"• **SAR US**: {get_spec('sar-us')}\n" + f"• **SAR EU**: {get_spec('sar-eu')}"
 
-        embed.description = overview + sar
-        embed.add_field(name="📱   DISPLAY:", value=display, inline=False)
-        embed.add_field(name="📸   MAIN CAMERA:", value=main_camera, inline=False)
-        embed.add_field(name="📷   SELFIE CAMERA:", value=selfie_camera, inline=False)
-        embed.add_field(name="📡   MISC. COMMS:", value=misc_comms, inline=False)
-        fans = get_spec("help-fans", key="class", class_="li").split("\n")[2]
-        hits = cast(element.Tag, soup.find("li", {"class": "help-popularity"}))
-        embed.set_footer(
-            text=f"Fans: {fans} • Popularity: 📈 +{hits.strong.text} ({hits.span.text})"
-        )
+            embed.description = overview + sar
+            embed.add_field(name="📱   DISPLAY:", value=display, inline=False)
+            embed.add_field(name="📸   MAIN CAMERA:", value=main_camera, inline=False)
+            embed.add_field(name="📷   SELFIE CAMERA:", value=selfie_camera, inline=False)
+            embed.add_field(name="📡   MISC. COMMS:", value=misc_comms, inline=False)
+            fans = get_spec("help-fans", key="class", class_="li").split("\n")[2]
+            hits = cast(element.Tag, soup.find("li", {"class": "help-popularity"}))
+            embed.set_footer(
+                text=f"Fans: {fans} • Popularity: 📈 +{hits.strong.text} ({hits.span.text})"
+            )
+
         await ctx.send(embed=embed)
 
     @commands.command(hidden=True)

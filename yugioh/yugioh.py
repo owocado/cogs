@@ -6,19 +6,21 @@ import discord
 from redbot.core import commands
 from redbot.core.utils.chat_formatting import humanize_number
 from redbot.core.utils.menus import DEFAULT_CONTROLS, close_menu, menu
-# from redbot.core.utils.dpy2_menus import BaseMenu, ListPages
 
 
 class YGO(commands.Cog):
     """Get nerdy info on a Yu-Gi-Oh! card or pull a random card."""
 
-    __authors__ = "ow0x, dragonfire535"
-    __version__ = "0.1.0"
+    __authors__ = ["ow0x", "dragonfire535"]
+    __version__ = "1.0.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
-        """Thanks Sinbad!"""
-        pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\n\nAuthor: {self.__author__}\nCog Version: {self.__version__}"
+        """Thanks Sinbad."""
+        return (
+            f"{super().format_help_for_context(ctx)}\n\n"
+            f"Authors:  {', '.join(self.__authors__)}\n"
+            f"Cog version:  v{self.__version__}"
+        )
 
     async def red_delete_data_for_user(self, **kwargs) -> None:
         """Nothing to delete"""
@@ -70,38 +72,37 @@ class YGO(commands.Cog):
     @commands.bot_has_permissions(add_reactions=True, embed_links=True)
     async def ygocard(self, ctx: commands.Context, *, card_name: str):
         """Search for a Yu-Gi-Oh! card."""
-        await ctx.trigger_typing()
-        base_url = f"https://db.ygoprodeck.com/api/v7/cardinfo.php?fname={card_name}"
-        card_data = await self.get(ctx, base_url)
-        if not card_data: return
-        if not card_data["data"]: return await ctx.send("No results.")
+        async with ctx.typing():
+            base_url = f"https://db.ygoprodeck.com/api/v7/cardinfo.php?fname={card_name}"
+            card_data = await self.get(ctx, base_url)
+            if not card_data: return
+            if not card_data["data"]: return await ctx.send("No results.")
 
-        pages = []
-        for i, data in enumerate(card_data["data"], start=1):
-            colour = await ctx.embed_colour()
-            page_meta = f"Page {i} of {len(card_data['data'])} | Card Level: "
-            race_or_spell = "Race:" if "Monster" in data["type"] else "Spell Type:"
-            footer = f"{page_meta}{data.get('level', 'N/A')} | {race_or_spell}: {data['race']}"
-            embed = self.generate_embed(colour, footer, data)
-            pages.append(embed)
+            pages = []
+            for i, data in enumerate(card_data["data"], start=1):
+                colour = await ctx.embed_colour()
+                page_meta = f"Page {i} of {len(card_data['data'])} | Card Level: "
+                race_or_spell = "Race:" if "Monster" in data["type"] else "Spell Type:"
+                footer = f"{page_meta}{data.get('level', 'N/A')} | {race_or_spell}: {data['race']}"
+                embed = self.generate_embed(colour, footer, data)
+                pages.append(embed)
 
         controls = {"❌": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
         await menu(ctx, pages, controls=controls, timeout=90.0)
-        # await BaseMenu(ListPages(pages), timeout=60, ctx=ctx).start(ctx)
 
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 3, commands.BucketType.member)
     async def randomcard(self, ctx: commands.Context):
         """Fetch a random Yu-Gi-Oh! card."""
-        await ctx.trigger_typing()
-        base_url = "https://db.ygoprodeck.com/api/v7/randomcard.php"
-        data = await self.get(ctx, base_url)
-        if not data:
-            return
-        colour = await ctx.embed_colour()
-        race_or_spell = "Race" if "Monster" in data["type"] else "Spell Type"
-        page_meta = f"ID: {data['id']} | Card Level: "
-        footer = f"{page_meta}{data.get('level', 'N/A')} | {race_or_spell}: {data['race']}"
-        embed = self.generate_embed(colour, footer, data)
-        await ctx.send(embed=embed)
+        async with ctx.typing():
+            base_url = "https://db.ygoprodeck.com/api/v7/randomcard.php"
+            data = await self.get(ctx, base_url)
+            if not data:
+                return
+            colour = await ctx.embed_colour()
+            race_or_spell = "Race" if "Monster" in data["type"] else "Spell Type"
+            page_meta = f"ID: {data['id']} | Card Level: "
+            footer = f"{page_meta}{data.get('level', 'N/A')} | {race_or_spell}: {data['race']}"
+            embed = self.generate_embed(colour, footer, data)
+            return await ctx.send(embed=embed)
