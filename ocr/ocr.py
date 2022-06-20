@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 from typing import Optional
 
 import aiohttp
@@ -9,12 +10,14 @@ from redbot.core.utils.chat_formatting import box, pagify
 
 from .converter import ImageFinder
 
+log = logging.getLogger("red.owo-cogs.ocr")
+
 
 class OCR(commands.Cog):
     """Detect text in images using ocr.space or Google Cloud Vision API."""
 
     __authors__ = ["TrustyJAID", "ow0x"]
-    __version__ = "1.0.0"
+    __version__ = "1.0.1"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad."""
@@ -44,15 +47,16 @@ class OCR(commands.Cog):
             "isOverlayRequired": False,
             "filetype": file_type
         }
-        try:
-            async with self.session.get(
-                "https://api.kaogurai.xyz/v1/ocr/image",
-                params={"url": image},
-            ) as resp:
+        async def query_kaogurai(url: str):
+            async with self.session.get(url, params={"url": image}) as resp:
                 if resp.status != 200:
-                    return await ctx.send(f"https://http.cat/{resp.status}")
-                result = await resp.json()
-        except Exception:
+                    log.debug(
+                        f"[OCR] {url} sent {resp.status} HTTP response code."
+                    )
+                    return None
+                return await resp.json()
+        result = await query_kaogurai("https://api.kaogurai.xyz/v1/ocr/image")
+        if not result:
             async with self.session.post(
                 "https://api.ocr.space/parse/image", data=data
             ) as resp:
@@ -61,14 +65,21 @@ class OCR(commands.Cog):
                 result = await resp.json()
 
         temp_ = result.get("textAnnotations", [{}])
-        if temp_ and temp_[0].get("description"):
+        if temp_[0].get("error") and temp_[0].get("error").get("message"):
+            return await ctx.send(
+                f"API returned error: {temp_[0]['error']['message']}"
+            )
+        if temp_[0].get("description"):
             return await ctx.send_interactive(
-                pagify(temp_[0].get("description", "none")), box_lang=""
+                pagify(temp_[0]["description"]), box_lang=""
             )
         if not result.get("ParsedResults"):
-            return await ctx.send(box(json.dumps(result), "json"))
+            return await ctx.send(box(str(result.get("ErrorMessage")), "json"))
 
-        return await ctx.send(result["ParsedResults"][0].get("ParsedText"))
+        return await ctx.send_interactive(
+            pagify(result["ParsedResults"][0].get("ParsedText")),
+            box_lang="py"
+        )
 
     @commands.command(aliases=["freeocr"])
     @commands.cooldown(1, 5, commands.BucketType.user)
@@ -84,6 +95,15 @@ class OCR(commands.Cog):
 
         You may use it to run OCR on old messages which contains attachments/image links.
         Simply reply to the said message with `[p]ocr` for detection to work.
+        
+        Pass `detect_handwriting` as True or `1` with command to more accurately detect handwriting from target image.
+        
+        **Example:**
+        ```py
+        [p]ocr image/attachment/URL
+        # To better detect handwriting in target image
+        [p]ocr 1 image/attachment/URL
+        ```
         """
         api_key = (await ctx.bot.get_shared_api_tokens("google_vision")).get("api_key")
 
