@@ -14,7 +14,7 @@ class Maps(commands.Cog):
     """Fetch a Google map of a specific location."""
 
     __authors__ = ["ow0x"]
-    __version__ = "1.0.0"
+    __version__ = "1.0.1"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad."""
@@ -31,15 +31,15 @@ class Maps(commands.Cog):
         self,
         ctx: commands.Context,
         zoom: Optional[int],
-        maptype: Literal["roadmap", "satellite", "terrain", "hybrid"],
+        map_type: str,
         *,
         location: str
     ):
         """Fetch a Google map of a specific location in various modes.
 
-        `zoom` parameter accepts values between 1 and 20
+        `zoom` parameter accepts values from 1 to 20. Defaults to 12 if any other value is provided.
 
-        The following list shows the approximate level of detail you can expect to see at each zoom level:
+        Zoom levels to show the approximate level of detail:
         ```
         1  : World
         5  : Landmass/continent
@@ -48,32 +48,30 @@ class Maps(commands.Cog):
         20 : Buildings
         ```
 
-        `maptype` parameter accepts 4 formats:
+        `map_type` parameter accepts only below 4 values:
         ```
         roadmap, satellite, terrain, hybrid
         ```
         You can read more on that in detail on Google Developers docs:
         https://developers.google.com/maps/documentation/maps-static/start#MapTypes
-
-        ⚠️ This command requires a Google Maps API key, if you have one, set it with:
-        ```
-        [p]set api googlemaps api_key <api_key>
-        ```
         """
         api_key = (await ctx.bot.get_shared_api_tokens("googlemaps")).get("api_key")
         if not api_key:
+            await ctx.send("\u26d4 API key not set. Ask bot owner to set it first!")
+            return
+        if map_type not in MAP_TYPES:
             return await ctx.send_help()
 
         zoom = zoom if (zoom and 1 <= zoom <= 20) else 12
-        maptype = "roadmap" if maptype not in MAP_TYPES else maptype
+        # maptype = "roadmap" if maptype not in MAP_TYPES else maptype
 
         async with ctx.typing():
             base_url = "https://maps.googleapis.com/maps/api/staticmap"
             params = {
                 "zoom": zoom,
-                "size": "500x500",
+                "size": "600x600",
                 "scale": "2",
-                "maptype": maptype,
+                "maptype": map_type,
                 "center": location,
                 "key": api_key
             }
@@ -89,4 +87,4 @@ class Maps(commands.Cog):
                 return await ctx.send("Operation timed out.")
 
             url = f"<https://www.google.com/maps/search/{location.replace(' ', '+')}>"
-            await ctx.send(content=url, file=discord.File(image, "map.png"))
+            return await ctx.send(content=url, file=discord.File(image, "map.png"))
