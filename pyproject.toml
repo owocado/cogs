@@ -1,0 +1,11 @@
+[tool.pyright]
+exclude = [
+    "**/__pycache__",
+    "data",
+]
+reportGeneralTypeIssues = "none"
+reportOptionalMemberAccess = "none"
+reportUnnecessaryTypeIgnoreComment = "warning"
+reportUnusedImport = "error"
+pythonVersion = "3.9"
+typeCheckingMode = "basic"

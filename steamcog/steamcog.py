@@ -1,29 +1,28 @@
 import asyncio
-import contextlib
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 import discord
 from html2text import html2text
-from redbot.core import commands
+from redbot.core import Config, commands
 from redbot.core.bot import Red
 from redbot.core.utils.menus import DEFAULT_CONTROLS, close_menu, menu
 
-from .stores import STORES
+from .converter import GamedealsConverter, RegionConverter, QueryConverter
+from .stores import AVAILABLE_REGIONS, STORES
 
-PageType = List[Union[discord.Embed, str]]
 USER_AGENT = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-    " (KHTML, like Gecko) Chrome/99.0.4844.74 Safari/537.36"
+    " (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"
 }
 
 
 class SteamCog(commands.Cog):
-    """Get info about a Steam game and fetch cheap game deals for PC game(s)."""
+    """Fetch data on a Steam game and cheap game deals for PC game(s)."""
 
     __authors__ = ["ow0x"]
-    __version__ = "1.2.0"
+    __version__ = "2.0.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad."""
@@ -33,28 +32,19 @@ class SteamCog(commands.Cog):
             f"Cog version:  v{self.__version__}"
         )
 
-    async def red_delete_data_for_user(self, **kwargs) -> None:
-        """Nothing to delete"""
-        pass
-
     def __init__(self, bot: Red) -> None:
         self.bot = bot
         self.session = aiohttp.ClientSession()
-        self.emojis = asyncio.create_task(self.init())
+        self.config = Config.get_conf(self, 357059159021060097, force_registration=True)
+        default_user = {'region': None}
+        self.config.register_user(**default_user)
 
     def cog_unload(self) -> None:
-        if self.emojis:
-            self.emojis.cancel()
         asyncio.create_task(self.session.close())
 
-    # Credits to someone, unfortunately
-    async def init(self):
-        await self.bot.wait_until_ready()
-        self.platform_emojis = {
-            "windows": discord.utils.get(self.bot.emojis, id=501562795880349696),
-            "mac": discord.utils.get(self.bot.emojis, id=501561088815661066),
-            "linux": discord.utils.get(self.bot.emojis, id=501561148156542996),
-        }
+    async def red_delete_data_for_user(self, **kwargs) -> None:
+        """Nothing to delete"""
+        pass
 
     def timestamp(self, date_string: str) -> str:
         try:
@@ -63,250 +53,210 @@ class SteamCog(commands.Cog):
             time_obj = datetime.strptime(date_string, "%d %b, %Y")
         return f"<t:{int(time_obj.timestamp())}:R>"
 
-    async def get(self, url: str, params: Dict[str, str]) -> Optional[Any]:
+    async def request(self, url: str, *, params: Optional[Dict[str, str]] = None):
         try:
             async with self.session.get(url, params=params, headers=USER_AGENT) as resp:
-                return None if resp.status != 200 else await resp.json()
-        except asyncio.TimeoutError:
+                if resp.status != 200:
+                    return None
+                return await resp.json()
+        except (asyncio.TimeoutError, aiohttp.ClientError):
             return None
-
-    # Attribution: https://github.com/TrustyJAID/Trusty-cogs/blob/master/notsobot/notsobot.py#L212
-    # at least my parents taught to me to give credits where it is due, unlike a snowflake's LOL!
-    async def fetch_steam_game_id(self, ctx: commands.Context, query: str) -> Optional[int]:
-        url = "https://store.steampowered.com/api/storesearch"
-        data = await self.get(url, {"cc": "us", "l": "en", "term": query})
-        if not data:
-            return None
-        if data.get("total", 0) == 0:
-            return None
-        elif data.get("total") == 1:
-            return data.get("items")[0].get("id")
-        else:
-            # Attribution: https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
-            items = "\n".join(
-                f"**{i}.** {val.get('name')}" for i, val in enumerate(data.get("items"), 1)
-            )
-            choices = f"Found below **{len(data['items'])}** results. Pick one in 60 seconds:\n\n{items}"
-            prompt = await ctx.send(choices)
-
-            def check(msg) -> bool:
-                return bool(
-                    msg.content.isdigit()
-                    and int(msg.content) in range(len(items) + 1)
-                    and msg.author.id == ctx.author.id
-                    and msg.channel.id == ctx.channel.id
-                )
-
-            try:
-                choice = await ctx.bot.wait_for("message", timeout=60.0, check=check)
-            except asyncio.TimeoutError:
-                choice = None
-            if choice is None or choice.content.strip() == "0":
-                with contextlib.suppress(discord.NotFound, discord.HTTPException):
-                    await prompt.edit(content="Cancelled.", delete_after=5.0)
-                return None
-            else:
-                with contextlib.suppress(discord.NotFound, discord.HTTPException):
-                    await prompt.delete()
-                return data["items"][int(choice.content.strip()) - 1].get("id")
 
     @staticmethod
-    def game_previews_embed(meta: tuple, url: str) -> discord.Embed:
-        embed = discord.Embed(colour=meta[0], title=meta[2])
-        embed.url = f"https://store.steampowered.com/app/{meta[1]}"
-        embed.set_author(name="Steam", icon_url="https://i.imgur.com/xxr2UBZ.png")
-        embed.set_image(url=url)
-
+    def game_previews_embed(image_url: str, **kwargs) -> discord.Embed:
+        embed = discord.Embed(colour=kwargs['colour'], title=kwargs['title'])
+        embed.url = f"https://store.steampowered.com/app/{kwargs['id']}"
+        # embed.set_author(name="Steam", icon_url="https://i.imgur.com/xxr2UBZ.png")
+        embed.set_image(url=image_url)
         return embed
 
-    def steam_embed(self, meta: tuple, app: Dict[str, Any]) -> discord.Embed:
-        em = discord.Embed(
-            colour=meta[1],
-            title=app["name"],
-            description=app.get("short_description", ""),
-        )
-        em.url = f"https://store.steampowered.com/app/{meta[0]}"
-        em.set_author(name="Steam", icon_url="https://i.imgur.com/xxr2UBZ.png")
-        em.set_image(url=str(app.get("header_image")).replace("\\", ""))
-        if app.get("price_overview"):
-            em.add_field(name="Game Price", value=app["price_overview"].get("final_formatted"))
+    def steam_embed(self, app: Dict[str, Any], **kwargs) -> discord.Embed:
+        em = discord.Embed(colour=kwargs['colour'], title=app["name"])
+        em.url = f"https://store.steampowered.com/app/{kwargs['id']}"
+        # em.set_author(name="Steam", icon_url="https://i.imgur.com/xxr2UBZ.png")
+        em.set_image(url=(app.get("header_image") or "").replace("\\", ""))
+        summary = app.get("short_description") or ""
+
+        if msrp := app.get("price_overview", {}):
+            summary += (
+                "\n\n↗ **[See the regional price chart on SteamDB!]"
+                f"(https://steamdb.info/app/{kwargs['id']}/)**"
+            )
+            if (discount := msrp.get("discount_percent")) and (initial := msrp.get("initial_formatted")):
+                discount = f"~~{initial}~~\n{msrp.get('final_formatted')}\n({discount}% discount)"
+                em.add_field(name=f"Price (in {msrp['currency']})", value=discount)
+            else:
+                em.add_field(name=f"Price (in {msrp['currency']})", value=msrp.get("final_formatted"))
         if app.get("release_date", {}).get("coming_soon"):
             em.add_field(name="Release Date", value="Coming Soon")
         else:
             em.add_field(
                 name="Release Date", value=self.timestamp(app["release_date"].get("date"))
             )
-        if app.get("metacritic"):
-            meta_ = app["metacritic"]
-            metacritic = f"**{meta_.get('score')}** ([Critic Reviews]({meta_.get('url')}))"
+        if meta_ := app.get("metacritic", {}):
+            metacritic = f"**{meta_.get('score')}%** ([Critic Reviews]({meta_.get('url')}))"
             em.add_field(name="Metacritic Score", value=metacritic)
-        if app.get("recommendations"):
-            em.add_field(
-                name="Recommendations",
-                value=f'{app["recommendations"].get("total"):,}',
-            )
+        if commend := app.get("recommendations"):
+            em.add_field(name="Recommendations", value=f'{commend.get("total"):,}')
         if app.get("achievements"):
             em.add_field(name="Achievements", value=app["achievements"].get("total"))
         if app.get("dlc"):
             em.add_field(name="DLC Count", value=len(app["dlc"]))
+        # thanks to npc203 (epic guy)
+        platforms = []
+        platform_emojis = {
+            "windows": str(discord.utils.get(self.bot.emojis, id=501562795880349696) or "Windows"),
+            "mac": str(discord.utils.get(self.bot.emojis, id=501561088815661066) or "Mac OS"),
+            "linux": str(discord.utils.get(self.bot.emojis, id=501561148156542996) or "Linux"),
+        }
+        if platform_dict := app.get("platforms", {}):
+            for key, value in platform_dict.items():
+                if value:
+                    platforms.append(platform_emojis[key])
+        if platforms:
+            em.add_field(name="Supported Platforms", value=", ".join(platforms))
         if app.get("developers"):
             em.add_field(name="Developers", value=", ".join(app["developers"]))
         if app.get("publishers", [""]) != [""]:
             em.add_field(name="Publishers", value=", ".join(app["publishers"]))
-        # thanks to npc203 (epic guy)
-        platforms = ""
-        if platform_dict := app.get("platforms"):
-            for k, v in platform_dict.items():
-                if v:
-                    platforms += self.platform_emojis[k] or f"{k.title()} OS\n"
-        if platforms:
-            em.add_field(name="Supported Platforms", value=platforms)
         if app.get("genres"):
             genres = ", ".join(m.get("description", "") for m in app["genres"])
             em.add_field(name="Genres", value=genres)
-        if len(em.fields) in {8, 11}:
+        if len(em.fields) in {5, 8, 11}:
             em.add_field(name="\u200b", value="\u200b")
-        footer = "Click on reactions to browse through game previews\n"
-        if app.get("content_descriptors").get("notes"):
+        footer = "Click on reactions to browse game preview screenshots!\n"
+        if app.get("content_descriptors", {}).get("notes"):
             footer += f"Note: {app['content_descriptors']['notes']}"
-        em.set_footer(text=footer)
+        em.description = summary
+        em.set_footer(text=footer, icon_url="https://i.imgur.com/xxr2UBZ.png")
         return em
 
-    @commands.command(usage="name of steam game")
-    @commands.bot_has_permissions(add_reactions=True, embed_links=True, read_message_history=True)
-    async def steam(self, ctx: commands.Context, *, query: str) -> None:
-        """Fetch basic info about a Steam game all from the comfort of your Discord home."""
+    @commands.group(invoke_without_command=True)
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    @commands.bot_has_permissions(embed_links=True, read_message_history=True)
+    async def steam(self, ctx: commands.Context, *, query: QueryConverter):
+        """
+        Fetch basic info about a game available on Valve Steam store.
+
+        To get game pricing for your region, use `[p]steam setmyregion <region>`.
+        You can provide either an [ISO3166 alpha-2](https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes) region code or the country name.
+        Once set, the bot will show pricing for your region in command embed.
+        """
         async with ctx.typing():
             # TODO: remove this temp fix once game is released
-            if query.lower() == "lost ark":
-                app_id = 1599340
-            else:
-                app_id = await self.fetch_steam_game_id(ctx, query)
-
-            if app_id is None:
-                return await ctx.send("Could not find any results.")
             base_url = "https://store.steampowered.com/api/appdetails"
-            data = await self.get(
-                base_url, {"appids": str(app_id), "l": "en", "cc": "us", "json": 1}
+            user_region = (await self.config.user(ctx.author).region()) or "US"
+            data = await self.request(
+                base_url,
+                params={"appids": str(query), "l": "en", "cc": user_region, "json": "1"}
             )
             if not data:
                 return await ctx.send("Something went wrong while querying Steam.")
             colour = await ctx.embed_colour()
-            app_data = data[f"{app_id}"].get("data")
+            app_data = data[f"{query}"].get("data")
 
-            pages: PageType = [self.steam_embed((app_id, colour), app_data)]
-            if app_data.get("screenshots"):
-                for i, preview in enumerate(app_data["screenshots"], start=1):
-                    meta = (colour, app_id, app_data["name"])
-                    embed = self.game_previews_embed(meta, preview.get("path_full", ""))
-                    embed.set_footer(text=f"Preview {i} of {len(app_data['screenshots'])}")
+            pages = [self.steam_embed(app_data, id=query, colour=colour)]
+            if screenshots := app_data.get("screenshots"):
+                for i, preview in enumerate(screenshots, start=1):
+                    embed = self.game_previews_embed(
+                        preview.get("path_full") or "",
+                        colour=colour, id=query, title=app_data["name"]
+                    )
+                    embed.set_footer(
+                        text=f"Preview {i} of {len(app_data['screenshots'])}",
+                        icon_url="https://i.imgur.com/xxr2UBZ.png"
+                    )
                     pages.append(embed)
 
-        controls = {"\u274c": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
-        await menu(ctx, pages, controls=controls, timeout=90.0)
+        await menu(ctx, pages, DEFAULT_CONTROLS, timeout=90.0)
+
+    @steam.command(name="setmyregion")
+    @commands.cooldown(1, 15, commands.BucketType.user)
+    async def steam_set_my_region(self, ctx: commands.Context, *, region: RegionConverter):
+        """Set your Steam region/country to show localized pricing.
+
+        If set, I will show game price for your region in `[p]steam` command embed.
+        If not available, the price will default to USD.
+
+        You can provide either an [ISO3166 alpha-2](https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes) region code or the valid country name.
+
+        **Example:**
+            - `[p]steam setmyregion DE`
+            - `[p]steam setmyregion United States`
+        """
+        country_name = [k for k, v in AVAILABLE_REGIONS.items() if v == region]
+        user_region = await self.config.user(ctx.author).region()
+        action = "changed to" if user_region else "set to"
+        await self.config.user(ctx.author).region.set(region)
+        await ctx.send(
+            f"✅ Success! Your region has now been {action} :flag_{region.lower()}:"
+            f" **{country_name[0].replace('_', ' ').title()}**!\n"
+            f"It will be used to show game price for your set region"
+            f" in `{ctx.clean_prefix}steam` command embeds from now.\n"
+            "If not available, the price will default to USD otherwise.\n"
+            # "You can change your region later using `[p]steam setmyregion <region>`."
+        )
 
     @staticmethod
-    def gamereqs_embed(meta, app: Dict[str, Any]) -> PageType:
-        pages: PageType = []
+    def game_requirements_embed(app: Dict[str, Any], **kwargs) -> List[discord.Embed]:
+        pages = []
         platform_mapping = {
             "windows": "pc_requirements",
             "mac": "mac_requirements",
             "linux": "linux_requirements",
         }
 
-        def sanitise(rawline):
-            return html2text(rawline).replace("\n\n", "\n")
-
-        for key, value in app.get("platforms").items():
+        all_platforms: Dict[str, str] = app.get("platforms", {})
+        index = 0
+        for key, value in all_platforms.items():
             if value and app.get(platform_mapping[key]):
-                em = discord.Embed(title=app["name"], colour=meta[1])
-                em.url = f"https://store.steampowered.com/app/{meta[0]}"
+                index += 1
+                em = discord.Embed(title=app["name"], colour=kwargs['colour'])
+                em.url = f"https://store.steampowered.com/app/{kwargs['id']}"
                 em.set_author(name="System Requirements")
-                em.set_thumbnail(url=str(app.get("header_image")).replace("\\", ""))
+                em.set_thumbnail(url=(app.get("header_image") or "").replace("\\", ""))
                 all_reqs = []
-                if app[platform_mapping[key]].get("minimum"):
-                    all_reqs.append(sanitise(app[platform_mapping[key]]["minimum"]))
-                if app[platform_mapping[key]].get("recommended"):
-                    all_reqs.append(sanitise(app[platform_mapping[key]]["recommended"]))
+                if minimum := app[platform_mapping[key]].get("minimum"):
+                    all_reqs.append(html2text(minimum).replace("\n\n", "\n"))
+                if recommended := app[platform_mapping[key]].get("recommended"):
+                    all_reqs.append(html2text(recommended).replace("\n\n", "\n"))
                 em.description = "\n\n".join(all_reqs)
-                em.set_footer(text="Powered by Steam", icon_url="https://i.imgur.com/xxr2UBZ.png")
+                em.set_footer(
+                    text=f"Page {index} • Data provided by Steam",
+                    icon_url="https://i.imgur.com/xxr2UBZ.png"
+                )
                 pages.append(em)
         return pages
 
     @commands.command(name="gamereqs", usage="name of steam game")
     @commands.bot_has_permissions(embed_links=True, read_message_history=True)
-    async def game_system_requirements(self, ctx: commands.Context, *, query: str) -> None:
+    async def game_system_requirements(self, ctx: commands.Context, *, query: QueryConverter):
         """Fetch system requirements for a Steam game, both minimum and recommended if any."""
         async with ctx.typing():
-            # TODO: remove this temp fix once game is released
-            if query.lower() == "lost ark":
-                app_id = 1599340
-            else:
-                app_id = await self.fetch_steam_game_id(ctx, query)
-
-            if app_id is None:
-                return await ctx.send("Could not find any results.")
-
             base_url = "https://store.steampowered.com/api/appdetails"
-            data = await self.get(
-                base_url, {"appids": str(app_id), "l": "en", "cc": "us", "json": 1}
+            user_region = (await self.config.user(ctx.author).region()) or "US"
+            data = await self.request(
+                base_url,
+                params={"appids": str(query), "l": "en", "cc": user_region, "json": "1"}
             )
             if not data:
                 return await ctx.send("Something went wrong while querying Steam.")
 
-            app_data = data[f"{app_id}"].get("data")
-            meta = (app_id, await ctx.embed_colour())
-            pages: PageType = self.gamereqs_embed(meta, app_data)
+            app_data = data[f"{query}"].get("data")
+            pages = self.game_requirements_embed(app_data, colour=await ctx.embed_colour(), id=query)
             if not pages:
-                return await ctx.send("Hmmm, no system requirements found for this game on Steam!")
+                await ctx.send("Hmmm, no system requirements info found for this game on Steam!")
+                return
 
-        controls = {"\u274c": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
-        await menu(ctx, pages, controls=controls, timeout=60.0)
-
-    async def fetch_deal_id(self, ctx: commands.Context, query: str) -> Optional[int]:
-        url = f"https://www.cheapshark.com/api/1.0/games?title={query}"
-        data = await self.get(url, None)
-        if not data:
-            return None
-        if len(data) == 0:
-            return None
-        elif len(data) == 1:
-            return data[0].get("cheapestDealID")
-        else:
-            # Attribution: https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
-            items = "".join(f"**{i}.** {x.get('external')}\n" for i, x in enumerate(data[:20], 1))
-            count = len(data) if len(data) <= 20 else 20
-            choices = f"Please select one from below in 60 seconds:\n\n{items}"
-            prompt = await ctx.send(f"Here are the first {count} results. {choices}")
-
-            def check(msg):
-                return bool(
-                    msg.content.isdigit()
-                    and int(msg.content) in range(len(items) + 1)
-                    and msg.author.id == ctx.author.id
-                    and msg.channel.id == ctx.channel.id
-                )
-
-            try:
-                choice = await ctx.bot.wait_for("message", timeout=60.0, check=check)
-            except asyncio.TimeoutError:
-                choice = None
-
-            if choice is None or choice.content.strip() == "0":
-                with contextlib.suppress(discord.NotFound, discord.HTTPException):
-                    await prompt.edit(content="Cancelled.", delete_after=5.0)
-                return None
-            else:
-                with contextlib.suppress(discord.NotFound, discord.HTTPException):
-                    await prompt.delete()
-                return data[int(choice.content.strip()) - 1].get("cheapestDealID")
+        controls = {"\N{CROSS MARK}": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
+        await menu(ctx, pages, controls=controls, timeout=90.0)
 
     @staticmethod
     def gamedeal_embed(stores, deal_id, data: Dict[str, Any]) -> discord.Embed:
         game = data["gameInfo"]
-        em = discord.Embed(colour=discord.Colour.blurple(), title=game.get("name", ""))
+        em = discord.Embed(colour=discord.Colour.blurple(), title=game.get("name") or "")
         if game.get("steamAppID"):
-            em.url = f"https://store.steampowered.com/app/{game.get('steamAppID')}"
+            em.url = f"https://store.steampowered.com/app/{game['steamAppID']}"
         em.set_thumbnail(url=game.get("thumb"))
         mrp_price = game.get("retailPrice")
         deal_price = game.get("salePrice")
@@ -317,13 +267,13 @@ class SteamCog(commands.Cog):
         base = "https://cheapshark.com/redirect?dealID="
         deal_store_info = f"[**{stores[game.get('storeID', '1')]}**]({base}{deal_id})"
         em.add_field(name="Deal available on", value=deal_store_info)
-        if game.get("steamRatingPercent") != "0" and game.get("steamRatingText"):
-            steam_rating = f"{game.get('steamRatingPercent')}%\n({game.get('steamRatingText')})"
-            em.add_field(name="Rating", value=steam_rating)
-        if data.get("cheapestPrice") and data["cheapestPrice"].get("price"):
-            date_from_epoch = datetime.utcfromtimestamp(data["cheapestPrice"]["date"]).timestamp()
-            cheapest_price = f"{data['cheapestPrice'].get('price')} USD\nthat was:\n<t:{int(date_from_epoch)}:R>"
-            em.add_field(name="Historical Cheapest Price", value=cheapest_price)
+        if (rating := game.get("steamRatingPercent")) and (review := game.get("steamRatingText")):
+            em.add_field(name="Rating", value=f"{rating}%\n({review})")
+        if topdeal := data.get("cheapestPrice"):
+            if cheapest := topdeal.get("price"):
+                date_from_epoch = datetime.utcfromtimestamp(topdeal["date"]).timestamp()
+                cheapest_price = f"{cheapest} USD\nthat was:\n<t:{int(date_from_epoch)}:R>"
+                em.add_field(name="Historical Cheapest Price", value=cheapest_price)
         if len(em.fields) == 5:
             em.add_field(name="\u200b", value="\u200b")
         em.set_footer(text="Data provided by cheapshark.com")
@@ -331,29 +281,26 @@ class SteamCog(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(embed_links=True, read_message_history=True)
-    async def gamedeal(self, ctx: commands.Context, *, game_name: str) -> None:
+    async def gamedeal(self, ctx: commands.Context, *, query: GamedealsConverter):
         """Fetch cheapest deal for a PC game from cheaphark.com"""
-        deal_id = await self.fetch_deal_id(ctx, game_name)
-        if deal_id is None:
-            return await ctx.send("No results.")
-
         async with ctx.typing():
-            deal_url = f"https://www.cheapshark.com/api/1.0/deals?id={deal_id}"
-            data = await self.get(deal_url, None)
+            deal_url = f"https://www.cheapshark.com/api/1.0/deals?id={query}"
+            data = await self.request(deal_url)
             if not data:
                 return await ctx.send("\u26d4 Could not query CheapShark API!")
 
-            all_stores = await self.get("https://www.cheapshark.com/api/1.0/stores", None)
+            all_stores = await self.request("https://www.cheapshark.com/api/1.0/stores")
+            NEW_STORES = None
             if all_stores:
-                STORES = {x["storeID"]: x["storeName"] for x in all_stores}
+                NEW_STORES = {x["storeID"]: x["storeName"] for x in all_stores}
             if data["gameInfo"].get("salePrice") == data["gameInfo"].get("retailPrice"):
                 return await ctx.send("This game currently has no cheaper deals.")
-            embed = self.gamedeal_embed(STORES, deal_id, data)
+            embed = self.gamedeal_embed(NEW_STORES or STORES, query, data)
             return await ctx.send(embed=embed)
 
     @staticmethod
-    def latestdeals_embed(meta: tuple, stores, data: Dict[str, Any]) -> discord.Embed:
-        em = discord.Embed(colour=meta[2])
+    def latestdeals_embed(data: Dict[str, Any], **kwargs) -> discord.Embed:
+        em = discord.Embed(colour=kwargs['colour'])
         em.title = str(data["title"])
         if data.get("steamAppID"):
             em.url = f"https://store.steampowered.com/app/{data.get('steamAppID')}"
@@ -362,28 +309,29 @@ class SteamCog(commands.Cog):
             em.description = "This game currently has no cheaper deals."
         else:
             mrp_price = data.get("normalPrice")
-            deal_price = data.get("salePrice")
+            deal_price = f"{data['salePrice']} USD" if data.get("salePrice", 0.0) > 0.0 else "🎉 FREE"
             em.add_field(name="Retail Price", value=f"~~{mrp_price} USD~~")
-            discount = round(float(data.get("savings")))
-            final_deal = f"**{deal_price} USD**\n({discount}% discount)"
+            discount = round(float(data.get("savings", 0)))
+            final_deal = f"**{deal_price}**\n({discount}% discount)"
             em.add_field(name="Deal Price", value=final_deal)
             deal_store_info = (
-                f"[**{stores[data.get('storeID')]}**]"
-                + f"(https://cheapshark.com/redirect?dealID={data['dealID']} 'Click here to go to this deal')"
+                f"[**{kwargs['stores'][data.get('storeID')]}**](https://cheapshark.com/"
+                f"redirect?dealID={data['dealID']} 'Click here to go to this deal')"
             )
             em.add_field(name="Deal available on", value=deal_store_info)
-        if data.get("steamRatingPercent") != "0" and data.get("steamRatingText"):
-            steam_rating = f"{data.get('steamRatingPercent')}% ({data.get('steamRatingText')})"
-            em.add_field(name="Rating", value=steam_rating)
+        if (rating := data.get("steamRatingPercent")) and (review := data.get("steamRatingText")):
+            em.add_field(name="Rating", value=f"{rating}% ({review})")
         if len(em.fields) == 5:
             em.add_field(name="\u200b", value="\u200b")
-        em.set_footer(text=f"Page {meta[0]} of {meta[1]} | Data provided by cheapshark.com")
+        em.set_footer(
+            text=f"Page {kwargs['page']} of {kwargs['total_pages']} | Data provided by cheapshark.com"
+        )
         return em
 
     @commands.command()
     @commands.cooldown(1, 20, commands.BucketType.default)
     @commands.bot_has_permissions(add_reactions=True, embed_links=True, read_message_history=True)
-    async def latestdeals(self, ctx: commands.Context, *, sort_by: str = "recent") -> None:
+    async def latestdeals(self, ctx: commands.Context, *, sort_by: str = "recent"):
         """Fetch list of latest deals for games from cheapshark.com
 
         `sort_by` argument accepts only one of the following parameter:
@@ -400,24 +348,29 @@ class SteamCog(commands.Cog):
             "recent",
             "deal rating",
         ]
-        if sort_by not in allowed_sorts:
+        if sort_by.lower() not in allowed_sorts:
             return await ctx.send(f"`sort_by` can only be one of `{', '.join(allowed_sorts)}`")
 
-        base_url = f"https://www.cheapshark.com/api/1.0/deals?sortBy={sort_by}"
+        base_url = f"https://www.cheapshark.com/api/1.0/deals?sortBy={sort_by.lower()}"
         async with ctx.typing():
-            results = await self.get(base_url, None)
-            all_stores = await self.get("https://www.cheapshark.com/api/1.0/stores", None)
+            results = await self.request(base_url)
+            all_stores = await self.request("https://www.cheapshark.com/api/1.0/stores")
+            NEW_STORES = None
             if all_stores:
-                STORES = {x["storeID"]: x["storeName"] for x in all_stores}
+                NEW_STORES = {x["storeID"]: x["storeName"] for x in all_stores}
 
             if not results:
                 return await ctx.send("\u26d4 Could not query CheapShark API!")
 
-            pages: PageType = []
+            pages = []
             for i, data in enumerate(results, 1):
                 meta = (i, len(results), await ctx.embed_color())
-                em = self.latestdeals_embed(meta, STORES, data)
+                em = self.latestdeals_embed(
+                    data, stores=NEW_STORES or STORES,
+                    colour=await ctx.embed_color(),
+                    page=i,
+                    total_pages=len(results)
+                )
                 pages.append(em)
 
-        controls = {"\u274c": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
-        await menu(ctx, pages, controls=controls, timeout=90.0)
+        await menu(ctx, pages, DEFAULT_CONTROLS, timeout=90.0)
