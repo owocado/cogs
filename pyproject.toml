@@ -6,6 +6,6 @@ exclude = [
 reportGeneralTypeIssues = "none"
 reportOptionalMemberAccess = "none"
 reportUnnecessaryTypeIgnoreComment = "warning"
-reportUnusedImport = "error"
+reportUnusedImport = "warning"
 pythonVersion = "3.9"
 typeCheckingMode = "basic"

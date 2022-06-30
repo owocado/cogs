@@ -24,7 +24,7 @@ class MovieDB(commands.Cog):
     """Get summarized info about a movie or TV show/series."""
 
     __author__ = "ow0x"
-    __version__ = "2.0.1"
+    __version__ = "2.0.2"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:  # Thanks Sinbad!
         return (
@@ -119,7 +119,10 @@ class MovieDB(commands.Cog):
 
             celebrities = []
             if cast_data := data.get("credits", {}).get("cast"):
-                emb2.set_footer(text="ℹ See next page to see the celebrities cast!")
+                emb2.set_footer(
+                    text="See next page to see this movie's celebrities cast!",
+                    icon_url="https://i.imgur.com/sSE7Usn.png"
+                )
                 celebrities = self.parse_credits(
                     f"movie/{data['id']}", data.get("original_title"), cast_data
                 )
@@ -206,10 +209,10 @@ class MovieDB(commands.Cog):
             if next_ep.get("air_date"):
                 next_airing = parse_date(next_ep["air_date"])
             next_episode_info = (
-                f"**S{next_ep.get('season_number', 0)}E{next_ep.get('episode_number', 0)}: "
-                f"{next_ep.get('name', 'N/A')}**\n`next airing:` {next_airing}"
+                f"**S{next_ep.get('season_number', 0)}E{next_ep.get('episode_number', 0)}**"
+                f" : {next_ep.get('name', 'N/A')}\n**`ETA to air:`** {next_airing}"
             )
-            embed.add_field(name="Next episode info", value=next_episode_info, inline=False)
+            embed.add_field(name="Next Episode Info", value=next_episode_info, inline=False)
         in_production = f"In production? ✅ Yes • " if data.get("in_production") else ""
         embed.set_footer(
             text=f"{in_production}Click on arrows to see more info!",
@@ -217,7 +220,7 @@ class MovieDB(commands.Cog):
         )
         return embed
 
-    @commands.command(aliases=["tv"], usage="tvshow name or title")
+    @commands.command(aliases=["tv", "tvseries"], usage="tvshow name or title")
     @is_apikey_set()
     @commands.bot_has_permissions(embed_links=True, read_message_history=True)
     async def tvshow(self, ctx: commands.Context, *, query: TVShowQueryConverter):
@@ -255,7 +258,10 @@ class MovieDB(commands.Cog):
 
             celebrities = []
             if cast_data := data.get("credits", {}).get("cast"):
-                emb2.set_footer(text="ℹ See next page to see the celebrities cast!")
+                emb2.set_footer(
+                    text="See next page to see this series' celebrities cast!",
+                    icon_url="https://i.imgur.com/sSE7Usn.png",
+                )
                 celebrities = self.parse_credits(
                     f"tv/{data['id']}", data.get("original_name"), cast_data
                 )

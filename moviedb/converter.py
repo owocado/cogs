@@ -49,9 +49,12 @@ class MovieQueryConverter(commands.Converter):
 
         # https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
         items = [
-            f"**`[{i:>2}]`  {v.get('title', '[TITLE MISSING]')}**"
-            f" ({parse_date(v.get('release_date'), 'D')})"
-            for i, v in enumerate(data["results"], start=1)
+            f"**`[{i:>2}]`** ({parse_date(obj.get('release_date'), 'D')})"
+            f"  {obj.get('original_title', '[MOVIE TITLE MISSING]')}"
+            for i, obj in enumerate(
+                sorted(data["results"], key=lambda x: x.get("release_date"), reverse=True),
+                start=1
+            )
         ]
         prompt: discord.Message = await ctx.send(
             f"Found below {len(items)} results. Choose one in 60 seconds:\n\n"
@@ -103,7 +106,10 @@ class TVShowQueryConverter(commands.Converter):
         items = [
             f"**`[{i:>2}]`  {v.get('original_name', '[TVSHOW TITLE MISSING]')}**"
             f" ({parse_date(v.get('first_air_date'), 'D', prefix='first aired on ')})"
-            for i, v in enumerate(data.get("results"), start=1)
+            for i, v in enumerate(
+                sorted(data["results"], key=lambda x: x.get("first_air_date"), reverse=True),
+                start=1
+            )
         ]
         prompt: discord.Message = await ctx.send(
             f"Found below {len(items)} results. Choose one in 60 seconds:\n\n"
