@@ -1,11 +1,11 @@
 import asyncio
-from typing import Any, Dict
+from typing import Any, Dict, List, Union
 
 import aiohttp
 import discord
 from redbot.core import commands
 from redbot.core.utils.chat_formatting import humanize_number as fnum, pagify
-from redbot.core.utils.menus import DEFAULT_CONTROLS, close_menu, menu
+from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
 
 from .converter import MovieQueryConverter, TVShowQueryConverter, parse_date, request
 
@@ -24,7 +24,7 @@ class MovieDB(commands.Cog):
     """Get summarized info about a movie or TV show/series."""
 
     __author__ = "ow0x"
-    __version__ = "2.0.0"
+    __version__ = "2.0.1"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:  # Thanks Sinbad!
         return (
@@ -43,7 +43,8 @@ class MovieDB(commands.Cog):
         """Nothing to delete"""
         pass
 
-    def movie_embed(self, colour: discord.Colour, data: Dict[str, Any]) -> discord.Embed:
+    @staticmethod
+    def movie_embed(colour: discord.Colour, data: Dict[str, Any]) -> discord.Embed:
         embed = discord.Embed(title=data.get("title") or "", colour=colour)
         description = data.get("overview") or ""
         if imdb_id := data.get("imdb_id"):
@@ -81,14 +82,17 @@ class MovieDB(commands.Cog):
         )
         return embed
 
-    @commands.command(usage="movie name or title")
+    @commands.command(aliases=["moviecast"], usage="movie name or title")
     @is_apikey_set()
     @commands.bot_has_permissions(embed_links=True, read_message_history=True)
     async def movie(self, ctx: commands.Context, *, query: MovieQueryConverter):
         """Show various info about a movie."""
         async with ctx.channel.typing():
             api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
-            data = await request(f"{API_BASE}/movie/{query}", params={"api_key": api_key})
+            data: Union[int, Dict[str, Any]] = await request(
+                f"{API_BASE}/movie/{query}",
+                params={"api_key": api_key, "append_to_response": "credits"},
+            )
             if type(data) == int:
                 await ctx.send(f"⚠ API sent response code: https://http.cat/{data}")
                 return
@@ -113,53 +117,51 @@ class MovieDB(commands.Cog):
             if tagline := data.get("tagline"):
                 emb2.add_field(name="Tagline", value=tagline, inline=False)
 
-        await menu(ctx, [emb1, emb2], DEFAULT_CONTROLS, timeout=120)
-
-    @commands.command(usage="movie name or title")
-    @is_apikey_set()
-    @commands.bot_has_permissions(embed_links=True, read_message_history=True)
-    async def moviecast(self, ctx: commands.Context, *, query: MovieQueryConverter):
-        """Show the given movie's cast (list of actors)."""
-        async with ctx.channel.typing():
-            api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
-            data = await request(f"{API_BASE}/movie/{query}/credits", params={"api_key": api_key})
-            if type(data) == int:
-                await ctx.send(f"⚠ API sent response code: https://http.cat/{data}")
-                return
-            if not data:
-                return await ctx.send("⛔ Could not fetch data from TMDB API.")
-            if not data.get("cast"):
-                return await ctx.send("⛔ No cast or actors data found for this movie.")
-
-            GENDERS_MAP = {"0": "", "1": "♀", "2": "♂"}
-            pretty_cast = "\n".join(
-                f"**`{i:>2}.`**  [{actor_obj.get('original_name')}]"
-                f"(https://www.themoviedb.org/person/{actor_obj.get('id')})"
-                f" {GENDERS_MAP[str(actor_obj.get('gender', 0))]}"
-                f" as **{actor_obj.get('character')}**"
-                for i, actor_obj in enumerate(data["cast"], start=1)
-            )
-
-            pages = []
-            all_pages = list(pagify(pretty_cast, page_length=1500))
-            for i, page in enumerate(all_pages, start=1):
-                emb = discord.Embed(colour=discord.Colour.random())
-                emb.description = page
-                emb.title = f"Movie Cast for {query.title()}"
-                emb.url = f"https://www.themoviedb.org/movie/{data.get('id', '')}"
-                emb.set_footer(
-                    text=f"Page {i} of {len(all_pages)}",
-                    icon_url="https://i.imgur.com/sSE7Usn.png",
+            celebrities = []
+            if cast_data := data.get("credits", {}).get("cast"):
+                emb2.set_footer(text="ℹ See next page to see the celebrities cast!")
+                celebrities = self.parse_credits(
+                    f"movie/{data['id']}", data.get("original_title"), cast_data
                 )
-                pages.append(emb)
 
-        controls = {"❌": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
-        await menu(ctx, pages, controls=controls, timeout=120)
+        await menu(ctx, [emb1, emb2] + celebrities, DEFAULT_CONTROLS, timeout=120)
 
-    def tvshow_embed(self, colour: discord.Colour, data: Dict[str, Any]) -> discord.Embed:
+    @staticmethod
+    def parse_credits(
+        tmdb_id: int, title: str, cast_data: List[Dict[str, Any]]
+    ) -> List[discord.Embed]:
+        GENDERS_MAP = {"0": "", "1": "♀", "2": "♂"}
+        pretty_cast = "\n".join(
+            f"**`{i:>2}.`**  [{actor_obj.get('original_name')}]"
+            f"(https://www.themoviedb.org/person/{actor_obj['id']})"
+            f" {GENDERS_MAP[str(actor_obj.get('gender', 0))]}"
+            f" as **{actor_obj.get('character') or '???'}**"
+            for i, actor_obj in enumerate(cast_data, 1)
+        )
+
+        pages = []
+        all_pages = list(pagify(pretty_cast, page_length=1500))
+        for i, page in enumerate(all_pages, start=1):
+            emb = discord.Embed(colour=discord.Colour.random(), description=page, title=title)
+            emb.url = f"https://www.themoviedb.org/{tmdb_id}"
+            emb.set_footer(
+                text=f"Celebrities Cast • Page {i} of {len(all_pages)}",
+                icon_url="https://i.imgur.com/sSE7Usn.png",
+            )
+            pages.append(emb)
+
+        return pages
+
+    @staticmethod
+    def tvshow_embed(colour: discord.Colour, data: Dict[str, Any]) -> discord.Embed:
+        summary = (
+            f"**Series status:**  {data.get('status') or 'Unknown'} ({data.get('type')})\n"
+        )
+        if runtime := data.get("episode_run_time"):
+            summary += f"**Average episode runtime:**  {runtime[0]} minutes\n"
         embed = discord.Embed(
             title=data.get("name") or "",
-            description=data.get("overview") or "",
+            description=f"{data.get('overview') or ''}\n\n{summary}",
             colour=colour,
         )
         embed.url = f"https://www.themoviedb.org/tv/{data.get('id')}"
@@ -184,8 +186,6 @@ class MovieDB(commands.Cog):
                     name="TMDB Rating",
                     value=f"**{vote_average:.1f}** ⭐ / 10\n({fnum(vote_count)} votes)",
                 )
-        embed.add_field(name="Series status", value=data.get("status", "N/A"))
-        embed.add_field(name="Series type", value=data.get("type", "N/A"))
         if networks := data.get("networks"):
             embed.add_field(name="Networks", value=", ".join([m.get("name") for m in networks]))
         if spoken_languages := data.get("spoken_languages", []):
@@ -197,11 +197,9 @@ class MovieDB(commands.Cog):
             seasons_meta = "\n".join(
                 f"**`[{i:>2}]`** {tv.get('name')}"
                 f"{parse_date(tv.get('air_date'), prefix=', first aired ')}"
-                f"({tv.get('episode_count', 0)} episodes)"
+                f"  ({tv.get('episode_count', 0)} episodes)"
                 for i, tv in enumerate(seasons_data, start=1)
             )
-            if runtime := data.get("episode_run_time"):
-                seasons_meta += f"\nAvg. ep. runtime: {runtime[0]} minutes"
             embed.add_field(name="Seasons summary", value=seasons_meta, inline=False)
         if next_ep := data.get("next_episode_to_air"):
             next_airing = "N/A"
@@ -226,7 +224,10 @@ class MovieDB(commands.Cog):
         """Show various info about a TV show/series."""
         async with ctx.channel.typing():
             api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
-            data = await request(f"{API_BASE}/tv/{query}", params={"api_key": api_key})
+            data: Union[int, Dict[str, Any]] = await request(
+                f"{API_BASE}/tv/{query}",
+                params={"api_key": api_key, "append_to_response": "credits"},
+            )
             if type(data) == int:
                 await ctx.send(f"⚠ API sent response code: https://http.cat/{data}")
                 return
@@ -236,6 +237,8 @@ class MovieDB(commands.Cog):
             emb1 = self.tvshow_embed(await ctx.embed_colour(), data)
             emb2 = discord.Embed(colour=await ctx.embed_colour(), title=data.get("name") or "")
             emb2.url = f"https://www.themoviedb.org/tv/{data.get('id')}"
+            if backdrop_path := data.get("backdrop_path"):
+                emb2.set_image(url=f"{CDN_BASE}{backdrop_path or '/'}")
             if production_countries := data.get("production_countries"):
                 emb2.add_field(
                     name="Production Countries",
@@ -250,10 +253,18 @@ class MovieDB(commands.Cog):
             if tagline := data.get("tagline"):
                 emb2.add_field(name="Tagline", value=tagline, inline=False)
 
-        await menu(ctx, [emb1, emb2], DEFAULT_CONTROLS, timeout=120)
+            celebrities = []
+            if cast_data := data.get("credits", {}).get("cast"):
+                emb2.set_footer(text="ℹ See next page to see the celebrities cast!")
+                celebrities = self.parse_credits(
+                    f"tv/{data['id']}", data.get("original_name"), cast_data
+                )
 
+        await menu(ctx, [emb1, emb2] + celebrities, DEFAULT_CONTROLS, timeout=120)
+
+    @staticmethod
     def suggestmovies_embed(
-        self, colour: discord.Colour, footer: str, data: Dict[str, Any]
+        colour: discord.Colour, footer: str, data: Dict[str, Any]
     ) -> discord.Embed:
         embed = discord.Embed(
             colour=colour,
@@ -300,8 +311,9 @@ class MovieDB(commands.Cog):
 
         await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120)
 
+    @staticmethod
     def suggestshows_embed(
-        self, colour: discord.Colour, footer: str, data: Dict[str, Any]
+        colour: discord.Colour, footer: str, data: Dict[str, Any]
     ) -> discord.Embed:
         embed = discord.Embed(
             title=data.get("name") or "", description=data.get("overview") or "", colour=colour
