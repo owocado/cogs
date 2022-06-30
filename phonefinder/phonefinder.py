@@ -1,14 +1,14 @@
 import asyncio
-import urllib.parse
-from contextlib import suppress
 from io import BytesIO
-from typing import Optional, cast
+from typing import cast
 
 import aiohttp
 import discord
-from aiocache import SimpleMemoryCache, cached
-from bs4 import BeautifulSoup as bsp, element
+from bs4 import BeautifulSoup as bsp
+from bs4 import element
 from redbot.core import commands
+
+from .converter import PARSER, USER_AGENT, QueryConverter
 
 try:
     from playwright.async_api import async_playwright
@@ -16,21 +16,12 @@ try:
 except ImportError:
     PLAYWRIGHT = False
 
-BASE_URL = "https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName={}"
-
-HEAD = {
-    "Accept": "text/html,application/xhtml+xml,application/xml",
-    "Accept-Encoding": "gzip, deflate, br",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-    " (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
-}
-
 
 class PhoneFinder(commands.Cog):
     """Fetch device specs for a (smart)phone model from GSMArena."""
 
     __authors__ = ["ow0x"]
-    __version__ = "1.2.0"
+    __version__ = "1.3.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad."""
@@ -46,76 +37,22 @@ class PhoneFinder(commands.Cog):
     def cog_unload(self) -> None:
         asyncio.create_task(self.session.close())
 
-    @cached(ttl=86400, cache=SimpleMemoryCache)
-    async def _fetch_href(self, ctx: commands.Context, query: str) -> Optional[str]:
-        try:
-            async with self.session.get(BASE_URL.format(query), headers=HEAD) as resp:
-                if resp.status != 200:
-                    return None
-                data = await resp.text()
-        except asyncio.TimeoutError:
-            return None
-
-        soup = bsp(data, "html.parser").find("div", {"class": "makers"})
-        get_ul_div = cast(element.Tag, soup.find("ul"))
-        makers = get_ul_div.find_all("li")
-        if not makers:
-            return None
-
-        if len(makers) == 1:
-            return makers[0].a["href"]
-
-        items = "\n".join(
-            f"**`[{i}]`** {x.span.get_text(separator=' ')}" for i, x in enumerate(makers, 1)
-        )
-
-        choices = f"Found above {len(makers)} result(s). Pick one within 60 seconds!"
-        embed = discord.Embed(description=items).set_footer(text=choices)
-        prompt = await ctx.send(embed=embed)
-
-        def check(msg) -> bool:
-            return bool(
-                msg.content.isdigit() and int(msg.content) in range(len(items) + 1)
-                and msg.author.id == ctx.author.id and msg.channel.id == ctx.channel.id
-            )
-
-        try:
-            choice = await ctx.bot.wait_for("message", timeout=60.0, check=check)
-        except asyncio.TimeoutError:
-            choice = None
-
-        if choice is None or choice.content.strip() == "0":
-            with suppress(discord.NotFound, discord.HTTPException):
-                await prompt.delete()
-            return "0"
-        else:
-            choice = int(choice.content.strip()) - 1
-            with suppress(discord.NotFound, discord.HTTPException):
-                await prompt.delete()
-            return makers[choice].a["href"]
-
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
-    async def phone(self, ctx: commands.Context, *, query: str) -> None:
+    async def phone(self, ctx: commands.Context, *, query: QueryConverter) -> None:
         """Fetch device specs, metadata for a (smart)phone model."""
-        endpoint = await self._fetch_href(ctx=ctx, query=urllib.parse.quote(query))
-        if endpoint == "0":
-            return await ctx.send("OK! Operation cancelled.")
-        if not endpoint:
-            return await ctx.send("No results found for your query.")
-
         async with ctx.typing():
-            url = f"https://www.gsmarena.com/{endpoint}"
+            url = f"https://www.gsmarena.com/{query}"
 
             try:
-                async with self.session.get(url, headers=HEAD) as response:
-                    if response.status != 200:
-                        return await ctx.send(f"https://http.cat/{response.status}")
-                    html = await response.text()
+                async with self.session.get(url, headers=USER_AGENT) as resp:
+                    if resp.status != 200:
+                        return await ctx.send(f"https://http.cat/{resp.status}")
+                    html = await resp.text()
             except asyncio.TimeoutError:
                 return await ctx.send("Operation timed out.")
 
-            soup = bsp(html, features="html.parser")
+            soup = bsp(html, features=PARSER)
             html_title = soup.find_all("title")[0].text
 
             # You probably got temporary IP banned by GSM Arena
@@ -189,16 +126,10 @@ class PhoneFinder(commands.Cog):
     @commands.check(lambda ctx: PLAYWRIGHT)
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 90, commands.BucketType.default)
-    async def phonespecs(self, ctx: commands.Context, *, query: str) -> None:
+    async def phonespecs(self, ctx: commands.Context, *, query: QueryConverter) -> None:
         """Fetch device specs for a (smart)phone model in fancy image mode."""
-        endpoint = await self._fetch_href(ctx=ctx, query=urllib.parse.quote(query))
-        if endpoint == "0":
-            return await ctx.send("OK! Operation cancelled.")
-        if not endpoint:
-            return await ctx.send("No results found for your query.")
-
         async with ctx.typing():
-            url = f"https://www.gsmarena.com/{endpoint}"
+            url = f"https://www.gsmarena.com/{query}"
             async with async_playwright() as playwright:
                 browser = await playwright.chromium.launch(channel="chrome")
                 page = await browser.new_page(
