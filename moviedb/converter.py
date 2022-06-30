@@ -49,7 +49,7 @@ class MovieQueryConverter(commands.Converter):
 
         # https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
         items = [
-            f"**`[{i:>2}]`** ({parse_date(obj.get('release_date'), 'D')})"
+            f"**`[{i:>2}]`** ({parse_date(obj.get('release_date'), 'd')})"
             f"  {obj.get('original_title', '[MOVIE TITLE MISSING]')}"
             for i, obj in enumerate(
                 sorted(data["results"], key=lambda x: x.get("release_date"), reverse=True),
@@ -105,7 +105,7 @@ class TVShowQueryConverter(commands.Converter):
         # https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
         items = [
             f"**`[{i:>2}]`  {v.get('original_name', '[TVSHOW TITLE MISSING]')}**"
-            f" ({parse_date(v.get('first_air_date'), 'D', prefix='first aired on ')})"
+            f" ({parse_date(v.get('first_air_date'), 'd', prefix='first aired on ')})"
             for i, v in enumerate(
                 sorted(data["results"], key=lambda x: x.get("first_air_date"), reverse=True),
                 start=1
