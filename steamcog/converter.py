@@ -1,6 +1,6 @@
 import asyncio
 import contextlib
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 import aiohttp
 import discord
@@ -15,7 +15,7 @@ USER_AGENT = {
 }
 
 
-async def request(url: str, **kwargs):
+async def request(url: str, **kwargs) -> Union[int, Dict[str, Any]]:
     params = kwargs.get("params")
     try:
         async with aiohttp.ClientSession() as session:
@@ -62,7 +62,7 @@ class QueryConverter(commands.Converter):
         if data.get("total", 0) == 0:
             raise commands.BadArgument("❌ No results found from your query.")
         elif data.get("total") == 1:
-            return data.get("items")[0].get("id")
+            return data.get("items", [{}])[0].get("id")
 
         def format_price(price_obj: Dict[str, Any], metascore: str) -> str:
             if not price_obj:
@@ -86,7 +86,7 @@ class QueryConverter(commands.Converter):
             f"{format_price(app.get('price', {}), app.get('metascore'))}"
             for i, app in enumerate(data.get("items"), start=1)
         ]
-        choices = f"Found below **{items}** results. Choose one in 60 seconds:\n\n"
+        choices = f"Found below **{len(items)}** results. Choose one in 60 seconds:\n\n"
         prompt: discord.Message = await ctx.send(choices + "\n".join(items))
 
         def check(msg: discord.Message) -> bool:

@@ -1,8 +1,6 @@
-import asyncio
 from datetime import datetime
 from typing import Any, Dict, List
 
-import aiohttp
 import discord
 from html2text import html2text
 from redbot.core import Config, commands
@@ -20,7 +18,7 @@ class SteamCog(commands.Cog):
     """Fetch data on a Steam game and cheap game deals for PC game(s)."""
 
     __authors__ = ["ow0x"]
-    __version__ = "2.0.0"
+    __version__ = "2.1.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad."""
@@ -32,13 +30,9 @@ class SteamCog(commands.Cog):
 
     def __init__(self, bot: Red) -> None:
         self.bot = bot
-        self.session = aiohttp.ClientSession()
         self.config = Config.get_conf(self, 357059159021060097, force_registration=True)
         default_user = {"region": None}
         self.config.register_user(**default_user)
-
-    def cog_unload(self) -> None:
-        asyncio.create_task(self.session.close())
 
     async def red_delete_data_for_user(self, **kwargs) -> None:
         """Nothing to delete"""
@@ -169,6 +163,66 @@ class SteamCog(commands.Cog):
                     pages.append(embed)
 
         await menu(ctx, pages, DEFAULT_CONTROLS, timeout=90.0)
+
+    @steam.command(name="featuredcategories", aliases=["featuredcategory", "featuredcat"])
+    async def steam_featured_categories(self, ctx: commands.Context, *, category: str):
+        """
+        Get popular games from featured categories on Steam store.
+
+        Currently available featured categories:
+            - Specials
+            - Coming Soon
+            - Top Sellers
+            - New Releases
+        """
+        category = category.lower().replace(" ", "_")
+        if category not in ["specials", "coming_soon", "top_sellers", "new_releases"]:
+            return await ctx.send_help()
+
+        async with ctx.typing():
+            base_url = "https://store.steampowered.com/api/featuredcategories"
+            user_region = (await self.config.user(ctx.author).region()) or "US"
+            data = await request(base_url, params={"l": "en", "cc": user_region, "json": "1"})
+            if type(data) == int:
+                await ctx.send(f"⚠ API sent response code: https://http.cat/{data}")
+                return
+            if not data or not data[category].get("items"):
+                return await ctx.send("⚠ No games found in that featured category.")
+
+            platforms_map = {
+                "windows_available": "Windows",
+                "mac_available": "Mac OS",
+                "linux_available": "Linux",
+            }
+            pages = []
+            for i, obj in enumerate(data[category]["items"], start=1):
+                em = discord.Embed(title=obj.get("name"), colour=await ctx.embed_colour())
+                em.url = f"https://store.steampowered.com/{obj.get('id') or ''}"
+                capsule_image = obj.get("large_capsule_image") or obj.get("small_capsule_image") or ""
+                em.set_image(url=capsule_image or obj.get("capsule_image") or "")
+                if obj.get("discounted"):
+                    discount = f"~~{obj.get('original_price') / 100}~~ {obj.get('final_price') / 100}"
+                    em.add_field(
+                        name="Discounted Price",
+                        value=f"{discount} {obj.get('currency')}\n{obj.get('discount_percent')}% off",
+                    )
+                else:
+                    em.add_field(name="Price", value=f"{obj.get('final_price') / 100} {obj.get('currency')}")
+                if discount_expiry := obj.get("discount_expiration"):
+                    em.add_field(name="Discount Expiry", value=f"<t:{discount_expiry}:R>")
+                platforms = []
+                for platform, name in platforms_map.items():
+                    if obj.get(platform):
+                        platforms.append(name)
+                if platforms:
+                    em.add_field(name="Supported Platforms", value=", ".join(platforms))
+                em.set_footer(
+                    text=f"Category: {data[category]['name']} • Page {i} of {len(data[category]['items'])}",
+                    icon_url="https://i.imgur.com/xxr2UBZ.png",
+                )
+                pages.append(em)
+
+        await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120.0)
 
     @steam.command(name="setmyregion")
     @commands.cooldown(1, 15, commands.BucketType.user)
