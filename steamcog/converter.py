@@ -21,10 +21,10 @@ async def request(url: str, **kwargs):
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=USER_AGENT, params=params) as resp:
                 if resp.status != 200:
-                    return None
+                    return resp.status
                 return await resp.json()
     except (asyncio.TimeoutError, aiohttp.ClientError):
-        return None
+        return 408
 
 
 class RegionConverter(commands.Converter):
@@ -55,10 +55,12 @@ class QueryConverter(commands.Converter):
             "https://store.steampowered.com/api/storesearch",
             params={"cc": user_region, "l": "en", "term": argument.lower()}
         )
+        if type(data) == int:
+            raise commands.BadArgument(f"⚠ API sent response code: https://http.cat/{data}")
         if not data:
-            raise commands.BadArgument("❌ No results found.")
+            raise commands.BadArgument("❌ No results found from your query.")
         if data.get("total", 0) == 0:
-            raise commands.BadArgument("❌ No results found.")
+            raise commands.BadArgument("❌ No results found from your query.")
         elif data.get("total") == 1:
             return data.get("items")[0].get("id")
 
@@ -69,24 +71,27 @@ class QueryConverter(commands.Converter):
             initial: Optional[int] = price_obj.get("initial")
             final: Optional[int] = price_obj.get("final")
             msg = []
-            if initial is not None and final is not None and initial != final:
-                msg.append(f"💵 {currency} ~~{nfmt(initial / 100)}~~ {nfmt(final / 100)}")
+            if initial is not None and final is not None:
+                if initial != final:
+                    msg.append(f"💵 {currency} ~~{nfmt(initial / 100)}~~ {nfmt(final / 100)}")
+                else:
+                    msg.append(f"💵 {currency} {nfmt(final / 100)}")
             if metascore:
                 msg.append(f"{metascore}% metascore")
             return f" ({', '.join(msg)})" if msg else ""
 
         # https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
-        items = "\n".join(
-            f"**`[{str(i).zfill(2)}]` {app.get('name')}**"
+        items = [
+            f"**`[{i:>2}]` {app.get('name')}**"
             f"{format_price(app.get('price', {}), app.get('metascore'))}"
             for i, app in enumerate(data.get("items"), start=1)
-        )
-        choices = f"Found below **{len(data['items'])}** results."
-        prompt: discord.Message = await ctx.send(f"{choices} Pick one in 60 seconds:\n\n{items}")
+        ]
+        choices = f"Found below **{items}** results. Choose one in 60 seconds:\n\n"
+        prompt: discord.Message = await ctx.send(choices + "\n".join(items))
 
         def check(msg: discord.Message) -> bool:
             return bool(
-                msg.content.isdigit()
+                msg.content and msg.content.isdigit()
                 and int(msg.content) in range(len(items) + 1)
                 and msg.author.id == ctx.author.id
                 and msg.channel.id == ctx.channel.id
@@ -111,21 +116,25 @@ class GamedealsConverter(commands.Converter):
     async def convert(self, ctx: commands.Context, argument: str) -> int:
         url = f"https://www.cheapshark.com/api/1.0/games?title={argument.lower()}"
         data = await request(url)
+        if type(data) == int:
+            raise commands.BadArgument(f"⚠ API sent response code: https://http.cat/{data}")
         if not data or len(data) == 0:
             raise commands.BadArgument("❌ No results found.")
         if len(data) == 1:
             return data[0].get("cheapestDealID")
 
         # https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
-        items = "".join(f"**{i}.** {x.get('external')}\n" for i, x in enumerate(data[:20], 1))
-        count = len(data) if len(data) <= 20 else 20
+        items = "\n".join(
+            f"**`[{i:>2}]`** {x.get('external')}" for i, x in enumerate(data[:20], 1)
+        )
+        count = len(data) if len(data) < 20 else 20
         choices = f"Choose one in 60 seconds:\n\n{items}"
-        prompt: discord.Message = await ctx.send(f"Found below {count} results. {choices}")
+        prompt: discord.Message = await ctx.send(f"Found below **{count}** results. {choices}")
 
         def check(msg: discord.Message) -> bool:
             return bool(
-                msg.content.isdigit()
-                and int(msg.content) in range(len(items) + 1)
+                msg.content and msg.content.isdigit()
+                and int(msg.content) in range(count + 1)
                 and msg.author.id == ctx.author.id
                 and msg.channel.id == ctx.channel.id
             )
