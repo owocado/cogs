@@ -45,16 +45,14 @@ class MovieQueryConverter(commands.Converter):
         if not data.get("results") or len(data.get("results")) == 0:
             raise commands.BadArgument("⛔ No such movie found from given query.")
         if len(data.get("results")) == 1:
-            return data.get("results")[0].get("id")
+            return data["results"][0].get("id")
 
         # https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
+        data["results"].sort(key=lambda x: x.get("release_date"), reverse=True)
         items = [
             f"**`[{i:>2}]`** ({parse_date(obj.get('release_date'), 'd')})"
             f"  {obj.get('original_title', '[MOVIE TITLE MISSING]')}"
-            for i, obj in enumerate(
-                sorted(data["results"], key=lambda x: x.get("release_date"), reverse=True),
-                start=1
-            )
+            for i, obj in enumerate(data["results"], start=1)
         ]
         prompt: discord.Message = await ctx.send(
             f"Found below {len(items)} results. Choose one in 60 seconds:\n\n"
@@ -100,16 +98,14 @@ class TVShowQueryConverter(commands.Converter):
         if not data.get("results") or len(data.get("results")) == 0:
             raise commands.BadArgument("⛔ No such TV show found from given query.")
         if len(data.get("results")) == 1:
-            return data.get("results")[0].get("id")
+            return data["results"][0].get("id")
 
         # https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
+        data["results"].sort(key=lambda x: x.get("first_air_date"), reverse=True)
         items = [
             f"**`[{i:>2}]`  {v.get('original_name', '[TVSHOW TITLE MISSING]')}**"
             f" ({parse_date(v.get('first_air_date'), 'd', prefix='first aired on ')})"
-            for i, v in enumerate(
-                sorted(data["results"], key=lambda x: x.get("first_air_date"), reverse=True),
-                start=1
-            )
+            for i, v in enumerate(data["results"], start=1)
         ]
         prompt: discord.Message = await ctx.send(
             f"Found below {len(items)} results. Choose one in 60 seconds:\n\n"

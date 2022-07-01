@@ -24,7 +24,7 @@ class MovieDB(commands.Cog):
     """Get summarized info about a movie or TV show/series."""
 
     __author__ = "ow0x"
-    __version__ = "2.0.2"
+    __version__ = "2.0.3"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:  # Thanks Sinbad!
         return (
