@@ -24,7 +24,7 @@ class MovieDB(commands.Cog):
     """Get summarized info about a movie or TV show/series."""
 
     __author__ = "ow0x"
-    __version__ = "2.0.3"
+    __version__ = "2.0.4"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:  # Thanks Sinbad!
         return (
@@ -77,8 +77,7 @@ class MovieDB(commands.Cog):
         if len(embed.fields) in {5, 8, 11}:
             embed.add_field(name="\u200b", value="\u200b")
         embed.set_footer(
-            text="Click arrows to see more info!",
-            icon_url="https://i.imgur.com/sSE7Usn.png",
+            text="Click arrows to see more info!", icon_url="https://i.imgur.com/sSE7Usn.png"
         )
         return embed
 
@@ -121,21 +120,22 @@ class MovieDB(commands.Cog):
             if cast_data := data.get("credits", {}).get("cast"):
                 emb2.set_footer(
                     text="See next page to see this movie's celebrities cast!",
-                    icon_url="https://i.imgur.com/sSE7Usn.png"
+                    icon_url="https://i.imgur.com/sSE7Usn.png",
                 )
                 celebrities = self.parse_credits(
-                    f"movie/{data['id']}", data.get("original_title"), cast_data
+                    cast_data,
+                    colour=await ctx.embed_colour(),
+                    tmdb_id=f"movie/{data['id']}",
+                    title=data["title"],
                 )
 
         await menu(ctx, [emb1, emb2] + celebrities, DEFAULT_CONTROLS, timeout=120)
 
     @staticmethod
-    def parse_credits(
-        tmdb_id: int, title: str, cast_data: List[Dict[str, Any]]
-    ) -> List[discord.Embed]:
+    def parse_credits(cast_data: List[Dict[str, Any]], **kwargs) -> List[discord.Embed]:
         GENDERS_MAP = {"0": "", "1": "♀", "2": "♂"}
         pretty_cast = "\n".join(
-            f"**`{i:>2}.`**  [{actor_obj.get('original_name')}]"
+            f"**`[{i:>2}]`**  [{actor_obj.get('original_name')}]"
             f"(https://www.themoviedb.org/person/{actor_obj['id']})"
             f" {GENDERS_MAP[str(actor_obj.get('gender', 0))]}"
             f" as **{actor_obj.get('character') or '???'}**"
@@ -145,8 +145,8 @@ class MovieDB(commands.Cog):
         pages = []
         all_pages = list(pagify(pretty_cast, page_length=1500))
         for i, page in enumerate(all_pages, start=1):
-            emb = discord.Embed(colour=discord.Colour.random(), description=page, title=title)
-            emb.url = f"https://www.themoviedb.org/{tmdb_id}"
+            emb = discord.Embed(colour=kwargs["colour"], description=page, title=kwargs["title"])
+            emb.url = f"https://www.themoviedb.org/{kwargs['tmdb_id']}/cast"
             emb.set_footer(
                 text=f"Celebrities Cast • Page {i} of {len(all_pages)}",
                 icon_url="https://i.imgur.com/sSE7Usn.png",
@@ -157,9 +157,7 @@ class MovieDB(commands.Cog):
 
     @staticmethod
     def tvshow_embed(colour: discord.Colour, data: Dict[str, Any]) -> discord.Embed:
-        summary = (
-            f"**Series status:**  {data.get('status') or 'Unknown'} ({data.get('type')})\n"
-        )
+        summary = f"**Series status:**  {data.get('status') or 'Unknown'} ({data.get('type')})\n"
         if runtime := data.get("episode_run_time"):
             summary += f"**Average episode runtime:**  {runtime[0]} minutes\n"
         embed = discord.Embed(
@@ -263,7 +261,10 @@ class MovieDB(commands.Cog):
                     icon_url="https://i.imgur.com/sSE7Usn.png",
                 )
                 celebrities = self.parse_credits(
-                    f"tv/{data['id']}", data.get("original_name"), cast_data
+                    cast_data,
+                    colour=await ctx.embed_colour(),
+                    tmdb_id=data["id"],
+                    title=data["name"],
                 )
 
         await menu(ctx, [emb1, emb2] + celebrities, DEFAULT_CONTROLS, timeout=120)
@@ -273,9 +274,7 @@ class MovieDB(commands.Cog):
         colour: discord.Colour, footer: str, data: Dict[str, Any]
     ) -> discord.Embed:
         embed = discord.Embed(
-            colour=colour,
-            title=data.get("title") or "",
-            description=data.get("overview") or "",
+            colour=colour, title=data.get("title") or "", description=data.get("overview") or ""
         )
         embed.url = f"https://www.themoviedb.org/movie/{data.get('id', '')}"
         embed.set_image(url=f"{CDN_BASE}{data.get('backdrop_path', '/')}")

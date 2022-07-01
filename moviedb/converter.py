@@ -50,12 +50,12 @@ class MovieQueryConverter(commands.Converter):
         # https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
         data["results"].sort(key=lambda x: x.get("release_date"), reverse=True)
         items = [
-            f"**`[{i:>2}]`** ({parse_date(obj.get('release_date'), 'd')})"
-            f"  {obj.get('original_title', '[MOVIE TITLE MISSING]')}"
+            f"**`[{i:>2}]`**  {obj.get('title', '[TITLE MISSING]')}"
+            f" ({parse_date(obj.get('release_date'), 'd')})"
             for i, obj in enumerate(data["results"], start=1)
         ]
         prompt: discord.Message = await ctx.send(
-            f"Found below {len(items)} results. Choose one in 60 seconds:\n\n"
+            f"Found below {len(items)} results with release dates. Choose one in 60 seconds:\n\n"
             + "\n".join(items).replace(" ()", "")
         )
 
