@@ -1,5 +1,5 @@
 {
-    "name": "IPData",
+    "name": "IPInfo",
     "short": "Get basic geolocation info on a public IP address.",
     "description": "Get basic geolocation info on a public IP address.",
     "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
@@ -7,7 +7,7 @@
     "author": ["ow0x"],
     "required_cogs": {},
     "requirements": [],
-    "tags": ["ip", "whois", "ipdata"],
+    "tags": ["ip", "whois", "ipdata", "ipinfo"],
     "min_bot_version": "3.4.14",
     "hidden": false,
     "disabled": false,
