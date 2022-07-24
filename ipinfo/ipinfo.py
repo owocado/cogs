@@ -31,7 +31,7 @@ class IPInfo(commands.Cog):
     @staticmethod
     def _make_embed(data: IPData, color: discord.Colour) -> discord.Embed:
         embed = discord.Embed(color=color)
-        embed.description = f"**Threat Info:**\n{data.threat}" if data.threat else ""
+        embed.description = f"__**Threat Info:**__\n\n{data.threat}" if data.threat else ""
         embed.set_author(name=f"Info for IP: {data.ip}", icon_url=data.flag or "")
         if data.asn:
             embed.add_field(name="ASN Carrier", value=str(data.asn))
@@ -44,7 +44,7 @@ class IPInfo(commands.Cog):
             embed.add_field(name="Calling Code", value=f"+{data.calling_code}")
         if (lat := data.latitude) and (lon := data.longitude):
             maps_link = f"[{data.co_ordinates}](https://www.google.com/maps?q={lat},{lon})"
-            embed.add_field(name="Latitude/Longitude", value=maps_link)
+            embed.add_field(name="Latitude & Longitude", value=maps_link)
         if len(embed.fields) == 5:
             embed.add_field(name='\u200b', value='\u200b')
         if data.threat.blocklists:
@@ -81,7 +81,9 @@ class IPInfo(commands.Cog):
                 assert isinstance(data, IPData)
                 embed = self._make_embed(data, await ctx.embed_colour())
                 if ctx.author.id == 306810730055729152:
-                    embed.add_field(name='API Quota', value=f"{data.count}/1500 used", inline=False)
+                    embed.add_field(
+                        name='API Quota', value=f"{data.count}/1500 used today", inline=False
+                    )
                 await ctx.send(embed=embed)
                 return
 
@@ -96,7 +98,9 @@ class IPInfo(commands.Cog):
                     embed = self._make_embed(data, await ctx.embed_colour())
                     embed.set_footer(text=f"Page {i} of {len(ip_addrs)}")
                 if ctx.author.id == 306810730055729152:
-                    embed.add_field(name='API Quota', value=f"{data.count}/1500 used", inline=False)
+                    embed.add_field(
+                        name='API Quota', value=f"{data.count}/1500 used today", inline=False
+                    )
                 embeds.append(embed)
 
             if not embeds:

@@ -84,7 +84,7 @@ class Threat:
             f"✅  IP {key.replace('_', ' ').title()}"
             for key, value in self.__dict__.items()
             if value and type(value) is bool
-        ).replace("Tor", "TOR").replace("Icloud", "iCloud").replace('Is', 'is')
+        ).replace("Icloud", "iCloud").replace('Is', 'is')
 
     @classmethod
     def from_dict(cls, data: dict) -> Threat:
