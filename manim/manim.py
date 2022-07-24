@@ -12,7 +12,6 @@ from typing import Any, Dict
 
 import discord
 from redbot.core import commands
-from redbot.core.bot import Red
 
 
 # https://github.com/Cog-Creators/Red-DiscordBot/blob/V3/develop/redbot/core/dev_commands.py#L31
@@ -30,7 +29,7 @@ class Manim(commands.Cog):
     """A cog for interacting with Manim python animation engine."""
 
     __authors__ = ["Manim Community Developers", "ow0x"]
-    __version__ = "0.15.2"
+    __version__ = "0.16.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad."""

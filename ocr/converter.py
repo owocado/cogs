@@ -4,10 +4,9 @@
 # I am forever indebted to and wholeheartedly thank TrustyJAID for providing this converter.
 import re
 
-from typing import Pattern, List, Union
+from typing import Pattern, List
 
 import discord
-from discord.ext.commands.converter import Converter
 from redbot.core import commands
 
 IMAGE_LINKS: Pattern = re.compile(
@@ -15,7 +14,7 @@ IMAGE_LINKS: Pattern = re.compile(
 )
 
 
-class ImageFinder(Converter):
+class ImageFinder(commands.Converter):
     """
     This is a class to convert NotSoBot's image searching
     capabilities into a more general converter class

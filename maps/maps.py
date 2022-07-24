@@ -2,7 +2,7 @@ import aiohttp
 import asyncio
 
 from io import BytesIO
-from typing import Literal, Optional
+from typing import Optional
 
 import discord
 from redbot.core import commands

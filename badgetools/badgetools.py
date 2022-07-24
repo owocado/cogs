@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 import discord
 from dateutil import relativedelta
 from redbot.core import commands
-from redbot.core.bot import Red
 from redbot.core.utils import AsyncIter
 from redbot.core.utils.chat_formatting import pagify
 from redbot.core.utils.menus import close_menu, menu, DEFAULT_CONTROLS

@@ -1,11 +1,9 @@
 import asyncio
-import json
 import logging
 from typing import Optional
 
 import aiohttp
 from redbot.core import commands
-from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import box, pagify
 
 from .converter import ImageFinder
@@ -17,22 +15,22 @@ class OCR(commands.Cog):
     """Detect text in images using ocr.space or Google Cloud Vision API."""
 
     __authors__ = ["TrustyJAID", "ow0x"]
-    __version__ = "1.0.1"
+    __version__ = "1.1.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad."""
         return (
             f"{super().format_help_for_context(ctx)}\n\n"
-            f"Authors:  {', '.join(self.__authors__)}\n"
-            f"Cog version:  v{self.__version__}"
+            f"**Authors:**  {', '.join(self.__authors__)}\n"
+            f"**Cog version:**  v{self.__version__}"
         )
 
-    def __init__(self):
-        self.sussy_string = "7d3306461d88957"
-        self.session = aiohttp.ClientSession()
+    sussy_string = "7d3306461d88957"
+    session = aiohttp.ClientSession()
 
     def cog_unload(self) -> None:
-        asyncio.create_task(self.session.close())
+        if self.session:
+            asyncio.create_task(self.session.close())
 
     async def red_delete_data_for_user(self, **kwargs) -> None:
         """Nothing to delete"""
@@ -47,6 +45,7 @@ class OCR(commands.Cog):
             "isOverlayRequired": False,
             "filetype": file_type
         }
+
         async def query_kaogurai(url: str):
             async with self.session.get(url, params={"url": image}) as resp:
                 if resp.status != 200:
@@ -55,6 +54,7 @@ class OCR(commands.Cog):
                     )
                     return None
                 return await resp.json()
+
         result = await query_kaogurai("https://api.kaogurai.xyz/v1/ocr/image")
         if not result:
             async with self.session.post(
@@ -65,14 +65,14 @@ class OCR(commands.Cog):
                 result = await resp.json()
 
         temp_ = result.get("textAnnotations", [{}])
-        if temp_[0].get("error") and temp_[0].get("error").get("message"):
-            return await ctx.send(
-                f"API returned error: {temp_[0]['error']['message']}"
-            )
+        if (err := temp_[0].get("error")) and (err_message := err.get("message")):
+            return await ctx.send(f"API returned error: {err_message}")
+
         if temp_[0].get("description"):
             return await ctx.send_interactive(
                 pagify(temp_[0]["description"]), box_lang=""
             )
+
         if not result.get("ParsedResults"):
             return await ctx.send(box(str(result.get("ErrorMessage")), "json"))
 
@@ -95,9 +95,9 @@ class OCR(commands.Cog):
 
         You may use it to run OCR on old messages which contains attachments/image links.
         Simply reply to the said message with `[p]ocr` for detection to work.
-        
+
         Pass `detect_handwriting` as True or `1` with command to more accurately detect handwriting from target image.
-        
+
         **Example:**
         ```py
         [p]ocr image/attachment/URL
@@ -141,13 +141,12 @@ class OCR(commands.Cog):
                 return await ctx.send("Operation timed out.")
 
         output = data.get("responses")
-        if output is None or output[0] == {}:
+        if not output or output[0] == {}:
             return await ctx.send("No text detected.")
-        if output[0].get("error") and output[0].get("error").get("message"):
-            return await ctx.send(
-                f"API returned error: {output[0]['error']['message']}"
-            )
-        detected_text = output[0].get("textAnnotations")[0].get("description")
+        if (err := output[0].get("error")) and (err_message := err.get("message")):
+            return await ctx.send(f"API returned error: {err_message}")
+
+        detected_text = output[0].get("textAnnotations", [{}])[0].get("description")
         if not detected_text:
             return await ctx.send("No text was detected in the target image.")
 
