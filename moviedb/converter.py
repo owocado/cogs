@@ -1,61 +1,34 @@
 import asyncio
 import contextlib
-from datetime import datetime
 
-import aiohttp
 import discord
-from redbot.core import commands
+from redbot.core.commands import BadArgument, Context, Converter
 
-def parse_date(date_string: str, style: str = "R", *, prefix: str = "") -> str:
-    if not date_string:
-        return ""
-    # TODO: Switch to dateparser if date string changes from API response
-    try:
-        date_obj = datetime.strptime(date_string, "%Y-%m-%d")
-        return f"{prefix}<t:{int(date_obj.timestamp())}:{style}>"
-    # Future proof it in case API changes date string
-    except ValueError:
-        return ""
+from .api import MovieSearchData, TVShowSearchData
+from .constants import MediaNotFound
+from .utils import format_date
 
 
-async def request(url: str, *, params: dict = None) -> aiohttp.ClientResponse:
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, params=params) as resp:
-                if resp.status != 200:
-                    return resp.status
-                return await resp.json()
-    except (asyncio.TimeoutError, aiohttp.ClientError):
-        return 408
+class MovieFinder(Converter):
 
+    async def convert(self, ctx: Context, argument: str) -> int:
+        api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key", "")
+        result = await MovieSearchData.request(api_key, argument.lower())
+        if isinstance(result, MediaNotFound):
+            raise BadArgument(str(result))
+        if not result:
+            raise BadArgument("⛔ No such movie found from given query.")
 
-class MovieQueryConverter(commands.Converter):
-
-    async def convert(self, ctx: commands.Context, argument: str) -> int:
-        api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
-        data = await request(
-            "https://api.themoviedb.org/3/search/movie",
-            params={"api_key": api_key, "query": argument.lower()}
-        )
-        if type(data) == int:
-            raise commands.BadArgument(f"⚠ API sent response code: https://http.cat/{data}")
-        if not data:
-            raise commands.BadArgument("⛔ No such movie found from given query.")
-
-        if not data.get("results") or len(data.get("results")) == 0:
-            raise commands.BadArgument("⛔ No such movie found from given query.")
-        if len(data.get("results")) == 1:
-            return data["results"][0].get("id")
+        if len(result) == 1:
+            return result[0].id
 
         # https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
-        data["results"].sort(key=lambda x: x.get("release_date"), reverse=True)
         items = [
-            f"**`[{i:>2}]`**  {obj.get('title', '[TITLE MISSING]')}"
-            f" ({parse_date(obj.get('release_date'), 'd')})"
-            for i, obj in enumerate(data["results"], start=1)
+            f"**{i}.**  {obj.title} ({format_date(obj.release_date, 'd')})"
+            for i, obj in enumerate(result, start=1)
         ]
         prompt: discord.Message = await ctx.send(
-            f"Found below {len(items)} results with release dates. Choose one in 60 seconds:\n\n"
+            f"Found below {len(items)} results (sorted by date). Choose one in 60 seconds:\n\n"
             + "\n".join(items).replace(" ()", "")
         )
 
@@ -68,44 +41,38 @@ class MovieQueryConverter(commands.Converter):
             )
 
         try:
-            choice = await ctx.bot.wait_for("message", timeout=60, check=check)
+            choice: discord.Message = await ctx.bot.wait_for("message", timeout=60, check=check)
         except asyncio.TimeoutError:
             choice = None
 
-        if choice is None or choice.content.strip() == "0":
+        if choice is None or (choice.content and choice.content.strip() == "0"):
             with contextlib.suppress(discord.NotFound, discord.HTTPException):
                 await prompt.delete()
-            raise commands.BadArgument("‼ You didn't pick a valid choice. Operation cancelled.")
+            raise BadArgument("‼ You didn't pick a valid choice. Operation cancelled.")
 
         with contextlib.suppress(discord.NotFound, discord.HTTPException):
             await prompt.delete()
-        return data["results"][int(choice.content.strip()) - 1].get("id")
+        return result[int(choice.content.strip()) - 1].id
 
 
-class TVShowQueryConverter(commands.Converter):
+class TVShowFinder(Converter):
 
-    async def convert(self, ctx: commands.Context, argument: str) -> int:
-        api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
-        data = await request(
-            "https://api.themoviedb.org/3/search/tv",
-            params={"api_key": api_key, "query": argument.lower()}
-        )
-        if type(data) == int:
-            raise commands.BadArgument(f"⚠ API sent response code: https://http.cat/{data}")
-        if not data:
-            raise commands.BadArgument("⛔ No such TV show found from given query.")
+    async def convert(self, ctx: Context, argument: str) -> int:
+        api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key", "")
+        result = await TVShowSearchData.request(api_key, argument.lower())
+        if isinstance(result, MediaNotFound):
+            raise BadArgument(str(result))
+        if not result:
+            raise BadArgument("⛔ No such TV show found from given query.")
 
-        if not data.get("results") or len(data.get("results")) == 0:
-            raise commands.BadArgument("⛔ No such TV show found from given query.")
-        if len(data.get("results")) == 1:
-            return data["results"][0].get("id")
+        if len(result) == 1:
+            return result[0].id
 
         # https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
-        data["results"].sort(key=lambda x: x.get("first_air_date"), reverse=True)
         items = [
-            f"**`[{i:>2}]`  {v.get('original_name', '[TVSHOW TITLE MISSING]')}**"
-            f" ({parse_date(v.get('first_air_date'), 'd', prefix='first aired on ')})"
-            for i, v in enumerate(data["results"], start=1)
+            f"**{i}.**  {v.name or v.original_name}"
+            f" ({format_date(v.first_air_date, 'd', prefix='first aired on ')})"
+            for i, v in enumerate(result, start=1)
         ]
         prompt: discord.Message = await ctx.send(
             f"Found below {len(items)} results. Choose one in 60 seconds:\n\n"
@@ -121,15 +88,15 @@ class TVShowQueryConverter(commands.Converter):
             )
 
         try:
-            choice = await ctx.bot.wait_for("message", timeout=60, check=check)
+            choice: discord.Message = await ctx.bot.wait_for("message", timeout=60, check=check)
         except asyncio.TimeoutError:
             choice = None
 
-        if choice is None or choice.content.strip() == "0":
+        if choice is None or (choice.content and choice.content.strip() == "0"):
             with contextlib.suppress(discord.NotFound, discord.HTTPException):
                 await prompt.delete()
-            raise commands.BadArgument("‼ You didn't pick a valid choice. Operation cancelled.")
+            raise BadArgument("‼ You didn't pick a valid choice. Operation cancelled.")
 
         with contextlib.suppress(discord.NotFound, discord.HTTPException):
             await prompt.delete()
-        return data.get("results")[int(choice.content.strip()) - 1].get("id")
+        return result[int(choice.content.strip()) - 1].id
