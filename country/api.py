@@ -43,8 +43,8 @@ class Flags:
 class Language:
     name: str
     nativeName: str
-    iso639_1: str
-    iso639_2: str
+    iso639_1: str = ""
+    iso639_2: str = ""
 
     def __str__(self) -> str:
         return self.name

@@ -1,108 +1,103 @@
 import asyncio
-from typing import Any, Dict, Optional
 
 import aiohttp
 import discord
 from redbot.core import commands
 from redbot.core.utils.chat_formatting import humanize_number
-from redbot.core.utils.menus import DEFAULT_CONTROLS, close_menu, menu
+from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
+
+from .api import NotFound, YuGiOhData
 
 
 class YGO(commands.Cog):
     """Get nerdy info on a Yu-Gi-Oh! card or pull a random card."""
 
     __authors__ = ["ow0x", "dragonfire535"]
-    __version__ = "1.0.0"
+    __version__ = "2.0.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad."""
         return (
             f"{super().format_help_for_context(ctx)}\n\n"
-            f"Authors:  {', '.join(self.__authors__)}\n"
-            f"Cog version:  v{self.__version__}"
+            f"**Authors:**  {', '.join(self.__authors__)}\n"
+            f"**Cog version:**  v{self.__version__}"
         )
+
+    session = aiohttp.ClientSession()
 
     async def red_delete_data_for_user(self, **kwargs) -> None:
         """Nothing to delete"""
         pass
 
-    async def get(self, ctx: commands.Context, url: str) -> Optional[Dict[str, Any]]:
-        try:
-            async with aiohttp.request("GET", url) as response:
-                if response.status != 200:
-                    await ctx.send(f"https://http.cat/{response.status}")
-                    return None
-                return await response.json()
-        except asyncio.TimeoutError:
-            await ctx.send("Operation timed out.")
-            return None
+    def cog_unload(self) -> None:
+        if self.session:
+            asyncio.create_task(self.session.close())
 
     @staticmethod
-    def generate_embed(colour, footer, data) -> discord.Embed:
-        embed = discord.Embed(colour=colour, title=data["name"], description=data["desc"])
-        embed.url = f"https://db.ygoprodeck.com/card/?search={data['id']}"
-        embed.set_author(
-            name="Yu-Gi-Oh!", url="http://www.yugioh-card.com/en/", icon_url="https://i.imgur.com/AJNBflD.png",
-        )
-        embed.set_image(url=str(data["card_images"][0]["image_url"]))
-        if "Monster" in data["type"]:
-            embed.add_field(name="Attribute", value=str(data.get("attribute")))
-            embed.add_field(name="Attack (ATK)", value=humanize_number(data.get("atk", 0)))
-            link_value = "Link Value" if data["type"] == "Link Monster" else "Defense (DEF)"
-            link_val = data.get("linkval") if data["type"] == "Link Monster" else humanize_number(data["def"])
+    def generate_embed(data: YuGiOhData, colour: discord.Colour, footer: str) -> discord.Embed:
+        embed = discord.Embed(colour=colour, title=data.name, description=data.desc)
+        embed.url = f"https://db.ygoprodeck.com/card/?search={data.id}"
+        embed.set_image(url=data.card_images[0].image_url)
+        if "Monster" in data.type:
+            embed.add_field(name="Attribute", value=str(data.attribute))
+            embed.add_field(name="Attack (ATK)", value=humanize_number(data.attack))
+            is_monster = data.type == "Monster"
+            link_value = "Link Value" if is_monster else "Defense (DEF)"
+            link_val = data.linkval if is_monster else humanize_number(data.defense)
             embed.add_field(name=link_value, value=str(link_val))
-        if data.get("card_sets"):
-            card_sets = "".join(
-                f"`[{str(i).zfill(2)}]` **{sets['set_name']}** (${sets['set_price']}) "
-                f"{sets.get('set_rarity_code', '')}\n"
-                for i, sets in enumerate(data["card_sets"], 1)
+        if data.card_sets:
+            card_sets = "\n".join(
+                f"`[{i:>2}]`  {card.set_name} @ **${card.set_price}** {card.set_rarity_code}"
+                for i, card in enumerate(data.card_sets, 1)
             )
             embed.add_field(name="Card Sets", value=card_sets, inline=False)
-        price_dict = data["card_prices"][0]
-        card_prices = (
-            f"Cardmarket: **€{price_dict['cardmarket_price']}**\nTCGPlayer: **${price_dict['tcgplayer_price']}**\n"
-            f"eBay: **${price_dict['ebay_price']}**\nAmazon: **${price_dict['amazon_price']}**\n"
-        )
-        embed.add_field(name="Prices", value=card_prices, inline=False)
-        embed.set_footer(text=footer)
+        if data.card_prices:
+            card_prices = (
+                f"Cardmarket: **€{data.card_prices[0].cardmarket_price}**\n"
+                f"TCGPlayer: **${data.card_prices[0].tcgplayer_price}**\n"
+                f"eBay: **${data.card_prices[0].ebay_price}**\n"
+                f"Amazon: **${data.card_prices[0].amazon_price}**\n"
+            )
+            embed.add_field(name="Prices", value=card_prices, inline=False)
+        embed.set_footer(text=footer, icon_url="https://i.imgur.com/AJNBflD.png")
         return embed
 
-    @commands.command()
+    @commands.command(aliases=("ygo", "yugioh"))
     @commands.cooldown(1, 5, commands.BucketType.user)
     @commands.bot_has_permissions(add_reactions=True, embed_links=True)
     async def ygocard(self, ctx: commands.Context, *, card_name: str):
         """Search for a Yu-Gi-Oh! card."""
         async with ctx.typing():
-            base_url = f"https://db.ygoprodeck.com/api/v7/cardinfo.php?fname={card_name}"
-            card_data = await self.get(ctx, base_url)
-            if not card_data: return
-            if not card_data["data"]: return await ctx.send("No results.")
+            card = card_name.replace(" ", "%20")
+            base_url = f"https://db.ygoprodeck.com/api/v7/cardinfo.php?fname={card}"
+            card_data = await YuGiOhData.request(self.session, base_url)
+            if isinstance(card_data, NotFound):
+                return await ctx.send(str(card_data))
 
             pages = []
-            for i, data in enumerate(card_data["data"], start=1):
+            for i, data in enumerate(card_data, start=1):
                 colour = await ctx.embed_colour()
-                page_meta = f"Page {i} of {len(card_data['data'])} | Card Level: "
-                race_or_spell = "Race:" if "Monster" in data["type"] else "Spell Type:"
-                footer = f"{page_meta}{data.get('level', 'N/A')} | {race_or_spell}: {data['race']}"
-                embed = self.generate_embed(colour, footer, data)
+                page_meta = f"Page {i} of {len(card_data)} | Card Level: "
+                race_or_spell = "Race" if "Monster" in data.type else "Spell Type"
+                footer = f"{page_meta}{data.level} | {race_or_spell}: {data.race}"
+                embed = self.generate_embed(data, colour, footer)
                 pages.append(embed)
 
-        controls = {"❌": close_menu} if len(pages) == 1 else DEFAULT_CONTROLS
-        await menu(ctx, pages, controls=controls, timeout=90.0)
+        await menu(ctx, pages, DEFAULT_CONTROLS, timeout=90.0)
 
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 3, commands.BucketType.member)
     async def randomcard(self, ctx: commands.Context):
         """Fetch a random Yu-Gi-Oh! card."""
         async with ctx.typing():
             base_url = "https://db.ygoprodeck.com/api/v7/randomcard.php"
-            data = await self.get(ctx, base_url)
-            if not data:
-                return
+            data = await YuGiOhData.request(self.session, base_url)
+            if isinstance(data, NotFound):
+                return await ctx.send(str(data))
+
             colour = await ctx.embed_colour()
-            race_or_spell = "Race" if "Monster" in data["type"] else "Spell Type"
-            page_meta = f"ID: {data['id']} | Card Level: "
-            footer = f"{page_meta}{data.get('level', 'N/A')} | {race_or_spell}: {data['race']}"
-            embed = self.generate_embed(colour, footer, data)
+            race_or_spell = "Race" if "Monster" in data.type else "Spell Type"
+            page_meta = f"ID: {data.id} | Card Level: "
+            footer = f"{page_meta}{data.level} | {race_or_spell}: {data.race}"
+            embed = self.generate_embed(data, colour, footer)
             return await ctx.send(embed=embed)

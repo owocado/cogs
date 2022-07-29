@@ -28,7 +28,7 @@ class MovieFinder(Converter):
             for i, obj in enumerate(result, start=1)
         ]
         prompt: discord.Message = await ctx.send(
-            f"Found below {len(items)} results (sorted by date). Choose one in 60 seconds:\n\n"
+            f"Found below {len(items)} results. Choose one in 60 seconds:\n\n"
             + "\n".join(items).replace(" ()", "")
         )
 
