@@ -13,7 +13,7 @@ class YGO(commands.Cog):
     """Get nerdy info on a Yu-Gi-Oh! card or pull a random card."""
 
     __authors__ = ["ow0x", "dragonfire535"]
-    __version__ = "2.0.0"
+    __version__ = "2.0.1"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad."""
@@ -41,10 +41,10 @@ class YGO(commands.Cog):
         if "Monster" in data.type:
             embed.add_field(name="Attribute", value=str(data.attribute))
             embed.add_field(name="Attack (ATK)", value=humanize_number(data.attack))
-            is_monster = data.type == "Monster"
-            link_value = "Link Value" if is_monster else "Defense (DEF)"
-            link_val = data.linkval if is_monster else humanize_number(data.defense)
-            embed.add_field(name=link_value, value=str(link_val))
+            is_monster = data.type == "Link Monster"
+            link_name = "Link Value" if is_monster else "Defense (DEF)"
+            link_value = data.linkval if is_monster else humanize_number(data.defense)
+            embed.add_field(name=link_name, value=str(link_value))
         if data.card_sets:
             card_sets = "\n".join(
                 f"`[{i:>2}]`  {card.set_name} @ **${card.set_price}** {card.set_rarity_code}"
