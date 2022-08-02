@@ -10,8 +10,8 @@ BADGES = {
     "unova": [34, 35, 36, 37, 38, 39, 40, 41],
     "kalos": [44, 45, 46, 47, 48, 49, 50, 51],
 }
-INTRO_GEN = ["na", "rb", "gs", "rs", "dp", "bw", "xy", "sm", "ss"]
-INTRO_GAMES = {
+
+GENERATIONS = {
     "na": "Unknown",
     "rb": "Red/Blue\n(Gen. 1)",
     "gs": "Gold/Silver\n(Gen. 2)",
@@ -22,6 +22,8 @@ INTRO_GAMES = {
     "sm": "Sun/Moon\n(Gen. 7)",
     "ss": "Sword/Shield\n(Gen. 8)",
 }
+GEN_KEYS = list(GENERATIONS.keys())
+
 STYLES = {"default": 3, "black": 50, "collector": 96, "dp": 5, "purple": 43}
 TRAINERS = {
     "ash": 13,
@@ -35,36 +37,36 @@ TRAINERS = {
 }
 
 
-def get_generation(pkmn_id: int) -> int:
-    if pkmn_id > 898:
-        return 0
-    elif pkmn_id >= 810:
-        return 8
-    elif pkmn_id >= 722:
-        return 7
-    elif pkmn_id >= 650:
-        return 6
-    elif pkmn_id >= 494:
-        return 5
-    elif pkmn_id >= 387:
-        return 4
-    elif pkmn_id >= 252:
-        return 3
-    elif pkmn_id >= 152:
-        return 2
-    elif pkmn_id >= 1:
-        return 1
+def get_generation(pokemon_id: int) -> str:
+    if pokemon_id >= 1 and pokemon_id <= 151:
+        generation = 1
+    elif pokemon_id >= 152 and pokemon_id <= 251:
+        generation = 2
+    elif pokemon_id >= 252 and pokemon_id <= 386:
+        generation = 3
+    elif pokemon_id >= 387 and pokemon_id <= 493:
+        generation = 4
+    elif pokemon_id >= 494 and pokemon_id <= 649:
+        generation = 5
+    elif pokemon_id >= 650 and pokemon_id <= 721:
+        generation = 6
+    elif pokemon_id >= 722 and pokemon_id <= 809:
+        generation = 7
+    elif pokemon_id >= 810 and pokemon_id <= 898:
+        generation = 8
     else:
-        return 0
+        generation = 0
+
+    return GENERATIONS[GEN_KEYS[generation]]
 
 
 class Generation(commands.Converter):
 
     async def convert(self, ctx: commands.Context, argument: str) -> int:
-        allowed_gens = ["gen1", "gen2", "gen3", "gen4", "gen5", "gen6", "gen7", "gen8"]
-        if argument and argument not in allowed_gens:
+        allowed_gens = [f"gen{x}" for x in range(1, 9)]
+        if argument.lower() not in allowed_gens:
             ctx.command.reset_cooldown(ctx)
-            raise commands.BadArgument("Only `gen1` to `gen8` arguments are allowed.")
+            raise commands.BadArgument("Only `gen1` to `gen8` values are allowed.")
 
         if argument == "gen1":
             return random.randint(1, 151)
