@@ -31,12 +31,12 @@ class MovieDB(commands.Cog):
     """Get summarized info about a movie or TV show/series."""
 
     __authors__ = "ow0x"
-    __version__ = "3.0.0"
+    __version__ = "3.0.1"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:  # Thanks Sinbad!
         return (
             f"{super().format_help_for_context(ctx)}\n\n"
-            f"**Author:** {self.__authors__}\n"
+            f"**Author(s):** {self.__authors__}\n"
             f"**Cog version:** {self.__version__}"
         )
 
@@ -163,7 +163,7 @@ class MovieDB(commands.Cog):
             api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key", "")
             output = await TVShowSuggestions.request(self.session, api_key, query)
             if isinstance(output, MediaNotFound):
-                await ctx.send(f"⚠ API sent response code: https://http.cat/{output}")
+                return await ctx.send(str(output))
 
             pages = []
             for i, data in enumerate(output, start=1):

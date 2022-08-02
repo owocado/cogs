@@ -403,8 +403,10 @@ class TVShowDetails:
 @dataclass
 class BaseSuggestions:
     id: int
+    adult: bool
     overview: str
     original_language: str
+    media_type: str
     popularity: float
     vote_count: int
     vote_average: float
@@ -413,7 +415,6 @@ class BaseSuggestions:
 
 @dataclass
 class MovieSuggestions(BaseSuggestions):
-    adult: bool
     title: str
     original_title: str
     release_date: str
@@ -427,7 +428,8 @@ class MovieSuggestions(BaseSuggestions):
 
     @classmethod
     def from_json(cls, data: Dict[str, Any]) -> MovieSuggestions:
-        return cls(**data)
+        genre_ids = data.pop('genre_ids', [])
+        return cls(genre_ids=genre_ids, **data)
 
     @classmethod
     async def request(
@@ -451,7 +453,7 @@ class MovieSuggestions(BaseSuggestions):
         if not data.get('results') or data['total_results'] < 1:
             return MediaNotFound('❌ No recommendations found related to that movie.', 404)
 
-        return [cls.from_json(obj) for obj in data]
+        return [cls.from_json(obj) for obj in data['results']]
 
 
 @dataclass
@@ -469,7 +471,9 @@ class TVShowSuggestions(BaseSuggestions):
 
     @classmethod
     def from_json(cls, data: Dict[str, Any]) -> TVShowSuggestions:
-        return cls(**data)
+        genre_ids = data.pop('genre_ids', [])
+        origin_country = data.pop('origin_country', [])
+        return cls(origin_country=origin_country, genre_ids=genre_ids, **data)
 
     @classmethod
     async def request(
@@ -493,4 +497,4 @@ class TVShowSuggestions(BaseSuggestions):
         if not data.get('results') or data['total_results'] < 1:
             return MediaNotFound('❌ No recommendations found related to that TV show.', 404)
 
-        return [cls.from_json(obj) for obj in data]
+        return [cls.from_json(obj) for obj in data['results']]
