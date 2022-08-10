@@ -1,0 +1,15 @@
+{
+    "name": "Anilist",
+    "short": "Fetch anime, manga related info from Anilist.",
+    "description": "Fetch info on any anime, manga, character, studio, user and more from Anilist.",
+    "end_user_data_statement": "This cog does not store any PII data about users.",
+    "install_msg": "Thank you for installing Anilist cog. Have fun!  🎉 🎉",
+    "author": ["ow0x"],
+    "required_cogs": {},
+    "requirements": [],
+    "tags": ["anime", "manga", "anilist", "studio"],
+    "min_bot_version": "3.4.16",
+    "hidden": false,
+	"disabled": false,
+    "type": "COG"
+}
