@@ -1,4 +1,4 @@
-CHARACTER = """
+CHARACTER_SCHEMA = """
 query ($page: Int, $perPage: Int, $search: String) {
   Page(page: $page, perPage: $perPage) {
     characters(search: $search) {
@@ -26,7 +26,7 @@ query ($page: Int, $perPage: Int, $search: String) {
 """
 
 
-GENRE = """
+GENRE_SCHEMA = """
 query ($page: Int, $perPage: Int, $genre: String, $type: MediaType, $format_in: [MediaFormat]) {
   Page(page: $page, perPage: $perPage) {
     pageInfo {
@@ -91,10 +91,10 @@ query ($page: Int, $perPage: Int, $genre: String, $type: MediaType, $format_in: 
 """
 
 
-MEDIA = """
-query ($page: Int, $perPage: Int, $search: String, $type: MediaType) {
+MEDIA_SCHEMA = """
+query ($page: Int, $perPage: Int, $search: String, $type: MediaType, $sort: [MediaSort]) {
   Page(page: $page, perPage: $perPage) {
-    media(search: $search, type: $type) {
+    media(search: $search, type: $type, sort: $sort) {
       id
       idMal
       title {
@@ -154,7 +154,7 @@ query ($page: Int, $perPage: Int, $search: String, $type: MediaType) {
 """
 
 
-SCHEDULE = """
+SCHEDULE_SCHEMA = """
 query ($page: Int, $perPage: Int, $notYetAired: Boolean, $sort: [AiringSort]) {
   Page(page: $page, perPage: $perPage) {
     airingSchedules(notYetAired: $notYetAired, sort: $sort) {
@@ -190,7 +190,7 @@ query ($page: Int, $perPage: Int, $notYetAired: Boolean, $sort: [AiringSort]) {
 """
 
 
-STAFF = """
+STAFF_SCHEMA = """
 query ($page: Int, $perPage: Int, $search: String) {
   Page(page: $page, perPage: $perPage) {
     staff(search: $search) {
@@ -227,7 +227,7 @@ query ($page: Int, $perPage: Int, $search: String) {
 """
 
 
-STUDIO = """
+STUDIO_SCHEMA = """
 query ($page: Int, $perPage: Int, $search: String) {
   Page(page: $page, perPage: $perPage) {
     studios(search: $search) {
@@ -254,7 +254,7 @@ query ($page: Int, $perPage: Int, $search: String) {
 """
 
 
-TAG = """
+TAG_SCHEMA = """
 query ($page: Int, $perPage: Int, $tag: String, $type: MediaType, $format_in: [MediaFormat]) {
   Page(page: $page, perPage: $perPage) {
     pageInfo {
@@ -318,7 +318,7 @@ query ($page: Int, $perPage: Int, $tag: String, $type: MediaType, $format_in: [M
 """
 
 
-TRENDING = """
+TRENDING_SCHEMA = """
 query ($page: Int, $perPage: Int, $type: MediaType, $sort: [MediaSort]) {
   Page(page: $page, perPage: $perPage) {
     media(type: $type, sort: $sort) {
@@ -381,7 +381,7 @@ query ($page: Int, $perPage: Int, $type: MediaType, $sort: [MediaSort]) {
 """
 
 
-USER = """
+USER_SCHEMA = """
 query ($page: Int, $perPage: Int, $name: String) {
   Page(page: $page, perPage: $perPage) {
     users(name: $name) {

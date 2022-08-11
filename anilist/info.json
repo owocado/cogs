@@ -6,7 +6,7 @@
     "install_msg": "Thank you for installing Anilist cog. Have fun!  🎉 🎉",
     "author": ["ow0x"],
     "required_cogs": {},
-    "requirements": [],
+    "requirements": ["html2text"],
     "tags": ["anime", "manga", "anilist", "studio"],
     "min_bot_version": "3.4.16",
     "hidden": false,
