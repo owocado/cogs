@@ -159,8 +159,8 @@ query ($page: Int, $perPage: Int, $search: String, $type: MediaType, $sort: [Med
       isAdult
       nextAiringEpisode {
         episode
-        timeUntilAiring
         airingAt
+        timeUntilAiring
       }
     }
   }
@@ -333,6 +333,7 @@ query ($page: Int, $perPage: Int, $tag: String, $type: MediaType, $format_in: [M
       isAdult
       nextAiringEpisode {
         episode
+        airingAt
         timeUntilAiring
       }
     }
