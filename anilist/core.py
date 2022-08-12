@@ -4,9 +4,10 @@ import aiohttp
 from redbot.core import commands
 from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
 
+from .api.character import CharacterData
 from .api.media import MediaData
-from .embed_maker import generate_media_embed
-from .schemas import MEDIA_SCHEMA
+from .embed_maker import generate_character_embed, generate_media_embed
+from .schemas import CHARACTER_SCHEMA, MEDIA_SCHEMA
 
 
 class Anilist(commands.Cog):
@@ -115,7 +116,25 @@ class Anilist(commands.Cog):
     @commands.command()
     async def character(self, ctx: commands.Context, *, query: str) -> None:
         """Fetch info on a anime/manga character from given query!"""
-        ...
+        async with ctx.typing():
+            results = await CharacterData.request(
+                self.session,
+                query=CHARACTER_SCHEMA,
+                page=1,
+                perPage=15,
+                search=query,
+                sort="SEARCH_MATCH"
+            )
+            if type(results) is str:
+                return await ctx.send(results)
+
+            pages = []
+            for i, page in enumerate(results, start=1):
+                emb = generate_character_embed(page)
+                emb.set_footer(text=f"Powered by AniList • Page {i} of {len(results)}")
+                pages.append(emb)
+
+        await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120)
 
     @commands.command()
     async def studio(self, ctx: commands.Context, *, query: str) -> None:

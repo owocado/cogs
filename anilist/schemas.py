@@ -1,7 +1,7 @@
 CHARACTER_SCHEMA = """
-query ($page: Int, $perPage: Int, $search: String) {
+query ($page: Int, $perPage: Int, $search: String, $sort: [CharacterSort]) {
   Page(page: $page, perPage: $perPage) {
-    characters(search: $search) {
+    characters(search: $search, sort: $sort) {
       name {
         full
         native
@@ -10,12 +10,21 @@ query ($page: Int, $perPage: Int, $search: String) {
       image {
         large
       }
-      description
+      description(asHtml: false)
+      gender
+      dateOfBirth {
+        year
+        month
+        day
+      }
+      age
       siteUrl
       media(perPage: 10) {
         nodes {
           siteUrl
+          type
           title {
+            english
             romaji
           }
         }

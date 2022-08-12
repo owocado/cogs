@@ -8,10 +8,9 @@ from typing import List, Optional
 import aiohttp
 from discord import Colour
 from html import unescape
-from html2text import html2text
 from textwrap import shorten
 
-from .formatters import format_anime_status, format_date, format_manga_status
+from .formatters import HANDLE, format_anime_status, format_date, format_manga_status
 
 
 @dataclass
@@ -94,14 +93,6 @@ class MediaData:
     externalLinks: List[ExternalSite] = field(default_factory=list)
 
     @property
-    def all_genres(self) -> str:
-        return ', '.join(self.genres)
-
-    @property
-    def all_synonyms(self) -> str:
-        return ', '.join(self.synonyms)
-
-    @property
     def external_links(self) -> str:
         return " • ".join(f"[{x.site}]({x.url})" for x in self.externalLinks)
 
@@ -109,7 +100,8 @@ class MediaData:
     def media_description(self) -> str:
         if not self.description:
             return ""
-        return shorten(html2text(unescape(self.description)), 300, placeholder="…")
+
+        return shorten(HANDLE.handle(unescape(self.description)), 300, placeholder="…")
 
     @property
     def media_end_date(self) -> str:

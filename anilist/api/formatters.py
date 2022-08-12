@@ -2,6 +2,10 @@
 import re
 from datetime import datetime
 
+import html2text
+
+HANDLE = html2text.HTML2Text(bodywidth=0)
+
 
 def format_media_type(media_type: str) -> str:
     MediaType = {
@@ -50,14 +54,14 @@ def clean_html(raw_text) -> str:
 
 def format_description(description: str, length: int) -> str:
     description = clean_html(description)
-    description = description.replace('**', '').replace('__', '')
-    description = description.replace('~!', '||').replace('!~', '||')
+    description = description.replace('__', '**').replace('~!', '|| ').replace('!~', ' ||')
+
     if len(description) > length:
-        description = description[0:length]
-        spoiler_tag_count = description.count('||')
-        if spoiler_tag_count % 2 != 0:
-            return description + '...||'
-        return description + '...'
+        description = description[:length]
+        if (description.count('||') % 4) != 0:
+            return description + ' || …'
+        return description + ' …'
+
     return description
 
 
