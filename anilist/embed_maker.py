@@ -14,19 +14,26 @@ def generate_character_embed(data: CharacterData) -> Embed:
     emb.set_author(name="Character Info")
     emb.set_thumbnail(url=data.image.large or "")
 
-    if synonyms := data.name.alternative:
-        emb.add_field(name="Also known as", value=", ".join(synonyms))
     if (dob := data.dateOfBirth) and dob.day and dob.month:
         emb.add_field(name="Birth Date", value=format_birth_date(dob.day, dob.month))
+    if synonyms := data.name.alternative:
+        emb.add_field(name="Also known as", value=", ".join(synonyms))
 
     if data.media_nodes:
         emb.add_field(name="Appearances", value=data.appeared_in, inline=False)
     return emb
 
 
-def generate_media_embed(data: MediaData) -> Embed:
+def generate_media_embed(data: MediaData, is_channel_nsfw: bool) -> Embed:
     description = format_description(data.description or "", 500) + "\n\n"
     embed = Embed(colour=data.prominent_colour, title=str(data.title), url=data.siteUrl or "")
+
+    if data.isAdult and not is_channel_nsfw:
+        embed.colour = 0xFF0000
+        embed.description = f"This {data.type.lower()} is marked as 🔞 NSFW on AniList."
+        embed.set_footer(text="Try again in NSFW channel to see full embed!")
+        return embed
+
     if data.coverImage.large and data.type == "MANGA":
         embed.set_thumbnail(url=data.coverImage.large)
     embed.set_image(url=data.preview_image)
@@ -51,7 +58,8 @@ def generate_media_embed(data: MediaData) -> Embed:
 
     start_date = data.media_start_date
     end_date = data.media_end_date
-    description += f"**{data.release_mode}**  {start_date} to {end_date}\n"
+    if_same_dates = f" to {end_date}" if start_date != end_date else ""
+    description += f"**{data.release_mode}**  {start_date}{if_same_dates}\n"
 
     if data.type == "ANIME":
         if data.duration:

@@ -30,7 +30,7 @@ class Name:
     def __str__(self) -> str:
         if self.full == self.native:
             return self.full
-        return f"{self.full} ({self.native})"
+        return f"{self.full} ({self.native})" if self.native else self.full
 
 
 @dataclass

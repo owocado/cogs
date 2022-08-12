@@ -7,14 +7,19 @@ from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
 from .api.character import CharacterData
 from .api.media import MediaData
 from .embed_maker import generate_character_embed, generate_media_embed
-from .schemas import CHARACTER_SCHEMA, MEDIA_SCHEMA
+from .schemas import (
+    CHARACTER_SCHEMA,
+    GENRE_SCHEMA,
+    MEDIA_SCHEMA,
+    TAG_SCHEMA
+)
 
 
 class Anilist(commands.Cog):
     """Fetch info on anime, manga, character, studio and more from Anilist!"""
 
     __authors__ = ["<@306810730055729152>"]
-    __version__ = "0.0.1"
+    __version__ = "0.0.6"
 
     session = aiohttp.ClientSession()
 
@@ -53,7 +58,7 @@ class Anilist(commands.Cog):
 
             pages = []
             for i, page in enumerate(results, start=1):
-                emb = generate_media_embed(page)
+                emb = generate_media_embed(page, ctx.channel.is_nsfw())
                 text = f"{emb.footer.text} • Page {i} of {len(results)}"
                 emb.set_footer(text=text)
                 pages.append(emb)
@@ -78,19 +83,20 @@ class Anilist(commands.Cog):
 
             pages = []
             for i, page in enumerate(results, start=1):
-                emb = generate_media_embed(page)
-                text = f"{emb.footer.text} • Page {i} of {len(results)}"
-                emb.set_footer(text=text)
+                emb = generate_media_embed(page, ctx.channel.is_nsfw())
+                emb.set_footer(text=f"{emb.footer.text} • Page {i} of {len(results)}")
                 pages.append(emb)
 
         await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120)
 
     @commands.command()
+    # TODO: use typing.Literal for media_type with dpy 2.x
     async def trending(self, ctx: commands.Context, media_type: str):
-        """Fetch info on any manga from given query!"""
+        """Fetch currently trending animes or manga from AniList!"""
         if media_type.lower() not in ["anime", "manga"]:
-            await ctx.send("Only `manga` or `anime` type is supported!")
-            return
+            return await ctx.send(
+                "You provided invalid media type! Only `manga` or `anime` type is supported!"
+            )
 
         async with ctx.typing():
             results = await MediaData.request(
@@ -104,14 +110,61 @@ class Anilist(commands.Cog):
             if type(results) is str:
                 return await ctx.send(results)
 
-            pages = []
-            for i, page in enumerate(results, start=1):
-                emb = generate_media_embed(page)
-                text = f"{emb.footer.text} • Page {i} of {len(results)}"
-                emb.set_footer(text=text)
-                pages.append(emb)
+            emb = generate_media_embed(results[0], ctx.channel.is_nsfw())
+            await ctx.send(embed=emb)
 
-        await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120)
+    @commands.command()
+    # TODO: use typing.Literal for media_type with dpy 2.x
+    async def random(self, ctx: commands.Context, media_type: str, *, genre: str):
+        """Fetch a random anime or manga based on input genre!
+
+        **Supported Genres:**
+            - Action, Adventure, Comedy, Drama, Ecchi
+            - Fantasy, Hentai, Horror, Mahou Shoujo, Mecha
+            - Music, Mystery, Psychological, Romance, Schi-Fi
+            - Slice of Life, Sports, Supernatural, Thriller
+
+        You can use any of the search tags supported on Anilist instead of any of above genres!
+        """
+        if media_type.lower() not in ["anime", "manga"]:
+            return await ctx.send(
+                "You provided invalid media type! Only `manga` or `anime` type is supported!"
+            )
+
+        async with ctx.typing():
+            get_format = {
+                "anime": ["TV", "TV_SHORT", "MOVIE", "OVA", "ONA"],
+                "manga": ["MANGA", "NOVEL", "ONE_SHOT"]
+            }
+
+            results = await MediaData.request(
+                self.session,
+                query=GENRE_SCHEMA,
+                page=1,
+                perPage=1,
+                type=media_type.upper(),
+                genre=genre,
+                format_in=get_format[media_type.lower()]
+            )
+            if type(results) is str:
+                results = await MediaData.request(
+                    self.session,
+                    query=TAG_SCHEMA,
+                    page=1,
+                    perPage=1,
+                    type=media_type.upper(),
+                    tag=genre,
+                    format_in=get_format[media_type.lower()]
+                )
+
+            if type(results) is str:
+                return await ctx.send(
+                    f"Could not find a random {media_type} from the given genre or tag.\n"
+                    "See if its valid as per AniList or try again with different genre/tag."
+                )
+
+            emb = generate_media_embed(results[0], ctx.channel.is_nsfw())
+            await ctx.send(embed=emb)
 
     @commands.command()
     async def character(self, ctx: commands.Context, *, query: str) -> None:

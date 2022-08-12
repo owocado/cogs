@@ -73,8 +73,8 @@ def clean_html(raw_text) -> str:
 
 
 def format_description(description: str, length: int) -> str:
-    description = clean_html(description)
-    description = description.replace('__', '**').replace('~!', '|| ').replace('!~', ' ||')
+    cleaned = clean_html(description)
+    description = cleaned.replace('__', '**').replace('~!', '|| ').replace('!~', ' ||')
 
     if len(description) > length:
         description = description[:length]
@@ -87,5 +87,5 @@ def format_description(description: str, length: int) -> str:
 
 def format_date(day: int, month: int, year: int) -> str:
     datetime_obj = datetime(year=year, month=month, day=day)
-    date = f"<t:{int(datetime_obj.timestamp())}:d>"
+    date = f"<t:{int(datetime_obj.timestamp())}:D>"
     return date

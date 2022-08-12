@@ -35,12 +35,16 @@ query ($page: Int, $perPage: Int, $search: String, $sort: [CharacterSort]) {
 """
 
 
+GENRE_COLLECTION_SCHEMA = """
+query {
+  GenreCollection
+}
+"""
+
+
 GENRE_SCHEMA = """
 query ($page: Int, $perPage: Int, $genre: String, $type: MediaType, $format_in: [MediaFormat]) {
   Page(page: $page, perPage: $perPage) {
-    pageInfo {
-      lastPage
-    }
     media(genre: $genre, type: $type, format_in: $format_in) {
       id
       idMal
@@ -92,6 +96,7 @@ query ($page: Int, $perPage: Int, $genre: String, $type: MediaType, $format_in: 
       isAdult
       nextAiringEpisode {
         episode
+        airingAt
         timeUntilAiring
       }
     }
@@ -263,74 +268,21 @@ query ($page: Int, $perPage: Int, $search: String) {
 """
 
 
-TAG_SCHEMA = """
-query ($page: Int, $perPage: Int, $tag: String, $type: MediaType, $format_in: [MediaFormat]) {
-  Page(page: $page, perPage: $perPage) {
-    pageInfo {
-      lastPage
-    }
-    media(tag: $tag, type: $type, format_in: $format_in) {
-      idMal
-      title {
-        romaji
-        english
-      }
-      coverImage {
-        large
-        color
-      }
-      description
-      bannerImage
-      format
-      status
-      type
-      meanScore
-      startDate {
-        year
-        month
-        day
-      }
-      endDate {
-        year
-        month
-        day
-      }
-      duration
-      source
-      episodes
-      chapters
-      volumes
-      studios {
-        nodes {
-          name
-        }
-      }
-      synonyms
-      genres
-      trailer {
-        id
-        site
-      }
-      externalLinks {
-        site
-        url
-      }
-      siteUrl
-      isAdult
-      nextAiringEpisode {
-        episode
-        timeUntilAiring
-      }
-    }
+TAG_COLLECTION_SCHEMA = """
+query {
+  MediaTagCollection {
+    name
+    description
+    isAdult
   }
 }
 """
 
 
-TRENDING_SCHEMA = """
-query ($page: Int, $perPage: Int, $type: MediaType, $sort: [MediaSort]) {
+TAG_SCHEMA = """
+query ($page: Int, $perPage: Int, $tag: String, $type: MediaType, $format_in: [MediaFormat]) {
   Page(page: $page, perPage: $perPage) {
-    media(type: $type, sort: $sort) {
+    media(tag: $tag, type: $type, format_in: $format_in) {
       id
       idMal
       title {
@@ -382,7 +334,6 @@ query ($page: Int, $perPage: Int, $type: MediaType, $sort: [MediaSort]) {
       nextAiringEpisode {
         episode
         timeUntilAiring
-        airingAt
       }
     }
   }

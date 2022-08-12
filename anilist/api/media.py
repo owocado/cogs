@@ -25,6 +25,9 @@ class DateModel:
     month: int = 0
     day: int = 0
 
+    def __eq__(self, other: object) -> bool:
+        return self.day == other.day and self.month == other.month and self.year == other.year
+
     def __str__(self) -> str:
         if not self.day:
             if self.year:
@@ -55,7 +58,7 @@ class Title:
     english: str = ""
 
     def __str__(self) -> str:
-        return self.english or self.romaji or "Title Missing"
+        return self.romaji or self.english or "Title Missing"
 
 
 @dataclass
@@ -101,7 +104,7 @@ class MediaData:
         if not self.description:
             return ""
 
-        return shorten(HANDLE.handle(unescape(self.description)), 300, placeholder="…")
+        return shorten(HANDLE.handle(unescape(self.description)), 400, placeholder="…")
 
     @property
     def media_end_date(self) -> str:
