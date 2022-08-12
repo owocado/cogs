@@ -41,10 +41,7 @@ class MediaNode:
 
     @classmethod
     def from_data(cls, data: dict) -> MediaNode:
-        return cls(
-            title=MediaTitle(**data.pop("title", {})),
-            **data
-        )
+        return cls(title=MediaTitle(**data.pop("title", {})), **data)
 
 
 @dataclass
@@ -69,13 +66,7 @@ class CharacterData:
 
     @property
     def character_summary(self) -> str:
-        if not self.description:
-            return ""
-
-        # text = self.description.replace('\n', '<br>').replace('__', '**')
-        # cleaned = HANDLE.handle(text.replace('~!', '|| ').replace('!~', ' ||'))
-        # end = " ||" if (cleaned.count("|") % 4) != 0 else ""
-        return format_description(self.description, 2050)
+        return format_description(self.description, 1800) if self.description else ""
 
     @property
     def appeared_in(self) -> str:

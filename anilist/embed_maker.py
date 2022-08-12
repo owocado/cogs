@@ -3,24 +3,24 @@ import random
 from discord import Colour, Embed
 
 from .api.character import CharacterData
-from .api.formatters import format_description, format_media_type
+from .api.formatters import format_birth_date, format_description, format_media_type
 from .api.media import MediaData
 
 
 def generate_character_embed(data: CharacterData) -> Embed:
-    emb = Embed(colour=Colour.from_hsv(random.random(), 0.5, 1.0))
+    emb = Embed(colour=Colour.from_hsv(random.random(), 0.5, 1.0), title=str(data.name))
     emb.description = data.character_summary
-    emb.title = str(data.name)
     emb.url = data.siteUrl or ""
     emb.set_author(name="Character Info")
     emb.set_thumbnail(url=data.image.large or "")
 
     if synonyms := data.name.alternative:
-        emb.add_field(name="Also known as", value=", ".join(synonyms), inline=False)
+        emb.add_field(name="Also known as", value=", ".join(synonyms))
+    if (dob := data.dateOfBirth) and dob.day and dob.month:
+        emb.add_field(name="Birth Date", value=format_birth_date(dob.day, dob.month))
 
     if data.media_nodes:
         emb.add_field(name="Appearances", value=data.appeared_in, inline=False)
-        # emb.set_footer(text=f"Powered by AniList • Page {page} of {pages}")
     return emb
 
 
@@ -41,7 +41,6 @@ def generate_media_embed(data: MediaData) -> Embed:
                 description += f"**Episodes:**  {aired_episodes}{next_episode_time}\n"
         elif data.episodes:
             description += f"**Episodes:**  {data.episodes}\n"
-
     elif data.type == "MANGA":
         if data.source:
             description += f"**Source:**  {data.media_source}\n"

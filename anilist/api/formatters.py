@@ -7,6 +7,26 @@ import html2text
 HANDLE = html2text.HTML2Text(bodywidth=0)
 
 
+def format_birth_date(day: int, month: int) -> str:
+    BirthDate = {
+        1: 'January',
+        2: 'February',
+        3: 'March',
+        4: 'April',
+        5: 'May',
+        6: 'June',
+        7: 'July',
+        8: 'August',
+        9: 'September',
+        10: 'October',
+        11: 'November',
+        12: 'December'
+    }
+    suffixes = {1: 'st', 2: 'nd', 3: 'rd'}
+    value = 'th' if 10 <= (day % 100) <= 20 else suffixes.get(day % 10, 'th')
+    return f"{day}{value} {BirthDate.get(month)}"
+
+
 def format_media_type(media_type: str) -> str:
     MediaType = {
         'N/A': 'Unknown',
@@ -58,7 +78,7 @@ def format_description(description: str, length: int) -> str:
 
     if len(description) > length:
         description = description[:length]
-        if (description.count('||') % 4) != 0:
+        if (description.count('|') % 4) != 0:
             return description + ' || …'
         return description + ' …'
 
