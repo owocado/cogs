@@ -7,18 +7,7 @@ from typing import Optional, Sequence
 import aiohttp
 
 from .formatters import format_description
-
-
-@dataclass
-class DateModel:
-    year: Optional[int]
-    month: Optional[int]
-    day: Optional[int]
-
-
-@dataclass
-class Image:
-    large: Optional[str]
+from .media import CoverImage, DateModel, Title as MediaTitle
 
 
 @dataclass
@@ -30,6 +19,7 @@ class Name:
     def __str__(self) -> str:
         if self.full == self.native:
             return self.full
+
         return f"{self.full} ({self.native})" if self.native else self.full
 
 
@@ -45,18 +35,9 @@ class MediaNode:
 
 
 @dataclass
-class MediaTitle:
-    english: Optional[str]
-    romaji: Optional[str]
-
-    def __str__(self) -> str:
-        return self.english or self.romaji or "Title Unknown"
-
-
-@dataclass
 class CharacterData:
     name: Name
-    image: Image
+    image: CoverImage
     description: Optional[str]
     gender: str
     dateOfBirth: DateModel
@@ -80,7 +61,7 @@ class CharacterData:
         nodes = data.pop("media", {}).get("nodes", [])
         return cls(
             name=Name(**data.pop("name", {})),
-            image=Image(**data.pop("image", {})),
+            image=CoverImage(**data.pop("image", {})),
             dateOfBirth=DateModel(**data.pop("dateOfBirth", {})),
             media_nodes=[MediaNode.from_data(node) for node in nodes],
             **data

@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass, field
 from random import random
-from typing import List, Optional
+from typing import Optional, Sequence
 
 import aiohttp
 from discord import Colour
@@ -16,7 +16,7 @@ from .formatters import HANDLE, format_anime_status, format_date, format_manga_s
 @dataclass
 class CoverImage:
     large: Optional[str]
-    color: Optional[str]
+    color: Optional[str] = None
 
 
 @dataclass
@@ -58,13 +58,13 @@ class Title:
     english: Optional[str]
 
     def __str__(self) -> str:
-        return self.romaji or self.english or "Title Missing"
+        return self.romaji or self.english or "Title ???"
 
 
 @dataclass
 class Trailer:
-    id: str
-    site: str
+    id: Optional[str]
+    site: Optional[str]
 
 
 @dataclass
@@ -91,13 +91,18 @@ class MediaData:
     volumes: Optional[int]
     trailer: Optional[Trailer]
     nextAiringEpisode: Optional[NextEpisodeInfo]
-    synonyms: List[str] = field(default_factory=list)
-    genres: List[str] = field(default_factory=list)
-    externalLinks: List[ExternalSite] = field(default_factory=list)
+    synonyms: Sequence[str] = field(default_factory=list)
+    genres: Sequence[str] = field(default_factory=list)
+    externalLinks: Sequence[ExternalSite] = field(default_factory=list)
 
     @property
     def external_links(self) -> str:
-        return " • ".join(f"[{x.site}]({x.url})" for x in self.externalLinks)
+        sites = " • ".join(map(str, self.externalLinks))
+        if self.trailer and self.trailer.site == "youtube":
+            sites += f' • [YouTube Trailer](https://youtu.be/{self.trailer.id})'
+        if self.idMal:
+            sites += f' • [MyAnimeList](https://myanimelist.net/anime/{self.idMal})'
+        return sites
 
     @property
     def media_description(self) -> str:
@@ -167,7 +172,7 @@ class MediaData:
     @classmethod
     async def request(
         cls, session: aiohttp.ClientSession, query: str, **kwargs
-    ) -> str | List[MediaData]:
+    ) -> str | Sequence[MediaData]:
         try:
             async with session.post(
                 "https://graphql.anilist.co", json={"query": query, "variables": kwargs}

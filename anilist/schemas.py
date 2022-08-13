@@ -172,12 +172,13 @@ SCHEDULE_SCHEMA = """
 query ($page: Int, $perPage: Int, $notYetAired: Boolean, $sort: [AiringSort]) {
   Page(page: $page, perPage: $perPage) {
     airingSchedules(notYetAired: $notYetAired, sort: $sort) {
-      timeUntilAiring
       airingAt
       episode
       media {
-        id
+        duration
+        format
         idMal
+        isAdult
         siteUrl
         title {
           romaji
@@ -190,9 +191,6 @@ query ($page: Int, $perPage: Int, $notYetAired: Boolean, $sort: [AiringSort]) {
           site
           url
         }
-        duration
-        format
-        isAdult
         trailer {
           id
           site
