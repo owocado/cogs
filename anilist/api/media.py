@@ -175,7 +175,7 @@ class MediaData:
                 if resp.status != 200:
                     return f"https://http.cat/{resp.status}.jpg"
                 result: dict = await resp.json()
-        except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+        except (aiohttp.ClientError, asyncio.TimeoutError):
             return f"https://http.cat/408.jpg"
 
         if err := result.get("errors"):

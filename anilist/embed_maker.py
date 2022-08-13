@@ -1,13 +1,15 @@
 import random
 
 from discord import Colour, Embed
+from redbot.core.utils.chat_formatting import humanize_number
 
 from .api.character import CharacterData
 from .api.formatters import format_birth_date, format_description, format_media_type
 from .api.media import MediaData
+from .api.studio import StudioData
 
 
-def generate_character_embed(data: CharacterData) -> Embed:
+def do_character_embed(data: CharacterData) -> Embed:
     emb = Embed(colour=Colour.from_hsv(random.random(), 0.5, 1.0), title=str(data.name))
     emb.description = data.character_summary
     emb.url = data.siteUrl or ""
@@ -24,7 +26,7 @@ def generate_character_embed(data: CharacterData) -> Embed:
     return emb
 
 
-def generate_media_embed(data: MediaData, is_channel_nsfw: bool) -> Embed:
+def do_media_embed(data: MediaData, is_channel_nsfw: bool) -> Embed:
     description = format_description(data.description or "", 500) + "\n\n"
     embed = Embed(colour=data.prominent_colour, title=str(data.title), url=data.siteUrl or "")
 
@@ -85,3 +87,18 @@ def generate_media_embed(data: MediaData, is_channel_nsfw: bool) -> Embed:
     embed.set_footer(text=" • ".join(stats))
     embed.description = description
     return embed
+
+
+def do_studio_embed(data: StudioData) -> Embed:
+    emb = Embed(colour=Colour.from_hsv(random.random(), 0.5, 1.0), title=data.name)
+    emb.url = data.siteUrl
+    popular_works = "\n".join(
+        f"{media} ({format_media_type(media.format)}){media.episodes_count}"
+        for media in data.media_nodes
+    )
+    emb.description = f"⏭️  **Most Popular Productions:**\n\n{popular_works}"
+    if data.isAnimationStudio:
+        emb.add_field(name="Studio Type", value="Animation Studio")
+    if data.favourites:
+        emb.add_field(name="Likes on AniList", value=humanize_number(data.favourites))
+    return emb

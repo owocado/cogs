@@ -9,12 +9,14 @@ from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
 from .api.character import CharacterData
 from .api.constants import GenreCollection
 from .api.media import MediaData
-from .embed_maker import generate_character_embed, generate_media_embed
+from .api.studio import StudioData
+from .embed_maker import do_character_embed, do_media_embed, do_studio_embed
 from .schemas import (
     CHARACTER_SCHEMA,
     GENRE_COLLECTION_SCHEMA,
     GENRE_SCHEMA,
     MEDIA_SCHEMA,
+    STUDIO_SCHEMA,
     TAG_SCHEMA
 )
 
@@ -25,7 +27,7 @@ class Anilist(commands.Cog):
     """Fetch info on anime, manga, character, studio and more from Anilist!"""
 
     __authors__ = ["<@306810730055729152>"]
-    __version__ = "0.0.6"
+    __version__ = "0.1.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str: # Thanks Sinbad!
         return (
@@ -37,7 +39,7 @@ class Anilist(commands.Cog):
     def __init__(self, *args, **kwargs):
         self.session = aiohttp.ClientSession()
         self.supported_genres = GenreCollection
-        asyncio.create_task(self.initialize())
+        # asyncio.create_task(self.initialize())
 
     def cog_unload(self) -> None:
         asyncio.create_task(self.session.close())
@@ -83,7 +85,7 @@ class Anilist(commands.Cog):
 
             pages = []
             for i, page in enumerate(results, start=1):
-                emb = generate_media_embed(page, ctx.channel.is_nsfw())
+                emb = do_media_embed(page, ctx.channel.is_nsfw())
                 text = f"{emb.footer.text} • Page {i} of {len(results)}"
                 emb.set_footer(text=text)
                 pages.append(emb)
@@ -108,7 +110,7 @@ class Anilist(commands.Cog):
 
             pages = []
             for i, page in enumerate(results, start=1):
-                emb = generate_media_embed(page, ctx.channel.is_nsfw())
+                emb = do_media_embed(page, ctx.channel.is_nsfw())
                 emb.set_footer(text=f"{emb.footer.text} • Page {i} of {len(results)}")
                 pages.append(emb)
 
@@ -137,7 +139,7 @@ class Anilist(commands.Cog):
 
             pages = []
             for i, page in enumerate(results, start=1):
-                emb = generate_media_embed(page, ctx.channel.is_nsfw())
+                emb = do_media_embed(page, ctx.channel.is_nsfw())
                 emb.set_footer(text=f"{emb.footer.text} • Page {i} of {len(results)}")
                 pages.append(emb)
 
@@ -199,7 +201,7 @@ class Anilist(commands.Cog):
                     "See if its valid as per AniList or try again with different genre/tag."
                 )
 
-            emb = generate_media_embed(results[0], ctx.channel.is_nsfw())
+            emb = do_media_embed(results[0], ctx.channel.is_nsfw())
             await ctx.send(embed=emb)
 
     @commands.command()
@@ -219,13 +221,30 @@ class Anilist(commands.Cog):
 
             pages = []
             for i, page in enumerate(results, start=1):
-                emb = generate_character_embed(page)
+                emb = do_character_embed(page)
                 emb.set_footer(text=f"Powered by AniList • Page {i} of {len(results)}")
                 pages.append(emb)
 
         await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120)
 
     @commands.command()
-    async def studio(self, ctx: commands.Context, *, query: str) -> None:
-        """Fetch info on an animation studio from given query!"""
-        ...
+    async def studio(self, ctx: commands.Context, *, name: str) -> None:
+        """Fetch info on an animation studio from given name query!"""
+        async with ctx.typing():
+            results = await StudioData.request(
+                self.session,
+                query=STUDIO_SCHEMA,
+                page=1,
+                perPage=15,
+                search=name,
+            )
+            if type(results) is str:
+                return await ctx.send(results)
+
+            pages = []
+            for i, page in enumerate(results, start=1):
+                emb = do_studio_embed(page)
+                emb.set_footer(text=f"Powered by AniList • Page {i} of {len(results)}")
+                pages.append(emb)
+
+        await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120)

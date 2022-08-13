@@ -247,21 +247,20 @@ query ($page: Int, $perPage: Int, $search: String) {
     studios(search: $search) {
       name
       favourites
+      isAnimationStudio
+      siteUrl
       media(sort: POPULARITY_DESC, perPage: 30) {
         nodes {
-          siteUrl
-          title {
-            romaji
-          }
-          format
           episodes
-          coverImage {
-            large
+          format
+          siteUrl
+          status
+          title {
+            english
+            romaji
           }
         }
       }
-      isAnimationStudio
-      siteUrl
     }
   }
 }
