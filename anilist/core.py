@@ -61,13 +61,13 @@ class Anilist(commands.Cog):
             return []
 
     async def cog_check(self, ctx: commands.Context) -> bool:
-        if not ctx.guild:
-            return True
-
-        my_perms = ctx.channel.permissions_for(ctx.guild.me)
-        return my_perms.embed_links and my_perms.send_messages
+        if ctx.guild:
+            my_perms = ctx.channel.permissions_for(ctx.guild.me)
+            return my_perms.read_message_history and my_perms.send_messages
+        return True
 
     @commands.command()
+    @commands.bot_has_permissions(embed_links=True)
     async def anime(self, ctx: commands.Context, *, query: str):
         """Fetch info on any anime from given query!"""
         async with ctx.typing():
@@ -93,6 +93,7 @@ class Anilist(commands.Cog):
         await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120)
 
     @commands.command(aliases=["manhwa"])
+    @commands.bot_has_permissions(embed_links=True)
     async def manga(self, ctx: commands.Context, *, query: str):
         """Fetch info on any manga from given query!"""
         async with ctx.typing():
@@ -117,6 +118,7 @@ class Anilist(commands.Cog):
         await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120)
 
     @commands.command()
+    @commands.bot_has_permissions(embed_links=True)
     # TODO: use typing.Literal for media_type with dpy 2.x
     async def trending(self, ctx: commands.Context, media_type: str):
         """Fetch currently trending animes or manga from AniList!"""
@@ -146,6 +148,7 @@ class Anilist(commands.Cog):
         await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120)
 
     @commands.command()
+    @commands.bot_has_permissions(embed_links=True)
     # TODO: use typing.Literal for media_type with dpy 2.x
     async def random(self, ctx: commands.Context, media_type: str, *, genre_or_tag: str = ""):
         """Fetch a random anime or manga based on provided genre or tag!
@@ -205,6 +208,7 @@ class Anilist(commands.Cog):
             await ctx.send(embed=emb)
 
     @commands.command()
+    @commands.bot_has_permissions(embed_links=True)
     async def character(self, ctx: commands.Context, *, query: str) -> None:
         """Fetch info on a anime/manga character from given query!"""
         async with ctx.typing():
@@ -228,6 +232,7 @@ class Anilist(commands.Cog):
         await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120)
 
     @commands.command()
+    @commands.bot_has_permissions(embed_links=True)
     async def studio(self, ctx: commands.Context, *, name: str) -> None:
         """Fetch info on an animation studio from given name query!"""
         async with ctx.typing():
