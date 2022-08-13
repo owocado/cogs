@@ -15,8 +15,8 @@ from .formatters import HANDLE, format_anime_status, format_date, format_manga_s
 
 @dataclass
 class CoverImage:
-    large: str = ""
-    color: str = ""
+    large: Optional[str]
+    color: Optional[str]
 
 
 @dataclass
@@ -54,8 +54,8 @@ class NextEpisodeInfo:
 
 @dataclass
 class Title:
-    romaji: str = ""
-    english: str = ""
+    romaji: Optional[str]
+    english: Optional[str]
 
     def __str__(self) -> str:
         return self.romaji or self.english or "Title Missing"

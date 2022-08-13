@@ -1,18 +1,24 @@
 import asyncio
+import logging
+import random
 
 import aiohttp
 from redbot.core import commands
 from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
 
 from .api.character import CharacterData
+from .api.constants import GenreCollection
 from .api.media import MediaData
 from .embed_maker import generate_character_embed, generate_media_embed
 from .schemas import (
     CHARACTER_SCHEMA,
+    GENRE_COLLECTION_SCHEMA,
     GENRE_SCHEMA,
     MEDIA_SCHEMA,
     TAG_SCHEMA
 )
+
+log = logging.getLogger("red.owo.anilist")
 
 
 class Anilist(commands.Cog):
@@ -21,17 +27,36 @@ class Anilist(commands.Cog):
     __authors__ = ["<@306810730055729152>"]
     __version__ = "0.0.6"
 
-    session = aiohttp.ClientSession()
-
-    def cog_unload(self) -> None:
-        asyncio.create_task(self.session.close())
-
     def format_help_for_context(self, ctx: commands.Context) -> str: # Thanks Sinbad!
         return (
             f"{super().format_help_for_context(ctx)}\n\n"
             f"**Authors:**  {', '.join(self.__authors__)}\n"
             f"**Cog version:**  {self.__version__}"
         )
+
+    def __init__(self, *args, **kwargs):
+        self.session = aiohttp.ClientSession()
+        self.supported_genres = GenreCollection
+        asyncio.create_task(self.initialize())
+
+    def cog_unload(self) -> None:
+        asyncio.create_task(self.session.close())
+
+    # TODO: utilise cog_load with dpy2
+    async def initialize(self) -> None:
+        fetched_genres = await self.fetch_genres(self.session, GENRE_COLLECTION_SCHEMA)
+        log.debug(f"Fetched supported genres from AniList:\n{fetched_genres}")
+        if fetched_genres and self.supported_genres != fetched_genres:
+            self.supported_genres = fetched_genres
+
+    async def fetch_genres(self, session: aiohttp.ClientSession, query: str):
+        try:
+            async with session.post("https://graphql.anilist.co", json={"query": query}) as resp:
+                if resp.status != 200:
+                    return []
+                return (await resp.json())["data"]["GenreCollection"]
+        except (KeyError, aiohttp.ClientError, asyncio.TimeoutError):
+            return []
 
     async def cog_check(self, ctx: commands.Context) -> bool:
         if not ctx.guild:
@@ -95,7 +120,7 @@ class Anilist(commands.Cog):
         """Fetch currently trending animes or manga from AniList!"""
         if media_type.lower() not in ["anime", "manga"]:
             return await ctx.send(
-                "You provided invalid media type! Only `manga` or `anime` type is supported!"
+                "Invalid media type provided! Only `manga` or `anime` type is supported!"
             )
 
         async with ctx.typing():
@@ -110,13 +135,18 @@ class Anilist(commands.Cog):
             if type(results) is str:
                 return await ctx.send(results)
 
-            emb = generate_media_embed(results[0], ctx.channel.is_nsfw())
-            await ctx.send(embed=emb)
+            pages = []
+            for i, page in enumerate(results, start=1):
+                emb = generate_media_embed(page, ctx.channel.is_nsfw())
+                emb.set_footer(text=f"{emb.footer.text} • Page {i} of {len(results)}")
+                pages.append(emb)
+
+        await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120)
 
     @commands.command()
     # TODO: use typing.Literal for media_type with dpy 2.x
-    async def random(self, ctx: commands.Context, media_type: str, *, genre: str):
-        """Fetch a random anime or manga based on input genre!
+    async def random(self, ctx: commands.Context, media_type: str, *, genre_or_tag: str = ""):
+        """Fetch a random anime or manga based on provided genre or tag!
 
         **Supported Genres:**
             - Action, Adventure, Comedy, Drama, Ecchi
@@ -124,11 +154,17 @@ class Anilist(commands.Cog):
             - Music, Mystery, Psychological, Romance, Schi-Fi
             - Slice of Life, Sports, Supernatural, Thriller
 
-        You can use any of the search tags supported on Anilist instead of any of above genres!
+        You can also use any of the search tags supported on Anilist instead of any of above genres!
         """
         if media_type.lower() not in ["anime", "manga"]:
             return await ctx.send(
-                "You provided invalid media type! Only `manga` or `anime` type is supported!"
+                "Invalid media type provided! Only `manga` or `anime` type is supported!"
+            )
+
+        if not genre_or_tag:
+            genre_or_tag = random.choice(self.supported_genres)
+            await ctx.send(
+                f"Since you didn't provide a genre or tag, I chose a random genre: {genre_or_tag}"
             )
 
         async with ctx.typing():
@@ -143,7 +179,7 @@ class Anilist(commands.Cog):
                 page=1,
                 perPage=1,
                 type=media_type.upper(),
-                genre=genre,
+                genre=genre_or_tag,
                 format_in=get_format[media_type.lower()]
             )
             if type(results) is str:
@@ -153,7 +189,7 @@ class Anilist(commands.Cog):
                     page=1,
                     perPage=1,
                     type=media_type.upper(),
-                    tag=genre,
+                    tag=genre_or_tag,
                     format_in=get_format[media_type.lower()]
                 )
 
