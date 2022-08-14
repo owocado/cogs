@@ -10,14 +10,22 @@ from .api.character import CharacterData
 from .api.constants import GenreCollection
 from .api.media import MediaData
 from .api.schedule import ScheduleData
+from .api.staff import StaffData
 from .api.studio import StudioData
-from .embed_maker import do_character_embed, do_media_embed, do_schedule_embed, do_studio_embed
+from .embed_maker import (
+    do_character_embed,
+    do_media_embed,
+    do_schedule_embed,
+    do_staff_embed,
+    do_studio_embed
+)
 from .schemas import (
     CHARACTER_SCHEMA,
     GENRE_COLLECTION_SCHEMA,
     GENRE_SCHEMA,
     MEDIA_SCHEMA,
     SCHEDULE_SCHEMA,
+    STAFF_SCHEMA,
     STUDIO_SCHEMA,
     TAG_SCHEMA
 )
@@ -168,13 +176,13 @@ class Anilist(commands.Cog):
                 "Invalid media type provided! Only `manga` or `anime` type is supported!"
             )
 
-        if not genre_or_tag:
-            genre_or_tag = random.choice(self.supported_genres)
-            await ctx.send(
-                f"Since you didn't provide a genre or tag, I chose a random genre: {genre_or_tag}"
-            )
-
         async with ctx.typing():
+            if not genre_or_tag:
+                genre_or_tag = random.choice(self.supported_genres)
+                await ctx.send(
+                    f"Since you didn't provide a genre or tag, I chose a random genre: {genre_or_tag}"
+                )
+
             get_format = {
                 "anime": ["TV", "TV_SHORT", "MOVIE", "OVA", "ONA"],
                 "manga": ["MANGA", "NOVEL", "ONE_SHOT"]
@@ -315,3 +323,32 @@ class Anilist(commands.Cog):
                 pages.append(emb)
 
         await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120)
+
+    @commands.command(aliases=("mangaka", "seiyuu"))
+    @commands.bot_has_permissions(embed_links=True)
+    async def anistaff(self, ctx: commands.Context, *, name: str):
+        """Get info on any manga or anime staff, seiyuu etc."""
+        async with ctx.typing():
+            results = await StaffData.request(
+                self.session,
+                query=STAFF_SCHEMA,
+                page=1,
+                perPage=15,
+                search=name,
+            )
+            if type(results) is str:
+                return await ctx.send(results)
+
+            pages = []
+            for i, page in enumerate(results, start=1):
+                emb = do_staff_embed(page)
+                emb.set_footer(text=f"Powered by AniList • Page {i} of {len(results)}")
+                pages.append(emb)
+
+        await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120)
+
+    @commands.command(aliases=["anilistuser"])
+    @commands.bot_has_permissions(embed_links=True)
+    async def aniuser(self, ctx: commands.Context, username: str):
+        """Get info on AniList user account."""
+        ...

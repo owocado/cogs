@@ -7,6 +7,7 @@ from .api.character import CharacterData
 from .api.formatters import format_birth_date, format_description, format_media_type
 from .api.media import MediaData
 from .api.schedule import ScheduleData
+from .api.staff import StaffData
 from .api.studio import StudioData
 
 
@@ -94,6 +95,59 @@ def do_schedule_embed(data: ScheduleData, upcoming: bool) -> Embed:
     air_type = "Upcoming" if upcoming else "Recently Aired"
     embed.set_author(name=f"{air_type} Anime • Episode Info")
     embed.set_thumbnail(url=data.media.coverImage.large or "")
+    return embed
+
+
+def do_staff_embed(data: StaffData) -> Embed:
+    embed = Embed(color=Colour.from_hsv(random.random(), 0.5, 1.0), title=str(data.name))
+    embed.url = data.siteUrl or ""
+    embed.set_thumbnail(url=data.image.large or "")
+
+    summary = ""
+    if data.dateOfBirth.humanize_date:
+        summary += f"**Birth:**  {data.dateOfBirth}\n"
+    if data.dateOfDeath.humanize_date:
+        summary += f"**Death:**  {data.dateOfDeath}\n"
+    if data.age:
+        summary += f"**Age:**  {data.age} years\n"
+    if data.gender:
+        summary += f"**Gender:**  {data.gender}\n"
+    if active := data.yearsActive:
+        summary += f"**Years active:**  {active[0]}-{data.dateOfDeath.year or 'present'}\n"
+    if data.homeTown:
+        summary += f"**Hometown:**  {data.homeTown}\n"
+
+    bio_data = format_description(data.description or "", 800)
+    if data.description and len(data.description) > len(bio_data):
+        bio_data += f" [(read more on AniList)]({data.siteUrl})\n"
+    embed.description = f"{summary}\n{bio_data}"
+
+    if pen_names := data.name.alternative:
+        embed.add_field(name="Other names", value=", ".join(pen_names))
+    if jobs := data.primaryOccupations:
+        embed.add_field(name="Primary Occupation(s)", value=", ".join(jobs))
+
+    if data.staff_media_nodes:
+        staff_roles_list = [
+            f"[{media.title}]({media.siteUrl}) ({format_media_type(media.format)})"
+            for media in data.staff_media_nodes[:10]
+        ]
+        notable_staff_roles = ", ".join(staff_roles_list)
+        if (total := len(data.staff_media_nodes)) > (parsed := len(staff_roles_list)):
+            notable_staff_roles += f" … and {total - parsed} more!"
+        embed.add_field(name="Staff / Production Roles", value=notable_staff_roles, inline=False)
+
+    if data.character_nodes:
+        character_roles_list = [
+            f"[{char.name.full}]({char.siteUrl}) ({char.name.native})"
+            for char in data.character_nodes[:10]
+        ]
+        character_roles = ", ".join(character_roles_list)
+        if (total := len(data.character_nodes)) > (parsed := len(character_roles_list)):
+            character_roles += f" … and {total - parsed} more!"
+        embed.add_field(
+            name="Voiced / Played Characters", value=character_roles, inline=False
+        )
     return embed
 
 

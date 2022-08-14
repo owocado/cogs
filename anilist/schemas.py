@@ -97,7 +97,6 @@ query ($page: Int, $perPage: Int, $genre: String, $type: MediaType, $format_in: 
       nextAiringEpisode {
         episode
         airingAt
-        timeUntilAiring
       }
     }
   }
@@ -160,7 +159,6 @@ query ($page: Int, $perPage: Int, $search: String, $type: MediaType, $sort: [Med
       nextAiringEpisode {
         episode
         airingAt
-        timeUntilAiring
       }
     }
   }
@@ -205,31 +203,50 @@ query ($page: Int, $perPage: Int, $notYetAired: Boolean, $sort: [AiringSort]) {
 STAFF_SCHEMA = """
 query ($page: Int, $perPage: Int, $search: String) {
   Page(page: $page, perPage: $perPage) {
-    staff(search: $search) {
+    staff(search: $search, sort: FAVOURITES_DESC) {
       name {
         full
         native
+        alternative
       }
-      language
+      age
+      description(asHtml: false)
+      gender
+      homeTown
+      primaryOccupations
+      siteUrl
+      yearsActive
+      dateOfBirth {
+        year
+        month
+        day
+      }
+      dateOfDeath {
+        year
+        month
+        day
+      }
       image {
         large
       }
-      description
-      siteUrl
-      staffMedia(perPage: 10) {
+      staffMedia(perPage: 40, sort: TRENDING_DESC) {
         nodes {
+          format
           siteUrl
+          status
           title {
+            english
             romaji
           }
         }
       }
-      characters(perPage: 10) {
+      characters(perPage: 40, sort: FAVOURITES_DESC) {
         nodes {
-          id
           siteUrl
           name {
             full
+            native
+            alternative
           }
         }
       }
@@ -331,7 +348,6 @@ query ($page: Int, $perPage: Int, $tag: String, $type: MediaType, $format_in: [M
       nextAiringEpisode {
         episode
         airingAt
-        timeUntilAiring
       }
     }
   }

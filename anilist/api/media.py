@@ -10,7 +10,7 @@ from discord import Colour
 from html import unescape
 from textwrap import shorten
 
-from .formatters import HANDLE, format_anime_status, format_date, format_manga_status
+from .formatters import HANDLE, format_anime_status, format_birth_date, format_date, format_manga_status
 
 
 @dataclass
@@ -30,10 +30,17 @@ class DateModel:
 
     def __str__(self) -> str:
         if not self.day:
-            if self.year:
-                return str(self.year)
-            return "TBD?"
+            return str(self.year) if self.year else "TBD?"
+        if not self.year:
+            return self.humanize_date
         return format_date(self.day, self.month, self.year)
+
+    @property
+    def humanize_date(self) -> str:
+        if not (self.day and self.month):
+            return str(self.year) if self.year else ""
+
+        return f"{format_birth_date(self.day, self.month)} {self.year or ''}"
 
 
 @dataclass
@@ -48,7 +55,6 @@ class ExternalSite:
 @dataclass
 class NextEpisodeInfo:
     episode: int
-    timeUntilAiring: int
     airingAt: int
 
 
