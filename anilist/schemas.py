@@ -1,37 +1,38 @@
 CHARACTER_SCHEMA = """
-query ($page: Int, $perPage: Int, $search: String, $sort: [CharacterSort]) {
+query ($page: Int, $perPage: Int, $search: String) {
   Page(page: $page, perPage: $perPage) {
-    characters(search: $search, sort: $sort) {
-      name {
-        full
-        native
-        alternative
-      }
-      image {
+    users(search: $search) {
+      id
+      name
+      about(asHtml: false)
+      avatar {
         large
       }
-      description(asHtml: false)
-      gender
-      dateOfBirth {
-        year
-        month
-        day
-      }
-      age
+      bannerImage
       siteUrl
-      media(perPage: 10) {
-        nodes {
-          siteUrl
-          type
-          title {
-            english
-            romaji
-          }
+      previousNames {
+        name
+        createdAt
+        updatedAt
+      }
+      statistics {
+        anime {
+          count
+          meanScore
+          minutesWatched
+          episodesWatched
+        }
+        manga {
+          count
+          meanScore
+          chaptersRead
+          volumesRead
         }
       }
     }
   }
 }
+
 """
 
 
@@ -356,16 +357,22 @@ query ($page: Int, $perPage: Int, $tag: String, $type: MediaType, $format_in: [M
 
 
 USER_SCHEMA = """
-query ($page: Int, $perPage: Int, $name: String) {
+query ($page: Int, $perPage: Int, $search: String) {
   Page(page: $page, perPage: $perPage) {
-    users(name: $name) {
+    users(search: $search) {
+      id
       name
+      about(asHtml: false)
       avatar {
         large
-        medium
       }
-      about
       bannerImage
+      siteUrl
+      previousNames {
+        name
+        createdAt
+        updatedAt
+      }
       statistics {
         anime {
           count
@@ -380,64 +387,6 @@ query ($page: Int, $perPage: Int, $name: String) {
           volumesRead
         }
       }
-      favourites {
-        anime {
-          nodes {
-            id
-            siteUrl
-            title {
-              romaji
-              english
-              native
-              userPreferred
-            }
-          }
-        }
-        manga {
-          nodes {
-            id
-            siteUrl
-            title {
-              romaji
-              english
-              native
-              userPreferred
-            }
-          }
-        }
-        characters {
-          nodes {
-            id
-            siteUrl
-            name {
-              first
-              last
-              full
-              native
-            }
-          }
-        }
-        staff {
-          nodes {
-            id
-            siteUrl
-            name {
-              first
-              last
-              full
-              native
-            }
-          }
-        }
-        studios {
-          nodes {
-            id
-            siteUrl
-            name
-          }
-        }
-      }
-      siteUrl
     }
   }
 }

@@ -12,12 +12,14 @@ from .api.media import MediaData
 from .api.schedule import ScheduleData
 from .api.staff import StaffData
 from .api.studio import StudioData
+from .api.user import UserData
 from .embed_maker import (
     do_character_embed,
     do_media_embed,
     do_schedule_embed,
     do_staff_embed,
-    do_studio_embed
+    do_studio_embed,
+    do_user_embed
 )
 from .schemas import (
     CHARACTER_SCHEMA,
@@ -27,7 +29,8 @@ from .schemas import (
     SCHEDULE_SCHEMA,
     STAFF_SCHEMA,
     STUDIO_SCHEMA,
-    TAG_SCHEMA
+    TAG_SCHEMA,
+    USER_SCHEMA
 )
 
 log = logging.getLogger("red.owo.anilist")
@@ -351,4 +354,22 @@ class Anilist(commands.Cog):
     @commands.bot_has_permissions(embed_links=True)
     async def aniuser(self, ctx: commands.Context, username: str):
         """Get info on AniList user account."""
-        ...
+        async with ctx.typing():
+            results = await UserData.request(
+                self.session,
+                query=USER_SCHEMA,
+                page=1,
+                perPage=15,
+                search=username
+            )
+            if type(results) is str:
+                return await ctx.send(results)
+
+            pages = []
+            for i, page in enumerate(results, start=1):
+                emb = do_user_embed(page)
+                text = f"{emb.footer.text} • Page {i} of {len(results)}"
+                emb.set_footer(text=text)
+                pages.append(emb)
+
+        await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120)

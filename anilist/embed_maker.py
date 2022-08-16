@@ -9,6 +9,7 @@ from .api.media import MediaData
 from .api.schedule import ScheduleData
 from .api.staff import StaffData
 from .api.studio import StudioData
+from .api.user import UserData
 
 
 def do_character_embed(data: CharacterData) -> Embed:
@@ -163,4 +164,36 @@ def do_studio_embed(data: StudioData) -> Embed:
         emb.add_field(name="Studio Type", value="Animation Studio")
     if data.favourites:
         emb.add_field(name="Likes on AniList", value=humanize_number(data.favourites))
+    return emb
+
+
+def do_user_embed(data: UserData) -> Embed:
+    emb = Embed(title=data.name, url=data.siteUrl)
+    emb.colour = Colour.from_hsv(random.random(), 0.5, 1.0)
+    emb.set_image(url=data.opengraph_banner)
+    if data.avatar.large:
+        emb.set_thumbnail(url=data.avatar.large)
+    if data.previousNames:
+        emb.add_field(name="Previous Username", value=data.previous_username)
+
+    if data.statistics.anime.count:
+        anime_stats = (
+            f"Anime(s) watched: **{data.statistics.anime.count}**\n"
+            f"Episodes watched: **{data.statistics.anime.episodesWatched}**\n"
+            f"Minutes watched: **{humanize_number(data.statistics.anime.minutesWatched)}**\n"
+        )
+        if anime_score := data.statistics.anime.meanScore:
+            anime_stats += f"Mean score: **{anime_score}%**"
+        emb.add_field(name="Anime Stats", value=anime_stats, inline=False)
+    if data.statistics.manga.count:
+        manga_stats= (
+            f"Manga(s) read: **{data.statistics.manga.count}**\n"
+            f"Chapters read: **{humanize_number(data.statistics.manga.chaptersRead)}**\n"
+        )
+        if volumes := data.statistics.manga.volumesRead:
+            manga_stats += f"Volumes read: **{humanize_number(volumes)}**\n"
+        if manga_score := data.statistics.manga.meanScore:
+            manga_stats += f"Mean score: **{manga_score}%**"
+        emb.add_field(name="Manga Stats", value=manga_stats, inline=False)
+
     return emb
