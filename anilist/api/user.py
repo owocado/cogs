@@ -1,18 +1,9 @@
 from __future__ import annotations
 
-import asyncio
 from dataclasses import dataclass, field
 from typing import Optional, Sequence
 
-import aiohttp
-
-from .media import CoverImage
-
-
-@dataclass
-class BaseStats:
-    count: int
-    meanScore: float
+from .base import BaseStats, CoverImage, fetch_data
 
 
 @dataclass
@@ -42,8 +33,7 @@ class Statistics:
     @classmethod
     def from_data(cls, data: dict) -> Statistics:
         return cls(
-            anime=AnimeStats(**data.pop("anime", {})),
-            manga=MangaStats(**data.pop("manga", {}))
+            anime=AnimeStats(**data.pop("anime", {})), manga=MangaStats(**data.pop("manga", {}))
         )
 
 
@@ -76,28 +66,17 @@ class UserData:
             avatar=CoverImage(**data.pop("avatar", {})),
             statistics=Statistics.from_data(data.pop("statistics", {})),
             previousNames=[PreviousName(**pn) for pn in previous_names],
-            **data
+            **data,
         )
 
     @classmethod
-    async def request(
-        cls, session: aiohttp.ClientSession, query: str, **kwargs
-    ) -> str | Sequence[UserData]:
-        try:
-            async with session.post(
-                "https://graphql.anilist.co", json={"query": query, "variables": kwargs}
-            ) as resp:
-                if resp.status != 200:
-                    return f"https://http.cat/{resp.status}.jpg"
-                result: dict = await resp.json()
-        except (aiohttp.ClientError, asyncio.TimeoutError):
-            return f"https://http.cat/408.jpg"
-
-        if err := result.get("errors"):
-            return f"{err[0]['message']} (Status: {err[0]['status']})"
+    async def request(cls, session, query: str, **kwargs) -> str | Sequence[UserData]:
+        result = await fetch_data(session, query, **kwargs)
+        if type(result) is str:
+            return result
 
         all_items = result.get("data", {}).get("Page", {}).get("users", [])
         if not all_items:
-            return f"https://http.cat/404.jpg"
+            return f"Sad trombone. No results!"
 
         return [cls.from_data(item) for item in all_items]

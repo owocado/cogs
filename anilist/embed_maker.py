@@ -39,9 +39,9 @@ def do_media_embed(data: MediaData, is_channel_nsfw: bool) -> Embed:
         embed.set_footer(text="Try again in NSFW channel to see full embed!")
         return embed
 
-    if data.coverImage.large and data.type == "MANGA":
-        embed.set_thumbnail(url=data.coverImage.large)
-    embed.set_image(url=data.preview_image)
+    # if data.coverImage.large and data.type == "MANGA":
+    #     embed.set_thumbnail(url=data.coverImage.large)
+    embed.set_image(url=f"https://img.anili.st/media/{data.id}")
 
     if data.type == "ANIME":
         if data.status == "RELEASING":
@@ -50,23 +50,20 @@ def do_media_embed(data: MediaData, is_channel_nsfw: bool) -> Embed:
                 description += f"**Episodes:**  {next_ep.episode - 1}{next_airing}\n"
         elif data.episodes:
             description += f"**Episodes:**  {data.episodes}\n"
+        if data.duration:
+            description += f"**Duration:**  {data.duration} minutes (average)\n"
     elif data.type == "MANGA":
-        if data.source:
-            description += f"**Source:**  {data.media_source}\n"
         if data.chapters:
             description += f"**Chapters:**  {data.chapters}\n"
         if data.volumes:
             description += f"**Volumes:**  {data.volumes or 0}\n"
+    if data.source:
+        description += f"**Source:**  {data.media_source}\n"
 
-    start_date = data.media_start_date
-    end_date = data.media_end_date
+    start_date = str(data.startDate)
+    end_date = str(data.endDate)
     if_same_dates = f" to {end_date}" if start_date != end_date else ""
     description += f"**{data.release_mode}**  {start_date}{if_same_dates}\n"
-
-    if data.type == "ANIME":
-        if data.duration:
-            description += f"**Duration:**  {data.duration} minutes (average)\n"
-        description += f"**Source:**  {data.media_source}\n"
 
     # if data.synonyms:
     #     embed.add_field(name="Synonyms", value=', '.join(f'`{x}`' for x in data.synonyms))
@@ -84,11 +81,11 @@ def do_schedule_embed(data: ScheduleData, upcoming: bool) -> Embed:
     embed.url = data.media.siteUrl
     when = "airing" if upcoming else "aired"
     embed.description = (
-        f'Episode **{data.episode}** {when} <t:{data.airingAt}:R>\n\n'
-        f'**Format:**  {format_media_type(data.media.format)}\n'
+        f"Episode **{data.episode}** {when} <t:{data.airingAt}:R>\n\n"
+        f"**Format:**  {format_media_type(data.media.format)}\n"
     )
     if data.media.duration:
-        f'**Duration:** {data.media.duration} minutes (average)'
+        f"**Duration:** {data.media.duration} minutes (average)"
 
     if data.media.externalLinks:
         embed.add_field(name="External Links", value=data.external_links)
@@ -146,9 +143,7 @@ def do_staff_embed(data: StaffData) -> Embed:
         character_roles = ", ".join(character_roles_list)
         if (total := len(data.character_nodes)) > (parsed := len(character_roles_list)):
             character_roles += f" … and {total - parsed} more!"
-        embed.add_field(
-            name="Voiced / Played Characters", value=character_roles, inline=False
-        )
+        embed.add_field(name="Voiced / Played Characters", value=character_roles, inline=False)
     return embed
 
 
@@ -186,7 +181,7 @@ def do_user_embed(data: UserData) -> Embed:
             anime_stats += f"Mean score: **{anime_score}%**"
         emb.add_field(name="Anime Stats", value=anime_stats, inline=False)
     if data.statistics.manga.count:
-        manga_stats= (
+        manga_stats = (
             f"Manga(s) read: **{data.statistics.manga.count}**\n"
             f"Chapters read: **{humanize_number(data.statistics.manga.chaptersRead)}**\n"
         )

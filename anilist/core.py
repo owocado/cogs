@@ -6,8 +6,8 @@ import aiohttp
 from redbot.core import commands
 from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
 
+from .api.base import GenreCollection
 from .api.character import CharacterData
-from .api.constants import GenreCollection
 from .api.media import MediaData
 from .api.schedule import ScheduleData
 from .api.staff import StaffData
@@ -19,7 +19,7 @@ from .embed_maker import (
     do_schedule_embed,
     do_staff_embed,
     do_studio_embed,
-    do_user_embed
+    do_user_embed,
 )
 from .schemas import (
     CHARACTER_SCHEMA,
@@ -30,7 +30,7 @@ from .schemas import (
     STAFF_SCHEMA,
     STUDIO_SCHEMA,
     TAG_SCHEMA,
-    USER_SCHEMA
+    USER_SCHEMA,
 )
 
 log = logging.getLogger("red.owo.anilist")
@@ -42,7 +42,7 @@ class Anilist(commands.Cog):
     __authors__ = ["<@306810730055729152>"]
     __version__ = "0.4.0"
 
-    def format_help_for_context(self, ctx: commands.Context) -> str: # Thanks Sinbad!
+    def format_help_for_context(self, ctx: commands.Context) -> str:  # Thanks Sinbad!
         return (
             f"{super().format_help_for_context(ctx)}\n\n"
             f"**Authors:**  {', '.join(self.__authors__)}\n"
@@ -52,7 +52,7 @@ class Anilist(commands.Cog):
     def __init__(self, *args, **kwargs):
         self.session = aiohttp.ClientSession()
         self.supported_genres = GenreCollection
-        # asyncio.create_task(self.initialize())
+        asyncio.create_task(self.initialize())
 
     def cog_unload(self) -> None:
         asyncio.create_task(self.session.close())
@@ -85,13 +85,7 @@ class Anilist(commands.Cog):
         """Fetch info on any anime from given query!"""
         async with ctx.typing():
             results = await MediaData.request(
-                self.session,
-                query=MEDIA_SCHEMA,
-                page=1,
-                perPage=15,
-                search=query,
-                type="ANIME",
-                sort="POPULARITY_DESC"
+                self.session, query=MEDIA_SCHEMA, search=query, type="ANIME",
             )
             if type(results) is str:
                 return await ctx.send(results)
@@ -111,13 +105,7 @@ class Anilist(commands.Cog):
         """Fetch info on any manga from given query!"""
         async with ctx.typing():
             results = await MediaData.request(
-                self.session,
-                query=MEDIA_SCHEMA,
-                page=1,
-                perPage=15,
-                search=query,
-                type="MANGA",
-                sort="POPULARITY_DESC"
+                self.session, query=MEDIA_SCHEMA, search=query, type="MANGA",
             )
             if type(results) is str:
                 return await ctx.send(results)
@@ -142,12 +130,7 @@ class Anilist(commands.Cog):
 
         async with ctx.typing():
             results = await MediaData.request(
-                self.session,
-                query=MEDIA_SCHEMA,
-                page=1,
-                perPage=15,
-                type=media_type.upper(),
-                sort="TRENDING_DESC"
+                self.session, query=MEDIA_SCHEMA, type=media_type.upper(), sort="TRENDING_DESC"
             )
             if type(results) is str:
                 return await ctx.send(results)
@@ -188,27 +171,25 @@ class Anilist(commands.Cog):
 
             get_format = {
                 "anime": ["TV", "TV_SHORT", "MOVIE", "OVA", "ONA"],
-                "manga": ["MANGA", "NOVEL", "ONE_SHOT"]
+                "manga": ["MANGA", "NOVEL", "ONE_SHOT"],
             }
 
             results = await MediaData.request(
                 self.session,
                 query=GENRE_SCHEMA,
-                page=1,
                 perPage=1,
                 type=media_type.upper(),
                 genre=genre_or_tag,
-                format_in=get_format[media_type.lower()]
+                format_in=get_format[media_type.lower()],
             )
             if type(results) is str:
                 results = await MediaData.request(
                     self.session,
                     query=TAG_SCHEMA,
-                    page=1,
                     perPage=1,
                     type=media_type.upper(),
                     tag=genre_or_tag,
-                    format_in=get_format[media_type.lower()]
+                    format_in=get_format[media_type.lower()],
                 )
 
             if type(results) is str:
@@ -226,12 +207,7 @@ class Anilist(commands.Cog):
         """Fetch info on a anime/manga character from given query!"""
         async with ctx.typing():
             results = await CharacterData.request(
-                self.session,
-                query=CHARACTER_SCHEMA,
-                page=1,
-                perPage=15,
-                search=query,
-                sort="SEARCH_MATCH"
+                self.session, query=CHARACTER_SCHEMA, search=query, sort="SEARCH_MATCH"
             )
             if type(results) is str:
                 return await ctx.send(results)
@@ -249,13 +225,7 @@ class Anilist(commands.Cog):
     async def studio(self, ctx: commands.Context, *, name: str) -> None:
         """Fetch info on an animation studio from given name query!"""
         async with ctx.typing():
-            results = await StudioData.request(
-                self.session,
-                query=STUDIO_SCHEMA,
-                page=1,
-                perPage=15,
-                search=name,
-            )
+            results = await StudioData.request(self.session, query=STUDIO_SCHEMA, search=name)
             if type(results) is str:
                 return await ctx.send(results)
 
@@ -272,12 +242,7 @@ class Anilist(commands.Cog):
         """Fetch list of upcoming animes airing within a day."""
         async with ctx.typing():
             results = await ScheduleData.request(
-                self.session,
-                query=SCHEDULE_SCHEMA,
-                page=1,
-                perPage=20,
-                notYetAired=True,
-                sort="TIME"
+                self.session, query=SCHEDULE_SCHEMA, perPage=20, notYetAired=True, sort="TIME"
             )
             if type(results) is str:
                 return await ctx.send(results)
@@ -304,10 +269,9 @@ class Anilist(commands.Cog):
             results = await ScheduleData.request(
                 self.session,
                 query=SCHEDULE_SCHEMA,
-                page=1,
                 perPage=20,
                 notYetAired=False,
-                sort="TIME_DESC"
+                sort="TIME_DESC",
             )
             if type(results) is str:
                 return await ctx.send(results)
@@ -332,13 +296,7 @@ class Anilist(commands.Cog):
     async def anistaff(self, ctx: commands.Context, *, name: str):
         """Get info on any manga or anime staff, seiyuu etc."""
         async with ctx.typing():
-            results = await StaffData.request(
-                self.session,
-                query=STAFF_SCHEMA,
-                page=1,
-                perPage=15,
-                search=name,
-            )
+            results = await StaffData.request(self.session, query=STAFF_SCHEMA, search=name)
             if type(results) is str:
                 return await ctx.send(results)
 
@@ -355,13 +313,7 @@ class Anilist(commands.Cog):
     async def aniuser(self, ctx: commands.Context, username: str):
         """Get info on AniList user account."""
         async with ctx.typing():
-            results = await UserData.request(
-                self.session,
-                query=USER_SCHEMA,
-                page=1,
-                perPage=15,
-                search=username
-            )
+            results = await UserData.request(self.session, query=USER_SCHEMA, search=username)
             if type(results) is str:
                 return await ctx.send(results)
 

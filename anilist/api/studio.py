@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import asyncio
 from dataclasses import dataclass, field
-from typing import Optional, Sequence
+from typing import Sequence
 
-import aiohttp
+from .base import MediaTitle, fetch_data
 from .formatters import format_anime_status
 
 
@@ -14,10 +13,10 @@ class MediaNode:
     format: str
     siteUrl: str
     status: str
-    title: Title
+    title: MediaTitle
 
     def __str__(self) -> str:
-        return f"**[{self.title}]({self.siteUrl})**"
+        return f"**[{self.title.english or self.title.romaji}]({self.siteUrl})**"
 
     @property
     def episodes_count(self) -> str:
@@ -30,16 +29,7 @@ class MediaNode:
 
     @classmethod
     def from_data(cls, data: dict) -> MediaNode:
-        return cls(title=Title(**data.pop("title", {})), **data)
-
-
-@dataclass
-class Title:
-    english: Optional[str]
-    romaji: Optional[str]
-
-    def __str__(self) -> str:
-        return self.english or self.romaji or "Title ???"
+        return cls(title=MediaTitle(**data.pop("title", {})), **data)
 
 
 @dataclass
@@ -56,24 +46,13 @@ class StudioData:
         return cls(media_nodes=[MediaNode.from_data(node) for node in nodes], **data)
 
     @classmethod
-    async def request(
-        cls, session: aiohttp.ClientSession, query: str, **kwargs
-    ) -> str | Sequence[StudioData]:
-        try:
-            async with session.post(
-                "https://graphql.anilist.co", json={"query": query, "variables": kwargs}
-            ) as resp:
-                if resp.status != 200:
-                    return f"https://http.cat/{resp.status}.jpg"
-                result: dict = await resp.json()
-        except (aiohttp.ClientError, asyncio.TimeoutError):
-            return f"https://http.cat/408.jpg"
-
-        if err := result.get("errors"):
-            return f"{err[0]['message']} (Status: {err[0]['status']})"
+    async def request(cls, session, query: str, **kwargs) -> str | Sequence[StudioData]:
+        result = await fetch_data(session, query, **kwargs)
+        if type(result) is str:
+            return result
 
         all_studios = result.get("data", {}).get("Page", {}).get("studios", [])
         if not all_studios:
-            return f"https://http.cat/404.jpg"
+            return f"Sad trombone. No results!"
 
         return [cls.from_data(item) for item in all_studios]

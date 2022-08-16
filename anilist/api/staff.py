@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-import asyncio
 from dataclasses import dataclass, field
 from typing import Optional, Sequence
 
-import aiohttp
-
+from .base import CoverImage, DateModel, MediaTitle, fetch_data
 from .character import Name
-from .media import CoverImage, DateModel, Title as MediaTitle
 
 
 @dataclass
@@ -59,28 +56,17 @@ class StaffData:
             image=CoverImage(**data.pop("image", {})),
             character_nodes=[CharacterNode.from_data(char) for char in characters],
             staff_media_nodes=[StaffNode.from_data(media) for media in staff_media],
-            **data
+            **data,
         )
 
     @classmethod
-    async def request(
-        cls, session: aiohttp.ClientSession, query: str, **kwargs
-    ) -> str | Sequence[StaffData]:
-        try:
-            async with session.post(
-                "https://graphql.anilist.co", json={"query": query, "variables": kwargs}
-            ) as resp:
-                if resp.status != 200:
-                    return f"https://http.cat/{resp.status}.jpg"
-                result: dict = await resp.json()
-        except (aiohttp.ClientError, asyncio.TimeoutError):
-            return f"https://http.cat/408.jpg"
-
-        if err := result.get("errors"):
-            return f"{err[0]['message']} (Status: {err[0]['status']})"
+    async def request(cls, session, query: str, **kwargs) -> str | Sequence[StaffData]:
+        result = await fetch_data(session, query, **kwargs)
+        if type(result) is str:
+            return result
 
         all_items = result.get("data", {}).get("Page", {}).get("staff", [])
         if not all_items:
-            return f"https://http.cat/404.jpg"
+            return f"Sad trombone. No results!"
 
         return [cls.from_data(item) for item in all_items]

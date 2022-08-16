@@ -1,55 +1,15 @@
 from __future__ import annotations
 
-import asyncio
 from dataclasses import dataclass, field
 from random import random
 from typing import Optional, Sequence
 
-import aiohttp
 from discord import Colour
 from html import unescape
 from textwrap import shorten
 
-from .formatters import HANDLE, format_anime_status, format_birth_date, format_date, format_manga_status
-
-
-@dataclass
-class CoverImage:
-    large: Optional[str]
-    color: Optional[str] = None
-
-
-@dataclass
-class DateModel:
-    year: int = 0
-    month: int = 0
-    day: int = 0
-
-    def __eq__(self, other: object) -> bool:
-        return self.day == other.day and self.month == other.month and self.year == other.year
-
-    def __str__(self) -> str:
-        if not self.day:
-            return str(self.year or "TBD?")
-        if not self.year:
-            return format_birth_date(self.day, self.month)
-        return format_date(self.day, self.month, self.year)
-
-    @property
-    def humanize_date(self) -> str:
-        if not (self.day and self.month):
-            return str(self.year) if self.year else ""
-
-        return f"{format_birth_date(self.day, self.month)} {self.year or ''}"
-
-
-@dataclass
-class ExternalSite:
-    site: str
-    url: str
-
-    def __str__(self) -> str:
-        return f"[{self.site}]({self.url})"
+from .base import CoverImage, DateModel, ExternalSite, MediaTitle, MediaTrailer, fetch_data
+from .formatters import HANDLE, format_anime_status, format_manga_status
 
 
 @dataclass
@@ -59,25 +19,10 @@ class NextEpisodeInfo:
 
 
 @dataclass
-class Title:
-    romaji: Optional[str]
-    english: Optional[str]
-
-    def __str__(self) -> str:
-        return self.romaji or self.english or "Title ???"
-
-
-@dataclass
-class Trailer:
-    id: Optional[str]
-    site: Optional[str]
-
-
-@dataclass
 class MediaData:
     id: int
     idMal: Optional[int]
-    title: Title
+    title: MediaTitle
     coverImage: CoverImage
     description: str
     bannerImage: str
@@ -95,7 +40,7 @@ class MediaData:
     episodes: Optional[int]
     chapters: Optional[int]
     volumes: Optional[int]
-    trailer: Optional[Trailer]
+    trailer: Optional[MediaTrailer]
     nextAiringEpisode: Optional[NextEpisodeInfo]
     synonyms: Sequence[str] = field(default_factory=list)
     genres: Sequence[str] = field(default_factory=list)
@@ -105,46 +50,32 @@ class MediaData:
     def external_links(self) -> str:
         sites = " • ".join(map(str, self.externalLinks))
         if self.trailer and self.trailer.site == "youtube":
-            sites += f' • [YouTube Trailer](https://youtu.be/{self.trailer.id})'
+            sites += f" • [YouTube Trailer](https://youtu.be/{self.trailer.id})"
         if self.idMal:
-            sites += f' • [MyAnimeList](https://myanimelist.net/anime/{self.idMal})'
+            sites += f" • [MyAnimeList](https://myanimelist.net/anime/{self.idMal})"
         return sites
 
     @property
     def media_description(self) -> str:
         if not self.description:
             return ""
-
         return shorten(HANDLE.handle(unescape(self.description)), 400, placeholder="…")
 
     @property
-    def media_end_date(self) -> str:
-        return str(self.endDate)
-
-    @property
-    def media_start_date(self) -> str:
-        return str(self.startDate)
-
-    @property
     def media_status(self) -> str:
-        if self.type == 'ANIME':
+        if self.type == "ANIME":
             status = format_anime_status(str(self.status))
-        elif self.type == 'MANGA':
+        elif self.type == "MANGA":
             status = format_manga_status(str(self.status))
         else:
             status = "Unknown"
-
         return f"Status: {status}"
 
     @property
     def media_source(self) -> str:
         if not self.source:
             return "Unknown"
-        return self.source.replace('_', ' ').title()
-
-    @property
-    def preview_image(self) -> str:
-        return f"https://img.anili.st/media/{self.id}"
+        return self.source.replace("_", " ").title()
 
     @property
     def prominent_colour(self) -> Colour:
@@ -162,38 +93,27 @@ class MediaData:
         trailer = data.pop("trailer", {})
         next_ep = data.pop("nextAiringEpisode", {})
         return cls(
-            title=Title(**data.pop("title", {})),
+            title=MediaTitle(**data.pop("title", {})),
             coverImage=CoverImage(**data.pop("coverImage", {})),
             startDate=DateModel(**data.pop("startDate", {})),
             endDate=DateModel(**data.pop("endDate", {})),
             studios=", ".join(studio["name"] for studio in studios) if studios else "",
             synonyms=data.pop("synonyms", []),
             genres=data.pop("genres", []),
-            trailer=Trailer(**trailer) if trailer else None,
+            trailer=MediaTrailer(**trailer) if trailer else None,
             externalLinks=[ExternalSite(**site) for site in data.pop("externalLinks", [])],
             nextAiringEpisode=NextEpisodeInfo(**next_ep) if next_ep else None,
-            **data
+            **data,
         )
 
     @classmethod
-    async def request(
-        cls, session: aiohttp.ClientSession, query: str, **kwargs
-    ) -> str | Sequence[MediaData]:
-        try:
-            async with session.post(
-                "https://graphql.anilist.co", json={"query": query, "variables": kwargs}
-            ) as resp:
-                if resp.status != 200:
-                    return f"https://http.cat/{resp.status}.jpg"
-                result: dict = await resp.json()
-        except (aiohttp.ClientError, asyncio.TimeoutError):
-            return f"https://http.cat/408.jpg"
-
-        if err := result.get("errors"):
-            return f"{err[0]['message']} (Status: {err[0]['status']})"
+    async def request(cls, session, query: str, **kwargs) -> str | Sequence[MediaData]:
+        result = await fetch_data(session, query, **kwargs)
+        if type(result) is str:
+            return result
 
         all_items = result.get("data", {}).get("Page", {}).get("media", [])
         if not all_items:
-            return f"https://http.cat/404.jpg"
+            return f"Sad trombone. No results!"
 
         return [cls.from_data(item) for item in all_items]
