@@ -1,0 +1,30 @@
+{
+    "name": "Pokebase",
+    "short": "Your personal Pokédex with fun games/commands.",
+    "description": "Fetch various info about a Pokémon and some fun commands.",
+    "end_user_data_statement": "This cog does not persistently store data or metadata about users.",
+    "install_msg": "Hi, thanks for installing Pokebase cog. Buy me a coffee if you enjoy it. /s",
+    "author": [
+        "ow0x (<@306810730055729152>)",
+        "phalt"
+    ],
+    "required_cogs": {},
+    "requirements": ["aiocache", "beautifulsoup4", "jmespath", "msgpack", "pillow", "ujson"],
+    "tags": [
+        "pokemon",
+        "pokedex",
+        "pokebase",
+        "pokeapi",
+        "whosthatpokemon",
+        "pokemontcg",
+        "pokemon card game",
+        "pokemon card",
+        "trainer card",
+        "pokemon trainer card",
+        "pokecord"
+    ],
+    "min_bot_version": "3.4.8",
+    "hidden": false,
+    "disabled": false,
+    "type": "COG"
+}
