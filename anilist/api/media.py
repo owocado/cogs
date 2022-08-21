@@ -56,6 +56,14 @@ class MediaData:
         return sites
 
     @property
+    def humanize_duration(self) -> str:
+        if not self.duration:
+            return ""
+        if self.duration < 60:
+            return f"{self.duration} minutes"
+        return f"{self.duration // 60}h {self.duration - 60}m."
+
+    @property
     def media_description(self) -> str:
         if not self.description:
             return ""

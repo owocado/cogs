@@ -48,10 +48,10 @@ def do_media_embed(data: MediaData, is_channel_nsfw: bool) -> Embed:
             if (next_ep := data.nextAiringEpisode) and next_ep.episode:
                 next_airing = f" (⏩ Next <t:{next_ep.airingAt}:R>)" if next_ep.airingAt else ""
                 description += f"**Episodes:**  {next_ep.episode - 1}{next_airing}\n"
-        elif data.episodes:
+        elif data.episodes and data.format != "MOVIE":
             description += f"**Episodes:**  {data.episodes}\n"
         if data.duration:
-            description += f"**Duration:**  {data.duration} minutes (average)\n"
+            description += f"**Duration:**  {data.humanize_duration} (average)\n"
     elif data.type == "MANGA":
         if data.chapters:
             description += f"**Chapters:**  {data.chapters}\n"
