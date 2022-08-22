@@ -8,7 +8,15 @@ from discord import Colour
 from html import unescape
 from textwrap import shorten
 
-from .base import CoverImage, DateModel, ExternalSite, MediaTitle, MediaTrailer, fetch_data
+from .base import (
+    CoverImage,
+    DateModel,
+    ExternalSite,
+    MediaTitle,
+    MediaTrailer,
+    NotFound,
+    fetch_data,
+)
 from .formatters import HANDLE, format_anime_status, format_manga_status
 
 
@@ -65,9 +73,11 @@ class MediaData:
 
     @property
     def media_description(self) -> str:
-        if not self.description:
-            return ""
-        return shorten(HANDLE.handle(unescape(self.description)), 400, placeholder="…")
+        return (
+            shorten(HANDLE.handle(unescape(self.description)), 400, placeholder="…")
+            if self.description
+            else ""
+        )
 
     @property
     def media_status(self) -> str:
@@ -81,9 +91,7 @@ class MediaData:
 
     @property
     def media_source(self) -> str:
-        if not self.source:
-            return "Unknown"
-        return self.source.replace("_", " ").title()
+        return self.source.replace("_", " ").title() if self.source else "Unknown"
 
     @property
     def prominent_colour(self) -> Colour:
@@ -93,7 +101,7 @@ class MediaData:
 
     @property
     def release_mode(self) -> str:
-        return f"Air date:" if self.type == "ANIME" else f"Publish date:"
+        return "Air date:" if self.type == "ANIME" else "Publish date:"
 
     @classmethod
     def from_data(cls, data: dict) -> MediaData:
@@ -115,13 +123,14 @@ class MediaData:
         )
 
     @classmethod
-    async def request(cls, session, query: str, **kwargs) -> str | Sequence[MediaData]:
+    async def request(cls, session, query: str, **kwargs) -> NotFound | Sequence[MediaData]:
         result = await fetch_data(session, query, **kwargs)
-        if type(result) is str:
-            return result
+        if result.get("message"):
+            return NotFound(**result)
 
         all_items = result.get("data", {}).get("Page", {}).get("media", [])
-        if not all_items:
-            return f"Sad trombone. No results!"
-
-        return [cls.from_data(item) for item in all_items]
+        return (
+            [cls.from_data(item) for item in all_items]
+            if all_items
+            else NotFound(message="Sad trombone. No results!")
+        )

@@ -1,6 +1,6 @@
 import asyncio
 from dataclasses import dataclass
-from typing import Optional, Sequence
+from typing import Any, Dict, Optional, Sequence
 
 import aiohttp
 
@@ -25,15 +25,17 @@ class DateModel:
     month: int = 0
     day: int = 0
 
-    def __eq__(self, other: object) -> bool:
+    def __eq__(self, other) -> bool:
         return self.day == other.day and self.month == other.month and self.year == other.year
 
     def __str__(self) -> str:
         if not self.day:
             return str(self.year or "TBD?")
-        if not self.year:
-            return format_birth_date(self.day, self.month)
-        return format_date(self.day, self.month, self.year)
+        return (
+            format_date(self.day, self.month, self.year)
+            if self.year
+            else format_birth_date(self.day, self.month)
+        )
 
     @property
     def humanize_date(self) -> str:
@@ -67,7 +69,16 @@ class MediaTrailer:
     site: Optional[str]
 
 
-async def fetch_data(session: aiohttp.ClientSession, query: str, **kwargs):
+@dataclass
+class NotFound:
+    message: str
+    status: Optional[int] = None
+
+    def __str__(self) -> str:
+        return f"https://http.cat/{self.status}.jpg" if self.status else self.message
+
+
+async def fetch_data(session: aiohttp.ClientSession, query: str, **kwargs) -> Dict[str, Any]:
     kwargs["page"] = 1
     if not kwargs.get("perPage"):
         kwargs["perPage"] = 15
@@ -76,13 +87,13 @@ async def fetch_data(session: aiohttp.ClientSession, query: str, **kwargs):
             "https://graphql.anilist.co", json={"query": query, "variables": kwargs}
         ) as response:
             if response.status != 200:
-                return f"https://http.cat/{response.status}.jpg"
+                return {"status": response.status, "message": "An error occurred."}
             result: dict = await response.json()
     except (aiohttp.ClientError, asyncio.TimeoutError):
-        return f"https://http.cat/408.jpg"
+        return {"status": 408, "message": "Operation timed out."}
 
     if err := result.get("errors"):
-        return f"{err[0]['message']} (Status: {err[0]['status']})"
+        return {"message": f"{err[0]['message']} (Status: {err[0]['status']})"}
     return result
 
 

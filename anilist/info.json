@@ -8,7 +8,7 @@
     "required_cogs": {},
     "requirements": ["html2text"],
     "tags": ["anime", "manga", "anilist", "studio"],
-    "min_bot_version": "3.4.16",
+    "min_bot_version": "3.5.0",
     "hidden": false,
 	"disabled": false,
     "type": "COG"

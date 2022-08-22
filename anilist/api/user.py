@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional, Sequence
 
-from .base import BaseStats, CoverImage, fetch_data
+from .base import BaseStats, CoverImage, NotFound, fetch_data
 
 
 @dataclass
@@ -54,10 +54,7 @@ class UserData:
 
     @property
     def previous_username(self) -> str:
-        if not self.previousNames:
-            return ""
-
-        return self.previousNames[0].name
+        return self.previousNames[0].name if self.previousNames else ""
 
     @classmethod
     def from_data(cls, data: dict) -> UserData:
@@ -70,13 +67,14 @@ class UserData:
         )
 
     @classmethod
-    async def request(cls, session, query: str, **kwargs) -> str | Sequence[UserData]:
+    async def request(cls, session, query: str, **kwargs) -> NotFound | Sequence[UserData]:
         result = await fetch_data(session, query, **kwargs)
-        if type(result) is str:
-            return result
+        if result.get("message"):
+            return NotFound(**result)
 
         all_items = result.get("data", {}).get("Page", {}).get("users", [])
-        if not all_items:
-            return f"Sad trombone. No results!"
-
-        return [cls.from_data(item) for item in all_items]
+        return (
+            [cls.from_data(item) for item in all_items]
+            if all_items
+            else NotFound("Sad trombone. No results!")
+        )

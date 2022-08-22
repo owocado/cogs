@@ -1,12 +1,10 @@
-import asyncio
 import logging
 import random
 
-import aiohttp
 from redbot.core import commands
 from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
 
-from .api.base import GenreCollection
+from .api.base import GenreCollection, NotFound
 from .api.character import CharacterData
 from .api.media import MediaData
 from .api.schedule import ScheduleData
@@ -23,7 +21,6 @@ from .embed_maker import (
 )
 from .schemas import (
     CHARACTER_SCHEMA,
-    GENRE_COLLECTION_SCHEMA,
     GENRE_SCHEMA,
     MEDIA_SCHEMA,
     SCHEDULE_SCHEMA,
@@ -36,11 +33,11 @@ from .schemas import (
 log = logging.getLogger("red.owo.anilist")
 
 
-class Anilist(commands.Cog):
+class Anilist(commands.GroupCog, group_name="anilist"):
     """Fetch info on anime, manga, character, studio and more from Anilist!"""
 
     __authors__ = ["<@306810730055729152>"]
-    __version__ = "0.4.0"
+    __version__ = "1.0.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:  # Thanks Sinbad!
         return (
@@ -49,46 +46,25 @@ class Anilist(commands.Cog):
             f"**Cog version:**  {self.__version__}"
         )
 
-    def __init__(self, *args, **kwargs):
-        self.session = aiohttp.ClientSession()
-        self.supported_genres = GenreCollection
-        asyncio.create_task(self.initialize())
-
-    def cog_unload(self) -> None:
-        asyncio.create_task(self.session.close())
-
-    # TODO: utilise cog_load with dpy2
-    async def initialize(self) -> None:
-        fetched_genres = await self.fetch_genres(self.session, GENRE_COLLECTION_SCHEMA)
-        log.debug(f"Fetched supported genres from AniList:\n{fetched_genres}")
-        if fetched_genres and self.supported_genres != fetched_genres:
-            self.supported_genres = fetched_genres
-
-    async def fetch_genres(self, session: aiohttp.ClientSession, query: str):
-        try:
-            async with session.post("https://graphql.anilist.co", json={"query": query}) as resp:
-                if resp.status != 200:
-                    return []
-                return (await resp.json())["data"]["GenreCollection"]
-        except (KeyError, aiohttp.ClientError, asyncio.TimeoutError):
-            return []
-
     async def cog_check(self, ctx: commands.Context) -> bool:
         if ctx.guild:
             my_perms = ctx.channel.permissions_for(ctx.guild.me)
             return my_perms.read_message_history and my_perms.send_messages
         return True
 
-    @commands.command()
     @commands.bot_has_permissions(embed_links=True)
+    @commands.hybrid_command()
     async def anime(self, ctx: commands.Context, *, query: str):
         """Fetch info on any anime from given query!"""
         async with ctx.typing():
             results = await MediaData.request(
-                self.session, query=MEDIA_SCHEMA, search=query, type="ANIME",
+                ctx.bot.session,
+                query=MEDIA_SCHEMA,
+                search=query,
+                type="ANIME",
             )
-            if type(results) is str:
-                return await ctx.send(results)
+            if isinstance(results, NotFound):
+                return await ctx.send(str(results))
 
             pages = []
             for i, page in enumerate(results, start=1):
@@ -99,16 +75,19 @@ class Anilist(commands.Cog):
 
         await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120)
 
-    @commands.command(aliases=["manhwa"])
     @commands.bot_has_permissions(embed_links=True)
+    @commands.hybrid_command(aliases=["manhwa"])
     async def manga(self, ctx: commands.Context, *, query: str):
         """Fetch info on any manga from given query!"""
         async with ctx.typing():
             results = await MediaData.request(
-                self.session, query=MEDIA_SCHEMA, search=query, type="MANGA",
+                ctx.bot.session,
+                query=MEDIA_SCHEMA,
+                search=query,
+                type="MANGA",
             )
-            if type(results) is str:
-                return await ctx.send(results)
+            if isinstance(results, NotFound):
+                return await ctx.send(str(results))
 
             pages = []
             for i, page in enumerate(results, start=1):
@@ -118,8 +97,8 @@ class Anilist(commands.Cog):
 
         await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120)
 
-    @commands.command()
     @commands.bot_has_permissions(embed_links=True)
+    @commands.hybrid_command()
     # TODO: use typing.Literal for media_type with dpy 2.x
     async def trending(self, ctx: commands.Context, media_type: str):
         """Fetch currently trending animes or manga from AniList!"""
@@ -130,10 +109,10 @@ class Anilist(commands.Cog):
 
         async with ctx.typing():
             results = await MediaData.request(
-                self.session, query=MEDIA_SCHEMA, type=media_type.upper(), sort="TRENDING_DESC"
+                ctx.bot.session, query=MEDIA_SCHEMA, type=media_type.upper(), sort="TRENDING_DESC"
             )
-            if type(results) is str:
-                return await ctx.send(results)
+            if isinstance(results, NotFound):
+                return await ctx.send(str(results))
 
             pages = []
             for i, page in enumerate(results, start=1):
@@ -143,8 +122,8 @@ class Anilist(commands.Cog):
 
         await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120)
 
-    @commands.command()
     @commands.bot_has_permissions(embed_links=True)
+    @commands.hybrid_command()
     # TODO: use typing.Literal for media_type with dpy 2.x
     async def random(self, ctx: commands.Context, media_type: str, *, genre_or_tag: str = ""):
         """Fetch a random anime or manga based on provided genre or tag!
@@ -164,7 +143,7 @@ class Anilist(commands.Cog):
 
         async with ctx.typing():
             if not genre_or_tag:
-                genre_or_tag = random.choice(self.supported_genres)
+                genre_or_tag = random.choice(GenreCollection)
                 await ctx.send(
                     f"Since you didn't provide a genre or tag, I chose a random genre: {genre_or_tag}"
                 )
@@ -175,16 +154,16 @@ class Anilist(commands.Cog):
             }
 
             results = await MediaData.request(
-                self.session,
+                ctx.bot.session,
                 query=GENRE_SCHEMA,
                 perPage=1,
                 type=media_type.upper(),
                 genre=genre_or_tag,
                 format_in=get_format[media_type.lower()],
             )
-            if type(results) is str:
+            if isinstance(results, NotFound):
                 results = await MediaData.request(
-                    self.session,
+                    ctx.bot.session,
                     query=TAG_SCHEMA,
                     perPage=1,
                     type=media_type.upper(),
@@ -192,7 +171,7 @@ class Anilist(commands.Cog):
                     format_in=get_format[media_type.lower()],
                 )
 
-            if type(results) is str:
+            if isinstance(results, NotFound):
                 return await ctx.send(
                     f"Could not find a random {media_type} from the given genre or tag.\n"
                     "See if its valid as per AniList or try again with different genre/tag."
@@ -201,16 +180,16 @@ class Anilist(commands.Cog):
             emb = do_media_embed(results[0], ctx.channel.is_nsfw())
             await ctx.send(embed=emb)
 
-    @commands.command()
     @commands.bot_has_permissions(embed_links=True)
+    @commands.hybrid_command()
     async def character(self, ctx: commands.Context, *, query: str) -> None:
         """Fetch info on a anime/manga character from given query!"""
         async with ctx.typing():
             results = await CharacterData.request(
-                self.session, query=CHARACTER_SCHEMA, search=query, sort="SEARCH_MATCH"
+                ctx.bot.session, query=CHARACTER_SCHEMA, search=query, sort="SEARCH_MATCH"
             )
-            if type(results) is str:
-                return await ctx.send(results)
+            if isinstance(results, NotFound):
+                return await ctx.send(str(results))
 
             pages = []
             for i, page in enumerate(results, start=1):
@@ -220,14 +199,14 @@ class Anilist(commands.Cog):
 
         await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120)
 
-    @commands.command()
     @commands.bot_has_permissions(embed_links=True)
+    @commands.hybrid_command()
     async def studio(self, ctx: commands.Context, *, name: str) -> None:
         """Fetch info on an animation studio from given name query!"""
         async with ctx.typing():
-            results = await StudioData.request(self.session, query=STUDIO_SCHEMA, search=name)
-            if type(results) is str:
-                return await ctx.send(results)
+            results = await StudioData.request(ctx.bot.session, query=STUDIO_SCHEMA, search=name)
+            if isinstance(results, NotFound):
+                return await ctx.send(str(results))
 
             pages = []
             for i, page in enumerate(results, start=1):
@@ -237,15 +216,15 @@ class Anilist(commands.Cog):
 
         await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def upcoming(self, ctx: commands.Context, summary_version: bool = False):
         """Fetch list of upcoming animes airing within a day."""
         async with ctx.typing():
             results = await ScheduleData.request(
-                self.session, query=SCHEDULE_SCHEMA, perPage=20, notYetAired=True, sort="TIME"
+                ctx.bot.session, query=SCHEDULE_SCHEMA, perPage=20, notYetAired=True, sort="TIME"
             )
-            if type(results) is str:
-                return await ctx.send(results)
+            if isinstance(results, NotFound):
+                return await ctx.send(str(results))
 
             if not ctx.channel.permissions_for(ctx.me).embed_links or summary_version:
                 airing = "\n".join(
@@ -262,19 +241,19 @@ class Anilist(commands.Cog):
 
         await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def lastaired(self, ctx: commands.Context, summary_version: bool = False):
         """Fetch list of upcoming animes airing within a day."""
         async with ctx.typing():
             results = await ScheduleData.request(
-                self.session,
+                ctx.bot.session,
                 query=SCHEDULE_SCHEMA,
                 perPage=20,
                 notYetAired=False,
                 sort="TIME_DESC",
             )
-            if type(results) is str:
-                return await ctx.send(results)
+            if isinstance(results, NotFound):
+                return await ctx.send(str(results))
 
             if not ctx.channel.permissions_for(ctx.me).embed_links or summary_version:
                 airing = "\n".join(
@@ -291,14 +270,14 @@ class Anilist(commands.Cog):
 
         await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120)
 
-    @commands.command(aliases=("mangaka", "seiyuu"))
     @commands.bot_has_permissions(embed_links=True)
+    @commands.hybrid_command(aliases=("mangaka", "seiyuu"))
     async def anistaff(self, ctx: commands.Context, *, name: str):
         """Get info on any manga or anime staff, seiyuu etc."""
         async with ctx.typing():
-            results = await StaffData.request(self.session, query=STAFF_SCHEMA, search=name)
-            if type(results) is str:
-                return await ctx.send(results)
+            results = await StaffData.request(ctx.bot.session, query=STAFF_SCHEMA, search=name)
+            if isinstance(results, NotFound):
+                return await ctx.send(str(results))
 
             pages = []
             for i, page in enumerate(results, start=1):
@@ -308,14 +287,14 @@ class Anilist(commands.Cog):
 
         await menu(ctx, pages, DEFAULT_CONTROLS, timeout=120)
 
-    @commands.command(aliases=["anilistuser"])
     @commands.bot_has_permissions(embed_links=True)
+    @commands.hybrid_command(aliases=["anilistuser"])
     async def aniuser(self, ctx: commands.Context, username: str):
         """Get info on AniList user account."""
         async with ctx.typing():
-            results = await UserData.request(self.session, query=USER_SCHEMA, search=username)
-            if type(results) is str:
-                return await ctx.send(results)
+            results = await UserData.request(ctx.bot.session, query=USER_SCHEMA, search=username)
+            if isinstance(results, NotFound):
+                return await ctx.send(str(results))
 
             pages = []
             for i, page in enumerate(results, start=1):
