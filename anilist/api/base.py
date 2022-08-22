@@ -13,13 +13,13 @@ class BaseStats:
     meanScore: float
 
 
-@dataclass
+@dataclass(slots=True)
 class CoverImage:
     large: Optional[str]
     color: Optional[str] = None
 
 
-@dataclass
+@dataclass(slots=True)
 class DateModel:
     year: int = 0
     month: int = 0
@@ -45,7 +45,7 @@ class DateModel:
         return f"{format_birth_date(self.day, self.month)} {self.year or ''}"
 
 
-@dataclass
+@dataclass(slots=True)
 class ExternalSite:
     site: str
     url: str
@@ -54,7 +54,7 @@ class ExternalSite:
         return f"[{self.site}]({self.url})"
 
 
-@dataclass
+@dataclass(slots=True)
 class MediaTitle:
     romaji: Optional[str]
     english: Optional[str]
@@ -63,13 +63,13 @@ class MediaTitle:
         return self.romaji or self.english or "Title ???"
 
 
-@dataclass
+@dataclass(slots=True)
 class MediaTrailer:
     id: Optional[str]
     site: Optional[str]
 
 
-@dataclass
+@dataclass(slots=True)
 class NotFound:
     message: str
     status: Optional[int] = None

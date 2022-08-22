@@ -6,7 +6,7 @@ from typing import Optional, Sequence
 from .base import CoverImage, ExternalSite, MediaTitle, MediaTrailer, NotFound, fetch_data
 
 
-@dataclass
+@dataclass(slots=True)
 class MediaNode:
     idMal: Optional[int]
     siteUrl: str
@@ -31,7 +31,7 @@ class MediaNode:
         )
 
 
-@dataclass
+@dataclass(slots=True)
 class ScheduleData:
     airingAt: int
     episode: int

@@ -18,14 +18,14 @@ class MangaStats(BaseStats):
     volumesRead: int
 
 
-@dataclass
+@dataclass(slots=True)
 class PreviousName:
     name: str
     createdAt: int = 0
     updatedAt: int = 0
 
 
-@dataclass
+@dataclass(slots=True)
 class Statistics:
     anime: AnimeStats
     manga: MangaStats
@@ -37,7 +37,7 @@ class Statistics:
         )
 
 
-@dataclass
+@dataclass(slots=True)
 class UserData:
     id: int
     name: str

@@ -20,13 +20,13 @@ from .base import (
 from .formatters import HANDLE, format_anime_status, format_manga_status
 
 
-@dataclass
+@dataclass(slots=True)
 class NextEpisodeInfo:
     episode: int
     airingAt: int
 
 
-@dataclass
+@dataclass(slots=True)
 class MediaData:
     id: int
     idMal: Optional[int]

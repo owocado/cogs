@@ -7,7 +7,7 @@ from .base import MediaTitle, NotFound, fetch_data
 from .formatters import format_anime_status
 
 
-@dataclass
+@dataclass(slots=True)
 class MediaNode:
     episodes: int
     format: str
@@ -33,7 +33,7 @@ class MediaNode:
         return cls(title=MediaTitle(**data.pop("title", {})), **data)
 
 
-@dataclass
+@dataclass(slots=True)
 class StudioData:
     name: str
     favourites: int

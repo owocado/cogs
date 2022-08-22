@@ -7,7 +7,7 @@ from .base import CoverImage, DateModel, MediaTitle, NotFound, fetch_data
 from .formatters import format_description
 
 
-@dataclass
+@dataclass(slots=True)
 class Name:
     full: str
     native: str
@@ -20,7 +20,7 @@ class Name:
         return f"{self.full} ({self.native})" if self.native else self.full
 
 
-@dataclass
+@dataclass(slots=True)
 class MediaNode:
     siteUrl: str
     type: str
@@ -31,7 +31,7 @@ class MediaNode:
         return cls(title=MediaTitle(**data.pop("title", {})), **data)
 
 
-@dataclass
+@dataclass(slots=True)
 class CharacterData:
     name: Name
     image: CoverImage

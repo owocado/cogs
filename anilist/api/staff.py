@@ -7,7 +7,7 @@ from .base import CoverImage, DateModel, MediaTitle, NotFound, fetch_data
 from .character import Name
 
 
-@dataclass
+@dataclass(slots=True)
 class CharacterNode:
     siteUrl: str
     name: Name
@@ -17,7 +17,7 @@ class CharacterNode:
         return cls(name=Name(**data.pop("name", {})), **data)
 
 
-@dataclass
+@dataclass(slots=True)
 class StaffNode:
     format: str
     siteUrl: str
@@ -29,7 +29,7 @@ class StaffNode:
         return cls(title=MediaTitle(**data.pop("title", {})), **data)
 
 
-@dataclass
+@dataclass(slots=True)
 class StaffData:
     name: Name
     age: Optional[int]

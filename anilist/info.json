@@ -9,6 +9,7 @@
     "requirements": ["html2text"],
     "tags": ["anime", "manga", "anilist", "studio"],
     "min_bot_version": "3.5.0",
+    "min_python_version": [3, 10, 0],
     "hidden": false,
 	"disabled": false,
     "type": "COG"
