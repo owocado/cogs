@@ -36,7 +36,7 @@ class Anilist(commands.GroupCog, group_name="anilist"):
     """Fetch info on anime, manga, character, studio and more from Anilist!"""
 
     __authors__ = ["ow0x (<@306810730055729152>)"]
-    __version__ = "2.0.1"
+    __version__ = "2.0.2"
 
     def format_help_for_context(self, ctx: Context) -> str:  # Thanks Sinbad!
         return (
