@@ -1,4 +1,3 @@
-import logging
 import random
 from typing import Literal
 
@@ -32,14 +31,12 @@ from .schemas import (
     USER_SCHEMA,
 )
 
-log = logging.getLogger("red.owo.anilist")
-
 
 class Anilist(commands.GroupCog, group_name="anilist"):
     """Fetch info on anime, manga, character, studio and more from Anilist!"""
 
-    __authors__ = ["<@306810730055729152>"]
-    __version__ = "2.0.0"
+    __authors__ = ["ow0x (<@306810730055729152>)"]
+    __version__ = "2.0.1"
 
     def format_help_for_context(self, ctx: Context) -> str:  # Thanks Sinbad!
         return (
