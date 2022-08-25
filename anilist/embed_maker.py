@@ -65,8 +65,10 @@ def do_media_embed(data: MediaData, is_channel_nsfw: bool) -> Embed:
     if_same_dates = f" to {end_date}" if start_date != end_date else ""
     description += f"**{data.release_mode}**  {start_date}{if_same_dates}\n"
 
-    # if data.synonyms:
-    #     embed.add_field(name="Synonyms", value=', '.join(f'`{x}`' for x in data.synonyms))
+    if data.title.native:
+        description += f"**Native Title:**  {data.title.native}\n"
+    if data.synonyms:
+        embed.add_field(name="Synonyms", value=", ".join(data.synonyms))
     if data.externalLinks:
         embed.add_field(name="External Links", value=data.external_links, inline=False)
 

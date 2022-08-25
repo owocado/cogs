@@ -103,6 +103,12 @@ class MediaData:
     def release_mode(self) -> str:
         return "Air date:" if self.type == "ANIME" else "Publish date:"
 
+    @property
+    def summarized_synonyms(self) -> str:
+        if self.synonyms and len(self.synonyms) > 2:
+            return f"{', '.join(self.synonyms[:2])} and {len(self.synonyms) - 2} more!"
+        return ", ".join(self.synonyms)
+
     @classmethod
     def from_data(cls, data: dict) -> MediaData:
         studios = data.pop("studios", {}).get("nodes", [])

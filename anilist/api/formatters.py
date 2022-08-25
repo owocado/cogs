@@ -54,14 +54,14 @@ def format_media_type(media_type: str) -> str:
         # Manga with just one chapter; often called yomikiri (読み切り)
         "ONE_SHOT": "One-shot manga",
     }
-    return MediaType.get(media_type, "UNKNOWN???")
+    return MediaType.get(media_type, "Unknown")
 
 
 def format_anime_status(media_status: str) -> str:
     AnimeStatus = {
         "FINISHED": "Finished",
         "RELEASING": "Currently Airing",
-        "NOT_YET_RELEASED": "Unreleased",
+        "NOT_YET_RELEASED": "Not Yet Released",
         "CANCELLED": "Cancelled",
     }
     return AnimeStatus.get(media_status, "Unknown")
@@ -71,7 +71,7 @@ def format_manga_status(media_status: str) -> str:
     MangaStatus = {
         "FINISHED": "Finished",
         "RELEASING": "Currently Publishing",
-        "NOT_YET_RELEASED": "Unreleased",
+        "NOT_YET_RELEASED": "Not Yet Released",
         "CANCELLED": "Cancelled",
     }
     return MangaStatus.get(media_status, "Unknown")

@@ -11,12 +11,14 @@ from .formatters import format_anime_status
 class MediaNode:
     episodes: Optional[int]
     format: Optional[str]
+    isAdult: bool
     siteUrl: str
     status: str
     title: MediaTitle
 
     def __str__(self) -> str:
-        return f"**[{self.title.english or self.title.romaji}]({self.siteUrl})**"
+        title = self.title.english or self.title.romaji
+        return f"**[{title}]({self.siteUrl})**{' 🔞' if self.isAdult else ''}"
 
     @property
     def episodes_count(self) -> str:

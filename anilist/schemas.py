@@ -111,8 +111,9 @@ query ($page: Int, $perPage: Int, $search: String, $type: MediaType, $sort: [Med
       id
       idMal
       title {
-        romaji
         english
+        native
+        romaji
       }
       coverImage {
         large
@@ -268,6 +269,7 @@ query ($page: Int, $perPage: Int, $search: String) {
         nodes {
           episodes
           format
+          isAdult
           siteUrl
           status
           title {
