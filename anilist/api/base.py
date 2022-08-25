@@ -60,7 +60,7 @@ class MediaTitle:
     english: Optional[str]
 
     def __str__(self) -> str:
-        return self.romaji or self.english or "Title ???"
+        return self.romaji or self.english or "TITLE N/A ???"
 
 
 @dataclass(slots=True)

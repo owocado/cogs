@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Sequence
+from typing import Optional, Sequence
 
 from .base import MediaTitle, NotFound, fetch_data
 from .formatters import format_anime_status
@@ -9,8 +9,8 @@ from .formatters import format_anime_status
 
 @dataclass(slots=True)
 class MediaNode:
-    episodes: int
-    format: str
+    episodes: Optional[int]
+    format: Optional[str]
     siteUrl: str
     status: str
     title: MediaTitle
