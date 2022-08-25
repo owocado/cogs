@@ -1,6 +1,7 @@
 import random
 
 from discord import Colour, Embed
+from redbot.core.commands import Context
 from redbot.core.utils.chat_formatting import humanize_number
 
 from .api.character import CharacterData
@@ -29,11 +30,12 @@ def do_character_embed(data: CharacterData) -> Embed:
     return emb
 
 
-def do_media_embed(data: MediaData, is_channel_nsfw: bool) -> Embed:
+def do_media_embed(ctx: Context, data: MediaData) -> Embed:
     description = format_description(data.description or "", 500) + "\n\n"
     embed = Embed(colour=data.prominent_colour, title=str(data.title), url=data.siteUrl or "")
 
-    if data.isAdult and not is_channel_nsfw:
+    is_nsfw_channel = False if not ctx.channel.guild else ctx.channel.is_nsfw()
+    if data.isAdult and is_nsfw_channel:
         embed.colour = 0xFF0000
         embed.description = f"This {data.type.lower()} is marked as 🔞 NSFW on AniList."
         embed.set_footer(text="Try again in NSFW channel to see full embed!")

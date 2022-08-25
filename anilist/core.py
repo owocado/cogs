@@ -36,7 +36,7 @@ class Anilist(commands.GroupCog, group_name="anilist"):
     """Fetch info on anime, manga, character, studio and more from Anilist!"""
 
     __authors__ = ["ow0x (<@306810730055729152>)"]
-    __version__ = "2.1.0"
+    __version__ = "2.1.1"
 
     def format_help_for_context(self, ctx: Context) -> str:  # Thanks Sinbad!
         return (
@@ -67,7 +67,7 @@ class Anilist(commands.GroupCog, group_name="anilist"):
 
             pages = []
             for i, page in enumerate(results, start=1):
-                emb = do_media_embed(page, getattr(ctx.channel, "is_nsfw", False))
+                emb = do_media_embed(ctx, page)
                 text = f"{emb.footer.text} • Page {i} of {len(results)}"
                 emb.set_footer(text=text)
                 pages.append(emb)
@@ -90,7 +90,7 @@ class Anilist(commands.GroupCog, group_name="anilist"):
 
             pages = []
             for i, page in enumerate(results, start=1):
-                emb = do_media_embed(page, getattr(ctx.channel, "is_nsfw", False))
+                emb = do_media_embed(ctx, page)
                 emb.set_footer(text=f"{emb.footer.text} • Page {i} of {len(results)}")
                 pages.append(emb)
 
@@ -109,7 +109,7 @@ class Anilist(commands.GroupCog, group_name="anilist"):
 
             pages = []
             for i, page in enumerate(results, start=1):
-                emb = do_media_embed(page, getattr(ctx.channel, "is_nsfw", False))
+                emb = do_media_embed(ctx, page)
                 emb.set_footer(text=f"{emb.footer.text} • Page {i} of {len(results)}")
                 pages.append(emb)
 
@@ -162,7 +162,7 @@ class Anilist(commands.GroupCog, group_name="anilist"):
                     ephemeral=True,
                 )
 
-            emb = do_media_embed(results[0], getattr(ctx.channel, "is_nsfw", False))
+            emb = do_media_embed(ctx, results[0])
             await ctx.send(embed=emb, ephemeral=True)
 
     @commands.bot_has_permissions(embed_links=True)
