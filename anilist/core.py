@@ -1,7 +1,7 @@
 import random
 from typing import Literal
 
-from redbot.core import commands
+from redbot.core import Config, commands
 from redbot.core.commands import Context
 from redbot.core.utils.dpy2_menus import BaseMenu, ListPages
 
@@ -45,11 +45,25 @@ class Anilist(commands.GroupCog, group_name="anilist"):
             f"**Cog version:**  {self.__version__}"
         )
 
+    def __init__(self) -> None:
+        self.config = Config.get_conf(self, 306810730055729152, force_registration=True)
+        self.config.register_guild(**{"SHOW_ADULT_MEDIA": None})
+
     async def cog_check(self, ctx: Context) -> bool:
         if ctx.guild:
             my_perms = ctx.channel.permissions_for(ctx.guild.me)
             return my_perms.read_message_history and my_perms.send_messages
         return True
+
+    async def to_hide_adult_media(self, ctx: Context) -> bool:
+        guild_toggle = None
+        nsfw_channel = True
+        if ctx.guild:
+            guild_toggle: bool = await self.config.guild(ctx.guild).SHOW_ADULT_MEDIA()
+            nsfw_channel = ctx.channel.is_nsfw()
+        print("guild_config", guild_toggle)
+        print("channel_sfw", nsfw_channel)
+        return not guild_toggle and not nsfw_channel
 
     @commands.bot_has_permissions(embed_links=True)
     @commands.hybrid_command()
@@ -67,7 +81,7 @@ class Anilist(commands.GroupCog, group_name="anilist"):
 
             pages = []
             for i, page in enumerate(results, start=1):
-                emb = do_media_embed(ctx, page)
+                emb = do_media_embed(page, await self.to_hide_adult_media(ctx))
                 text = f"{emb.footer.text} • Page {i} of {len(results)}"
                 emb.set_footer(text=text)
                 pages.append(emb)
@@ -90,7 +104,7 @@ class Anilist(commands.GroupCog, group_name="anilist"):
 
             pages = []
             for i, page in enumerate(results, start=1):
-                emb = do_media_embed(ctx, page)
+                emb = do_media_embed(page, await self.to_hide_adult_media(ctx))
                 emb.set_footer(text=f"{emb.footer.text} • Page {i} of {len(results)}")
                 pages.append(emb)
 
@@ -109,7 +123,7 @@ class Anilist(commands.GroupCog, group_name="anilist"):
 
             pages = []
             for i, page in enumerate(results, start=1):
-                emb = do_media_embed(ctx, page)
+                emb = do_media_embed(page, await self.to_hide_adult_media(ctx))
                 emb.set_footer(text=f"{emb.footer.text} • Page {i} of {len(results)}")
                 pages.append(emb)
 
@@ -162,7 +176,7 @@ class Anilist(commands.GroupCog, group_name="anilist"):
                     ephemeral=True,
                 )
 
-            emb = do_media_embed(ctx, results[0])
+            emb = do_media_embed(results[0], await self.to_hide_adult_media(ctx))
             await ctx.send(embed=emb, ephemeral=True)
 
     @commands.bot_has_permissions(embed_links=True)
@@ -292,3 +306,23 @@ class Anilist(commands.GroupCog, group_name="anilist"):
                 pages.append(emb)
 
         await BaseMenu(ListPages(pages), timeout=120, ctx=ctx).start(ctx)
+
+    @commands.group()
+    @commands.guild_only()
+    @commands.admin_or_permissions(manage_guild=True)
+    async def anilistset(self, _):
+        """Group setting command for configuration!"""
+        pass
+
+    @anilistset.command()
+    async def shownsfw(self, ctx: Context):
+        """[For Admins] Setting toggle to show NSFW anime/manga results in this server!"""
+        await ctx.typing()
+        toggle_state: bool = await self.config.guild(ctx.guild).SHOW_ADULT_MEDIA()
+        await self.config.guild(ctx.guild).SHOW_ADULT_MEDIA.set(not toggle_state)
+        show_or_hide = "**SHOW**" if not toggle_state is True else "**HIDE**"
+        msg = f"I will now {show_or_hide} embed preview for adult animes/mangas in this server!\n"
+        if toggle_state:
+            msg += "The embed preview for adult animes/manga will only show up in NSFW channels!"
+        await ctx.send(msg)
+        await ctx.tick()
