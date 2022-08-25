@@ -36,7 +36,7 @@ class Anilist(commands.GroupCog, group_name="anilist"):
     """Fetch info on anime, manga, character, studio and more from Anilist!"""
 
     __authors__ = ["ow0x (<@306810730055729152>)"]
-    __version__ = "2.1.1"
+    __version__ = "2.2.0"
 
     def format_help_for_context(self, ctx: Context) -> str:  # Thanks Sinbad!
         return (
@@ -61,8 +61,6 @@ class Anilist(commands.GroupCog, group_name="anilist"):
         if ctx.guild:
             guild_toggle: bool = await self.config.guild(ctx.guild).SHOW_ADULT_MEDIA()
             nsfw_channel = ctx.channel.is_nsfw()
-        print("guild_config", guild_toggle)
-        print("channel_sfw", nsfw_channel)
         return not guild_toggle and not nsfw_channel
 
     @commands.bot_has_permissions(embed_links=True)
