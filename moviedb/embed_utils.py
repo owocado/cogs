@@ -19,7 +19,7 @@ def make_movie_embed(data: MovieDetails, colour: discord.Colour) -> discord.Embe
         description += f"\n\n**[see IMDB page!](https://www.imdb.com/title/{imdb_id})**"
     embed.url = f"https://www.themoviedb.org/movie/{data.id}"
     embed.description = description
-    # embed.set_image(url=f"{CDN_BASE}{data.backdrop_path or '/'}")
+    embed.set_image(url=f"{CDN_BASE}{data.backdrop_path or '/'}")
     embed.set_thumbnail(url=f"{CDN_BASE}{data.poster_path or '/'}")
     if data.release_date:
         embed.add_field(name="Release Date", value=format_date(data.release_date))
@@ -48,7 +48,7 @@ def parse_credits(
     cast_data: Sequence[CelebrityCast],
     colour: discord.Colour,
     title: str,
-    tmdb_id: int
+    tmdb_id: str
 ) -> List[discord.Embed]:
     GENDERS_MAP = {"0": "", "1": "♀", "2": "♂", "3": "⚧"}
     pretty_cast = "\n".join(
@@ -81,7 +81,7 @@ def make_tvshow_embed(data: TVShowDetails, colour: discord.Colour) -> discord.Em
         summary += f"► In production? ✅ Yes"
     embed.description=f"{data.overview or ''}\n\n{summary}"
     embed.url = f"https://www.themoviedb.org/tv/{data.id}"
-    # embed.set_image(url=f"{CDN_BASE}{data.backdrop_path or '/'}")
+    embed.set_image(url=f"{CDN_BASE}{data.backdrop_path or '/'}")
     embed.set_thumbnail(url=f"{CDN_BASE}{data.poster_path or '/'}")
     if data.created_by:
         embed.add_field(name="Creators", value=data.creators)

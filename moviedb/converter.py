@@ -1,26 +1,38 @@
+from __future__ import annotations
+
 import asyncio
 import contextlib
+from datetime import datetime
+from textwrap import shorten
+from typing import List, cast
 
 import discord
-from redbot.core.commands import BadArgument, Context, Converter
+from redbot.core.bot import Red
+from redbot.core.commands import BadArgument, Context
 
-from .api import MovieSearchData, TVShowSearchData
-from .constants import MediaNotFound
+from .api import (
+    MovieDetails,
+    MovieSearchData,
+    MovieSuggestions,
+    TVShowDetails,
+    TVShowSearchData,
+    TVShowSuggestions
+)
 from .utils import format_date
 
 
-class MovieFinder(Converter):
+class MovieFinder(discord.app_commands.Transformer):
 
-    async def convert(self, ctx: Context, argument: str) -> int:
+    async def convert(self, ctx: Context, argument: str):
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key", "")
-        result = await MovieSearchData.request(api_key, argument.lower())
-        if isinstance(result, MediaNotFound):
+        result = await MovieSearchData.request(ctx.cog.session, api_key, argument.lower())
+        if isinstance(result, str):
             raise BadArgument(str(result))
         if not result:
             raise BadArgument("⛔ No such movie found from given query.")
 
         if len(result) == 1:
-            return result[0].id
+            return await MovieDetails.request(ctx.cog.session, api_key, result[0].id)
 
         # https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
         items = [
@@ -41,7 +53,7 @@ class MovieFinder(Converter):
             )
 
         try:
-            choice: discord.Message = await ctx.bot.wait_for("message", timeout=60, check=check)
+            choice = await ctx.bot.wait_for("message", timeout=60, check=check)
         except asyncio.TimeoutError:
             choice = None
 
@@ -52,21 +64,55 @@ class MovieFinder(Converter):
 
         with contextlib.suppress(discord.NotFound, discord.HTTPException):
             await prompt.delete()
-        return result[int(choice.content.strip()) - 1].id
+        movie_id = result[int(choice.content.strip()) - 1].id
+        return await MovieDetails.request(ctx.cog.session, api_key, movie_id)
+
+    async def transform(self, interaction: discord.Interaction, value: str):
+        bot = cast(Red, interaction.client)
+        ctx = await bot.get_context(interaction)
+        key = (await ctx.bot.get_shared_api_tokens('tmdb')).get('api_key', '')
+        if 'suggest' in interaction.command.name:
+            return await MovieSuggestions.request(ctx.cog.session, key, value)
+        return await MovieDetails.request(ctx.cog.session, key, value)
+
+    async def autocomplete(
+        self, interaction: discord.Interaction, value: int | float | str
+    ) -> List[discord.app_commands.Choice]:
+        bot = cast(Red, interaction.client)
+        ctx = await bot.get_context(interaction)
+        token = (await ctx.bot.get_shared_api_tokens('tmdb')).get('api_key', '')
+        results = await MovieSearchData.request(ctx.cog.session, token, str(value))
+        if isinstance(results, str):
+            return []
+
+        def parser(title: str, date: str) -> str:
+            if not date:
+                return shorten(title, 96, placeholder=' …')
+            date = datetime.strptime(date, '%Y-%m-%d').strftime('%d %b, %Y')
+            return f"{shorten(title, 82, placeholder=' …')} ({date})"
+
+        choices = [
+            discord.app_commands.Choice(
+                name=f"{parser(movie.title, movie.release_date)}",
+                value=str(movie.id)
+            )
+            for movie in results
+        ]
+        return choices[:24]
 
 
-class TVShowFinder(Converter):
+class TVShowFinder(discord.app_commands.Transformer):
 
-    async def convert(self, ctx: Context, argument: str) -> int:
+    async def convert(self, ctx: Context, argument: str):
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key", "")
-        result = await TVShowSearchData.request(api_key, argument.lower())
-        if isinstance(result, MediaNotFound):
+        result = await TVShowSearchData.request(ctx.cog.session, api_key, argument.lower())
+        if isinstance(result, str):
             raise BadArgument(str(result))
         if not result:
             raise BadArgument("⛔ No such TV show found from given query.")
 
         if len(result) == 1:
-            return result[0].id
+            return await TVShowDetails.request(ctx.cog.session, api_key, result[0].id)
 
         # https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
         items = [
@@ -88,7 +134,7 @@ class TVShowFinder(Converter):
             )
 
         try:
-            choice: discord.Message = await ctx.bot.wait_for("message", timeout=60, check=check)
+            choice = await ctx.bot.wait_for("message", timeout=60, check=check)
         except asyncio.TimeoutError:
             choice = None
 
@@ -99,4 +145,38 @@ class TVShowFinder(Converter):
 
         with contextlib.suppress(discord.NotFound, discord.HTTPException):
             await prompt.delete()
-        return result[int(choice.content.strip()) - 1].id
+        tv_id = result[int(choice.content.strip()) - 1].id
+        return await TVShowDetails.request(ctx.cog.session, api_key, tv_id)
+
+    async def transform(self, interaction: discord.Interaction, value: str):
+        bot = cast(Red, interaction.client)
+        ctx = await bot.get_context(interaction)
+        key = (await ctx.bot.get_shared_api_tokens('tmdb')).get('api_key', '')
+        if 'suggest' in interaction.command.name:
+            return await TVShowSuggestions.request(ctx.cog.session, key, value)
+        return await TVShowDetails.request(ctx.cog.session, key, value)
+
+    async def autocomplete(
+        self, interaction: discord.Interaction, value: int | float | str
+    ) -> List[discord.app_commands.Choice]:
+        bot = cast(Red, interaction.client)
+        ctx = await bot.get_context(interaction)
+        token = (await ctx.bot.get_shared_api_tokens('tmdb')).get('api_key', '')
+        results = await TVShowSearchData.request(ctx.cog.session, token, str(value))
+        if isinstance(results, str):
+            return []
+
+        def parser(title: str, date: str) -> str:
+            if not date:
+                return shorten(title, 96, placeholder=' …')
+            date = datetime.strptime(date, '%Y-%m-%d').strftime('%d %b, %Y')
+            return f'{shorten(title, 70, placeholder=" …")} (began on {date})'
+
+        choices = [
+            discord.app_commands.Choice(
+                name=f"{parser(tvshow.name, tvshow.first_air_date)}",
+                value=str(tvshow.id)
+            )
+            for tvshow in results
+        ]
+        return choices[:24]

@@ -10,7 +10,7 @@
     "required_cogs": {},
     "requirements": [],
     "tags": ["movie", "tv series", "tv show", "themoviedb", "imdb"],
-    "min_bot_version": "3.4.12",
+    "min_bot_version": "3.5.0",
     "hidden": false,
     "disabled": false,
     "type": "COG"

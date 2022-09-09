@@ -43,24 +43,24 @@ class MovieSearchData(BaseSearch):
     @classmethod
     async def request(
         cls,
+        session: aiohttp.ClientSession,
         api_key: str,
         query: str
-    ) -> MediaNotFound | Sequence[MovieSearchData]:
+    ) -> str | Sequence[MovieSearchData]:
         params = {'api_key': api_key, 'query': query.replace(' ', '+')}
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(f'{API_BASE}/search/movie', params=params) as resp:
-                    if resp.status in [401, 404]:
-                        err_data = await resp.json()
-                        return MediaNotFound(err_data['status_message'], resp.status)
-                    if resp.status != 200:
-                        return MediaNotFound('', resp.status)
-                    data: Dict[str, Any] = await resp.json()
+            async with session.get(f'{API_BASE}/search/movie', params=params) as resp:
+                if resp.status in [401, 404]:
+                    err_data = await resp.json()
+                    return err_data['status_message']
+                if resp.status != 200:
+                    return f'https://http.cat/{resp.status}.jpg'
+                data: Dict[str, Any] = await resp.json()
         except (asyncio.TimeoutError, aiohttp.ClientError):
-            return MediaNotFound('⚠️ Operation timed out.', 408)
+            return '⚠️ Operation timed out.'
 
         if not data.get('results') or data['total_results'] < 1:
-            return MediaNotFound('❌ No results.', 404)
+            return '❌ No results.'
 
         # data['results'].sort(key=lambda x: x.get('release_date'), reverse=True)
         return [cls(**q) for q in data['results']]
@@ -77,24 +77,24 @@ class TVShowSearchData(BaseSearch):
     @classmethod
     async def request(
         cls,
+        session: aiohttp.ClientSession,
         api_key: str,
         query: str
-    ) -> MediaNotFound | Sequence[TVShowSearchData]:
+    ) -> str | Sequence[TVShowSearchData]:
         params = {'api_key': api_key, 'query': query.replace(' ', '+')}
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(f'{API_BASE}/search/tv', params=params) as resp:
-                    if resp.status in [401, 404]:
-                        err_data = await resp.json()
-                        return MediaNotFound(err_data['status_message'], resp.status)
-                    if resp.status != 200:
-                        return MediaNotFound('', resp.status)
-                    data: Dict[str, Any] = await resp.json()
+            async with session.get(f'{API_BASE}/search/tv', params=params) as resp:
+                if resp.status in [401, 404]:
+                    err_data = await resp.json()
+                    return err_data['status_message']
+                if resp.status != 200:
+                    return f'https://http.cat/{resp.status}.jpg'
+                data: Dict[str, Any] = await resp.json()
         except (asyncio.TimeoutError, aiohttp.ClientError):
-            return MediaNotFound('⚠️ Operation timed out.', 408)
+            return '⚠️ Operation timed out.'
 
         if not data.get('results') or data['total_results'] < 1:
-            return MediaNotFound('❌ No results.', 404)
+            return '❌ No results.'
 
         # data['results'].sort(key=lambda x: x.get('first_air_date'), reverse=True)
         return [cls(**q) for q in data['results']]
@@ -183,7 +183,7 @@ class MovieDetails:
 
     @classmethod
     async def request(
-        cls, session: aiohttp.ClientSession, api_key: str, movie_id: int
+        cls, session: aiohttp.ClientSession, api_key: str, movie_id: Any
     ) -> MediaNotFound | MovieDetails:
         movie_data = {}
         params = {'api_key': api_key, 'append_to_response': 'credits'}
@@ -382,7 +382,7 @@ class TVShowDetails:
         cls,
         session: aiohttp.ClientSession,
         api_key: str,
-        tvshow_id: int
+        tvshow_id: Any
     ) -> MediaNotFound | TVShowDetails:
         tvshow_data = {}
         params = {'api_key': api_key, 'append_to_response': 'credits'}
@@ -436,7 +436,7 @@ class MovieSuggestions(BaseSuggestions):
         cls,
         session: aiohttp.ClientSession,
         api_key: str,
-        movie_id: str
+        movie_id: Any
     ) -> MediaNotFound | Sequence[MovieSuggestions]:
         url = f"{API_BASE}/movie/{movie_id}/recommendations"
         try:
@@ -480,9 +480,9 @@ class TVShowSuggestions(BaseSuggestions):
         cls,
         session: aiohttp.ClientSession,
         api_key: str,
-        query: str
+        tmdb_id: Any
     ) -> MediaNotFound | Sequence[TVShowSuggestions]:
-        url = f"{API_BASE}/tv/{query}/recommendations"
+        url = f"{API_BASE}/tv/{tmdb_id}/recommendations"
         try:
             async with session.get(url, params={"api_key": api_key}) as resp:
                 if resp.status in [401, 404]:
