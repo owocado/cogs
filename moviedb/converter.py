@@ -24,15 +24,16 @@ from .utils import format_date
 class MovieFinder(discord.app_commands.Transformer):
 
     async def convert(self, ctx: Context, argument: str):
+        session = ctx.bot.get_cog('MovieDB').session
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key", "")
-        result = await MovieSearchData.request(ctx.cog.session, api_key, argument.lower())
+        result = await MovieSearchData.request(session, api_key, argument.lower())
         if isinstance(result, str):
             raise BadArgument(str(result))
         if not result:
             raise BadArgument("⛔ No such movie found from given query.")
 
         if len(result) == 1:
-            return await MovieDetails.request(ctx.cog.session, api_key, result[0].id)
+            return await MovieDetails.request(session, api_key, result[0].id)
 
         # https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
         items = [
@@ -65,23 +66,23 @@ class MovieFinder(discord.app_commands.Transformer):
         with contextlib.suppress(discord.NotFound, discord.HTTPException):
             await prompt.delete()
         movie_id = result[int(choice.content.strip()) - 1].id
-        return await MovieDetails.request(ctx.cog.session, api_key, movie_id)
+        return await MovieDetails.request(session, api_key, movie_id)
 
     async def transform(self, interaction: discord.Interaction, value: str):
         bot = cast(Red, interaction.client)
-        ctx = await bot.get_context(interaction)
-        key = (await ctx.bot.get_shared_api_tokens('tmdb')).get('api_key', '')
+        session = bot.get_cog('MovieDB').session
+        key = (await bot.get_shared_api_tokens('tmdb')).get('api_key', '')
         if 'suggest' in interaction.command.name:
-            return await MovieSuggestions.request(ctx.cog.session, key, value)
-        return await MovieDetails.request(ctx.cog.session, key, value)
+            return await MovieSuggestions.request(session, key, value)
+        return await MovieDetails.request(session, key, value)
 
     async def autocomplete(
         self, interaction: discord.Interaction, value: int | float | str
     ) -> List[discord.app_commands.Choice]:
         bot = cast(Red, interaction.client)
-        ctx = await bot.get_context(interaction)
-        token = (await ctx.bot.get_shared_api_tokens('tmdb')).get('api_key', '')
-        results = await MovieSearchData.request(ctx.cog.session, token, str(value))
+        session = bot.get_cog('MovieDB').session
+        token = (await bot.get_shared_api_tokens('tmdb')).get('api_key', '')
+        results = await MovieSearchData.request(session, token, str(value))
         if isinstance(results, str):
             return []
 
@@ -104,15 +105,16 @@ class MovieFinder(discord.app_commands.Transformer):
 class TVShowFinder(discord.app_commands.Transformer):
 
     async def convert(self, ctx: Context, argument: str):
+        session = ctx.bot.get_cog('MovieDB').session
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key", "")
-        result = await TVShowSearchData.request(ctx.cog.session, api_key, argument.lower())
+        result = await TVShowSearchData.request(session, api_key, argument.lower())
         if isinstance(result, str):
             raise BadArgument(str(result))
         if not result:
             raise BadArgument("⛔ No such TV show found from given query.")
 
         if len(result) == 1:
-            return await TVShowDetails.request(ctx.cog.session, api_key, result[0].id)
+            return await TVShowDetails.request(session, api_key, result[0].id)
 
         # https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
         items = [
@@ -146,23 +148,23 @@ class TVShowFinder(discord.app_commands.Transformer):
         with contextlib.suppress(discord.NotFound, discord.HTTPException):
             await prompt.delete()
         tv_id = result[int(choice.content.strip()) - 1].id
-        return await TVShowDetails.request(ctx.cog.session, api_key, tv_id)
+        return await TVShowDetails.request(session, api_key, tv_id)
 
     async def transform(self, interaction: discord.Interaction, value: str):
         bot = cast(Red, interaction.client)
-        ctx = await bot.get_context(interaction)
-        key = (await ctx.bot.get_shared_api_tokens('tmdb')).get('api_key', '')
+        session = bot.get_cog('MovieDB').session
+        key = (await bot.get_shared_api_tokens('tmdb')).get('api_key', '')
         if 'suggest' in interaction.command.name:
-            return await TVShowSuggestions.request(ctx.cog.session, key, value)
-        return await TVShowDetails.request(ctx.cog.session, key, value)
+            return await TVShowSuggestions.request(session, key, value)
+        return await TVShowDetails.request(session, key, value)
 
     async def autocomplete(
         self, interaction: discord.Interaction, value: int | float | str
     ) -> List[discord.app_commands.Choice]:
         bot = cast(Red, interaction.client)
-        ctx = await bot.get_context(interaction)
-        token = (await ctx.bot.get_shared_api_tokens('tmdb')).get('api_key', '')
-        results = await TVShowSearchData.request(ctx.cog.session, token, str(value))
+        session = bot.get_cog('MovieDB').session
+        token = (await bot.get_shared_api_tokens('tmdb')).get('api_key', '')
+        results = await TVShowSearchData.request(session, token, str(value))
         if isinstance(results, str):
             return []
 
