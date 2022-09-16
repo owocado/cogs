@@ -50,3 +50,10 @@ Credits
 * `TrustyJAID <https://github.com/TrustyJAID>`_ for providing moviepy logic & converter (also for being unbiased person).
 * `Fixator <https://github.com/fixator10>`_ for helping me improve badgetools cog code  (also for being unbiased person).
 * some few good people from `Red <https://c.tenor.com/noSAzWis3sIAAAAC/so-proud-of-this-community-proud.gif>`_
+
+
+-------
+Contact
+-------
+
+I have a `Discord server <https://discord.gg/2kEJ3tFmaQ>`_ if you need any help from me.
