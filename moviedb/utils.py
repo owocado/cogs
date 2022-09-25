@@ -15,11 +15,11 @@ def format_date(date_string: str, style: str = "R", *, prefix: str = "") -> str:
     return f"{prefix}<t:{int(date_obj.timestamp())}:{style}>"
 
 
-# credits to devon
+# credits to devon (Gorialis)
 def natural_size(value: int) -> str:
     if value < 1000:
         return str(value)
 
-    units = ('', 'K', 'million', 'billion')
+    units = ('', 'K', 'M', 'B')
     power = int(math.log(max(abs(value), 1), 1000))
-    return f"{value / (1000 ** power):.2f} {units[power]}"
+    return f"{value / (1000 ** power):.1f}{units[power]}"

@@ -1,15 +1,43 @@
 from __future__ import annotations
 
+from textwrap import shorten
 from typing import List, Sequence
 
 import discord
 from redbot.core.utils.chat_formatting import pagify
 
-from .api import MovieDetails, MovieSuggestions, TVShowDetails, TVShowSuggestions
-from .constants import CelebrityCast
+from .api.base import CDN_BASE, CelebrityCast
+from .api.details import MovieDetails, TVShowDetails
+from .api.person import Person
+from .api.suggestions import MovieSuggestions, TVShowSuggestions
 from .utils import format_date, natural_size
 
-CDN_BASE = "https://image.tmdb.org/t/p/original"
+GENDERS = ["", "♀ ", "♂ ", "⚧ "]
+
+
+def make_person_embed(person: Person, colour: discord.Colour) -> discord.Embed:
+    emb = discord.Embed(colour=colour, title=person.name)
+    emb.description = shorten(person.biography or "", 500, placeholder=" …")
+    emb.url = f"https://www.themoviedb.org/person/{person.id}"
+    emb.set_thumbnail(url=person.person_image)
+    emb.add_field(name="Known For", value=person.known_for_department)
+    if dob := person.birthday:
+        emb.add_field(name="Birthday", value=f"{format_date(dob, 'D')}\n({format_date(dob)})")
+    if rip := person.deathday:
+        emb.add_field(
+            name="🙏 Passed away on", value=f"{format_date(rip, 'D')}\n({format_date(rip)})"
+        )
+    if person.place_of_birth:
+        emb.add_field(name="Place of Birth", value=person.place_of_birth)
+    external_links = ""
+    if person.imdb_id:
+        external_links += f"[IMDb](https://www.imdb.com/name/{person.imdb_id})"
+    if person.homepage:
+        external_links += f"[Home page]({person.homepage})\n"
+    if external_links:
+        emb.add_field(name="External Links", value=external_links)
+    emb.set_footer(text="Data provided by TheMovieDB!", icon_url="https://i.imgur.com/sSE7Usn.png")
+    return emb
 
 
 def make_movie_embed(data: MovieDetails, colour: discord.Colour) -> discord.Embed:
@@ -24,9 +52,9 @@ def make_movie_embed(data: MovieDetails, colour: discord.Colour) -> discord.Embe
     if data.release_date:
         embed.add_field(name="Release Date", value=format_date(data.release_date))
     if data.budget:
-        embed.add_field(name="Budget (USD)", value=natural_size(data.budget))
+        embed.add_field(name="Budget (USD)", value=f"${natural_size(data.budget)}")
     if data.revenue:
-        embed.add_field(name="Revenue (USD)", value=natural_size(data.revenue))
+        embed.add_field(name="Revenue (USD)", value=f"${natural_size(data.revenue)}")
     if data.humanize_runtime:
         embed.add_field(name="Runtime", value=data.humanize_runtime)
     if data.vote_average and data.vote_count:
@@ -50,9 +78,8 @@ def parse_credits(
     title: str,
     tmdb_id: str
 ) -> List[discord.Embed]:
-    GENDERS_MAP = {"0": "", "1": "♀", "2": "♂", "3": "⚧"}
     pretty_cast = "\n".join(
-        f"**`[{i:>2}]`**  {GENDERS_MAP[str(actor.gender)]} [{actor.name}]"
+        f"**`[{i:>2}]`**  {GENDERS[str(actor.gender)]} [{actor.name}]"
         f"(https://www.themoviedb.org/person/{actor.id})"
         f" as **{actor.character or '???'}**"
         for i, actor in enumerate(cast_data, 1)
