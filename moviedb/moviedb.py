@@ -26,7 +26,7 @@ class MovieDB(commands.Cog):
     """Get summarized info about a movie or TV show/series."""
 
     __authors__ = "ow0x"
-    __version__ = "4.2.0"
+    __version__ = "4.2.1"
 
     def format_help_for_context(self, ctx: Context) -> str:  # Thanks Sinbad!
         return (
@@ -54,7 +54,7 @@ class MovieDB(commands.Cog):
 
     @commands.bot_has_permissions(embed_links=True)
     @commands.hybrid_command(aliases=["actor", "director"])
-    @describe(movie="Type name of celebrity! i.e. actor, director, producer etc.")
+    @describe(name="Type name of celebrity! i.e. actor, director, producer etc.")
     async def celebrity(self, ctx: Context, *, name: PersonFinder):
         """Get various info about a movie/tvshow celebrity or crew!"""
         await ctx.typing()
