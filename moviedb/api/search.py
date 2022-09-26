@@ -25,8 +25,8 @@ class PersonSearch:
         if not self.known_for:
             return ""
         first = self.known_for[0].get('title') or self.known_for[0].get('name')
-        if len(self.known_for) > 2:
-            first += f" & {len(self.known_for) - 2} more!"
+        if len(self.known_for) > 1:
+            first += f" & {len(self.known_for) - 1} more!"
         return f"(known for {first})"
 
     @classmethod

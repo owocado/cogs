@@ -23,19 +23,20 @@ class PersonFinder(discord.app_commands.Transformer):
     async def convert(self, ctx: Context, argument: str):
         session = ctx.bot.get_cog('MovieDB').session
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key", "")
-        result = await PersonSearch.request(session, api_key, argument.lower())
-        if isinstance(result, MediaNotFound):
-            raise BadArgument(str(result))
-
-        if len(result) == 1:
-            return await PersonDetails.request(session, api_key, result[0].id)
+        results = await PersonSearch.request(session, api_key, argument.lower())
+        if isinstance(results, MediaNotFound):
+            raise BadArgument(str(results))
+        if not results:
+            raise BadArgument("⛔ No celebrity or media persons found from given query.")
+        if len(results) == 1:
+            return await PersonDetails.request(session, api_key, results[0].id)
 
         items = [
-            f"**{i}.**  {obj.name} {obj.notable_roles}" for i, obj in enumerate(result, 1)
+            f"**{i}.**  {obj.name} {obj.notable_roles}" for i, obj in enumerate(results, 1)
         ]
         prompt: discord.Message = await ctx.send(
-            f"Found below {len(items)} media personalities. Choose one in 60 seconds:\n\n"
-            + "\n".join(items).replace(" ()", "")
+            f"Found below {len(items)} results. Choose one in 60 seconds:\n\n"
+            + "\n".join(items)
         )
 
         def check(msg: discord.Message) -> bool:
@@ -58,7 +59,7 @@ class PersonFinder(discord.app_commands.Transformer):
 
         with contextlib.suppress(discord.NotFound, discord.HTTPException):
             await prompt.delete()
-        person_id = result[int(choice.content.strip()) - 1].id
+        person_id = results[int(choice.content.strip()) - 1].id
         return await PersonDetails.request(session, api_key, person_id)
 
     async def transform(self, interaction: discord.Interaction, value: str):
@@ -74,11 +75,13 @@ class PersonFinder(discord.app_commands.Transformer):
         session = bot.get_cog('MovieDB').session
         token = (await bot.get_shared_api_tokens('tmdb')).get('api_key', '')
         results = await PersonSearch.request(session, token, str(value))
-        if isinstance(results, MediaNotFound):
+        if not results or isinstance(results, MediaNotFound):
             return []
 
         choices = [
-            discord.app_commands.Choice(name=person.name, value=str(person.id))
+            discord.app_commands.Choice(
+                name=f"{person.name} {person.notable_roles}", value=str(person.id)
+            )
             for person in results
         ]
         return choices[:24]
@@ -89,19 +92,18 @@ class MovieFinder(discord.app_commands.Transformer):
     async def convert(self, ctx: Context, argument: str):
         session = ctx.bot.get_cog('MovieDB').session
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key", "")
-        result = await MovieSearch.request(session, api_key, argument.lower())
-        if isinstance(result, MediaNotFound):
-            raise BadArgument(str(result))
-        if not result:
+        results = await MovieSearch.request(session, api_key, argument.lower())
+        if isinstance(results, MediaNotFound):
+            raise BadArgument(str(results))
+        if not results:
             raise BadArgument("⛔ No such movie found from given query.")
-
-        if len(result) == 1:
-            return await MovieDetails.request(session, api_key, result[0].id)
+        if len(results) == 1:
+            return await MovieDetails.request(session, api_key, results[0].id)
 
         # https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
         items = [
             f"**{i}.**  {obj.title} ({format_date(obj.release_date, 'd')})"
-            for i, obj in enumerate(result, start=1)
+            for i, obj in enumerate(results, start=1)
         ]
         prompt: discord.Message = await ctx.send(
             f"Found below {len(items)} movies. Choose one in 60 seconds:\n\n"
@@ -128,7 +130,7 @@ class MovieFinder(discord.app_commands.Transformer):
 
         with contextlib.suppress(discord.NotFound, discord.HTTPException):
             await prompt.delete()
-        movie_id = result[int(choice.content.strip()) - 1].id
+        movie_id = results[int(choice.content.strip()) - 1].id
         return await MovieDetails.request(session, api_key, movie_id)
 
     async def transform(self, interaction: discord.Interaction, value: str):
@@ -146,7 +148,7 @@ class MovieFinder(discord.app_commands.Transformer):
         session = bot.get_cog('MovieDB').session
         token = (await bot.get_shared_api_tokens('tmdb')).get('api_key', '')
         results = await MovieSearch.request(session, token, str(value))
-        if isinstance(results, MediaNotFound):
+        if not results or isinstance(results, MediaNotFound):
             return []
 
         def parser(title: str, date: str) -> str:
@@ -170,20 +172,19 @@ class TVShowFinder(discord.app_commands.Transformer):
     async def convert(self, ctx: Context, argument: str):
         session = ctx.bot.get_cog('MovieDB').session
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key", "")
-        result = await TVShowSearch.request(session, api_key, argument.lower())
-        if isinstance(result, MediaNotFound):
-            raise BadArgument(str(result))
-        if not result:
+        results = await TVShowSearch.request(session, api_key, argument.lower())
+        if isinstance(results, MediaNotFound):
+            raise BadArgument(str(results))
+        if not results:
             raise BadArgument("⛔ No such TV show found from given query.")
-
-        if len(result) == 1:
-            return await TVShowDetails.request(session, api_key, result[0].id)
+        if len(results) == 1:
+            return await TVShowDetails.request(session, api_key, results[0].id)
 
         # https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
         items = [
             f"**{i}.**  {v.name or v.original_name}"
             f" ({format_date(v.first_air_date, 'd', prefix='first aired on ')})"
-            for i, v in enumerate(result, start=1)
+            for i, v in enumerate(results, start=1)
         ]
         prompt: discord.Message = await ctx.send(
             f"Found below {len(items)} TV shows. Choose one in 60 seconds:\n\n"
@@ -210,7 +211,7 @@ class TVShowFinder(discord.app_commands.Transformer):
 
         with contextlib.suppress(discord.NotFound, discord.HTTPException):
             await prompt.delete()
-        tv_id = result[int(choice.content.strip()) - 1].id
+        tv_id = results[int(choice.content.strip()) - 1].id
         return await TVShowDetails.request(session, api_key, tv_id)
 
     async def transform(self, interaction: discord.Interaction, value: str):
@@ -228,7 +229,7 @@ class TVShowFinder(discord.app_commands.Transformer):
         session = bot.get_cog('MovieDB').session
         token = (await bot.get_shared_api_tokens('tmdb')).get('api_key', '')
         results = await TVShowSearch.request(session, token, str(value))
-        if isinstance(results, MediaNotFound):
+        if not results or isinstance(results, MediaNotFound):
             return []
 
         def parser(title: str, date: str) -> str:

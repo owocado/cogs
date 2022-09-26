@@ -14,6 +14,7 @@ CDN_BASE = "https://image.tmdb.org/t/p/original"
 @dataclass
 class BaseSearch:
     id: int
+    media_type: str
     overview: str = ''
     popularity: float = 0.0
     vote_count: int = 0
@@ -29,6 +30,9 @@ class MediaNotFound:
     http_code: int
     status_code: Optional[int] = None
     success: bool = False
+
+    def __len__(self) -> int:
+        return 0
 
     def __str__(self) -> str:
         return self.status_message or f'https://http.cat/{self.http_code}.jpg'

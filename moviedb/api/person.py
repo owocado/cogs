@@ -71,10 +71,12 @@ class PersonCredits:
         cast_data = data.pop("cast", [])
         crew_data = data.pop("crew", [])
         cast_data.sort(
-            key=lambda x: x.get('release_date', '') or x.get('first_air_date', ''), reverse=True
+            key=lambda x: x.get('release_date', '') or x.get('first_air_date', ''),
+            reverse=True
         )
         crew_data.sort(
-            key=lambda x: x.get('release_date', '') or x.get('first_air_date', ''), reverse=True
+            key=lambda x: x.get('release_date', '') or x.get('first_air_date', ''),
+            reverse=True
         )
         return cls(
             cast=[CastCredits.from_data(csc) for csc in cast_data] if cast_data else [],

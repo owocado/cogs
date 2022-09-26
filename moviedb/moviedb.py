@@ -26,7 +26,7 @@ class MovieDB(commands.Cog):
     """Get summarized info about a movie or TV show/series."""
 
     __authors__ = "ow0x"
-    __version__ = "4.1.0"
+    __version__ = "4.2.0"
 
     def format_help_for_context(self, ctx: Context) -> str:  # Thanks Sinbad!
         return (
@@ -54,10 +54,11 @@ class MovieDB(commands.Cog):
 
     @commands.bot_has_permissions(embed_links=True)
     @commands.hybrid_command(aliases=["actor", "director"])
+    @describe(movie="Type name of celebrity! i.e. actor, director, producer etc.")
     async def celebrity(self, ctx: Context, *, name: PersonFinder):
         """Get various info about a movie/tvshow celebrity or crew!"""
         await ctx.typing()
-        if isinstance(name, MediaNotFound):
+        if not name or isinstance(name, MediaNotFound):
             return await ctx.send(str(name))
 
         data = cast(Person, name)
@@ -107,7 +108,7 @@ class MovieDB(commands.Cog):
         await ctx.typing()
         # api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key", "")
         # data = await MovieDetails.request(ctx.bot.session, api_key, query)
-        if isinstance(movie, MediaNotFound):
+        if not movie or isinstance(movie, MediaNotFound):
             return await ctx.send(str(movie))
 
         data = cast(MovieDetails, movie)
@@ -149,7 +150,7 @@ class MovieDB(commands.Cog):
         await ctx.typing()
         # api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key", "")
         # data = await TVShowDetails.request(ctx.bot.session, api_key, query)
-        if isinstance(tv_show, MediaNotFound):
+        if not tv_show or isinstance(tv_show, MediaNotFound):
             return await ctx.send(str(tv_show))
 
         data = cast(TVShowDetails, tv_show)
@@ -194,7 +195,7 @@ class MovieDB(commands.Cog):
         await ctx.typing()
         # api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key", "")
         # output = await MovieSuggestions.request(ctx.bot.session, api_key, query)
-        if isinstance(movie, MediaNotFound):
+        if not movie or isinstance(movie, MediaNotFound):
             return await ctx.send(str(movie))
 
         pages = []
@@ -214,7 +215,7 @@ class MovieDB(commands.Cog):
         await ctx.typing()
         # api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key", "")
         # output = await TVShowSuggestions.request(ctx.bot.session, api_key, query)
-        if isinstance(tv_show, MediaNotFound):
+        if not tv_show or isinstance(tv_show, MediaNotFound):
             return await ctx.send(str(tv_show))
 
         pages = []

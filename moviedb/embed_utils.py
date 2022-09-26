@@ -22,20 +22,20 @@ def make_person_embed(person: Person, colour: discord.Colour) -> discord.Embed:
     emb.set_thumbnail(url=person.person_image)
     emb.add_field(name="Known For", value=person.known_for_department)
     if dob := person.birthday:
-        emb.add_field(name="Birthday", value=f"{format_date(dob, 'D')}\n({format_date(dob)})")
+        emb.add_field(name="Birth Date", value=f"{format_date(dob, 'D')}\n({format_date(dob)})")
     if rip := person.deathday:
         emb.add_field(
             name="🙏 Passed away on", value=f"{format_date(rip, 'D')}\n({format_date(rip)})"
         )
     if person.place_of_birth:
         emb.add_field(name="Place of Birth", value=person.place_of_birth)
-    external_links = ""
+    ext_links: List[str] = []
     if person.imdb_id:
-        external_links += f"[IMDb](https://www.imdb.com/name/{person.imdb_id})"
+        ext_links.append(f"[IMDb](https://www.imdb.com/name/{person.imdb_id})")
     if person.homepage:
-        external_links += f"[Home page]({person.homepage})\n"
-    if external_links:
-        emb.add_field(name="External Links", value=external_links)
+        ext_links.append(f"[Personal website]({person.homepage})\n")
+    if ext_links:
+        emb.add_field(name="External Links", value=", ".join(ext_links))
     emb.set_footer(text="Data provided by TheMovieDB!", icon_url="https://i.imgur.com/sSE7Usn.png")
     return emb
 
@@ -79,7 +79,7 @@ def parse_credits(
     tmdb_id: str
 ) -> List[discord.Embed]:
     pretty_cast = "\n".join(
-        f"**`[{i:>2}]`**  {GENDERS[str(actor.gender)]} [{actor.name}]"
+        f"**`[{i:>2}]`**  {GENDERS[actor.gender]} [{actor.name}]"
         f"(https://www.themoviedb.org/person/{actor.id})"
         f" as **{actor.character or '???'}**"
         for i, actor in enumerate(cast_data, 1)
