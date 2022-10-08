@@ -16,7 +16,7 @@
         "redditinfo",
         "subreddit"
     ],
-    "min_bot_version": "3.5.0dev0",
+    "min_bot_version": "3.5.0.dev0",
     "disabled": false,
     "hidden": false,
     "type": "COG"
