@@ -416,17 +416,17 @@ class RedditInfo(commands.Cog):
         if data.get("over18") and not ctx.channel.is_nsfw():
             await ctx.send("That subreddit is marked as NSFW. Try again in NSFW channel.")
             return
-        async with self.config.channel(channel).subreddit() as feed:
-            if feed == subreddit:
+        current_feed = await self.config.channel(channel).subreddit()
+        if current_feed and current_feed == subreddit:
                 await ctx.send("There is already a feed setup for that subreddit in this channel.")
                 return
 
-            feed = subreddit
-            await ctx.send(
-                f"✅ Done. Random posts from `/{result['display_name_prefixed']}` will be "
-                f"posted in {channel.mention} at already specified interval.\n"
-                f"Use `{ctx.clean_prefix}randomfeedset interval` cmd to change delay timer."
-            )
+        await self.config.channel(channel).subreddit.set(subreddit)
+        await ctx.send(
+            f"✅ Done. Random posts from `/{result['display_name_prefixed']}` will be "
+            f"posted in {channel.mention} at already specified interval.\n"
+            f"Use `{ctx.clean_prefix}randomfeedset interval` cmd to change delay timer."
+        )
         await ctx.tick()
 
     @randomfeedset.command(aliases=["delay", "timer"])
