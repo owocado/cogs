@@ -60,6 +60,8 @@ class RedditInfo(commands.Cog):
     async def _fetch_random_post_task(self) -> None:
         all_data: dict = await self.config.all_channels()
         for channel_id, data in all_data.items():
+            if not data["subreddit"]:
+                continue
             channel = self.bot.get_channel(int(channel_id))
             if not channel:
                 logger.info(f"Channel or thread by ID: {channel_id} could not be found!")
@@ -392,13 +394,12 @@ class RedditInfo(commands.Cog):
         self,
         ctx: Context,
         subreddit: str,
-        channel: Union[discord.TextChannel, discord.Thread] = None,
+        channel: Union[discord.TextChannel, discord.Thread] = commands.CurrentChannel,
     ):
         """Set up a channel where random post from given subreddit will be posted on given interval in minutes.
 
         Provide the valid subreddit name without `/r/` prefix or any formatting.
         """
-        channel = channel or ctx.channel
         await ctx.typing()
         try:
             async with self.session.get(f"https://reddit.com/r/{subreddit}/about.json") as resp:
@@ -418,8 +419,8 @@ class RedditInfo(commands.Cog):
             return
         current_feed = await self.config.channel(channel).subreddit()
         if current_feed and current_feed == subreddit:
-                await ctx.send("There is already a feed setup for that subreddit in this channel.")
-                return
+            await ctx.send("There is already a feed setup for that subreddit in this channel.")
+            return
 
         await self.config.channel(channel).subreddit.set(subreddit)
         await ctx.send(
@@ -440,6 +441,25 @@ class RedditInfo(commands.Cog):
         self._fetch_random_post_task.change_interval(minutes=delay)
         await self.config.interval.set(delay)
         await ctx.send(f"✅ Done. Changed interval for auto post feed to {delay} minutes!")
+        await ctx.tick()
+
+    @randomfeedset.command()
+    async def remove(
+        self,
+        ctx: Context,
+        channel: Union[discord.TextChannel, discord.Thread] = commands.CurrentChannel
+    ):
+        """Removes any existing feed setup for a channel or thread."""
+        current_feed = await self.config.channel(channel).subreddit()
+        if not current_feed:
+            await ctx.send(f"There is no random post feed setup for {channel.mention}!")
+            return
+
+        await self.config.channel(channel).subreddit.set(None)
+        await ctx.send(
+            f"Done. Feed `/r/{current_feed}` has been removed from {channel.mention}!\n"
+            "Hence, random posts from that subreddit will no longer be posted."
+        )
         await ctx.tick()
 
     @commands.group()
