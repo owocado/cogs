@@ -407,7 +407,7 @@ class RedditInfo(commands.Cog):
                 result = await resp.json()
         except (aiohttp.ClientError, asyncio.TimeoutError):
             return await ctx.send(
-                "Operation timed out while trying to query subreddit. Try again later."
+                "Timeout while trying to query subreddit by given name. Try again later."
             )
 
         data = result.get("data")
@@ -423,8 +423,9 @@ class RedditInfo(commands.Cog):
 
             feed = subreddit
             await ctx.send(
-                f"✅ Done. Random posts from `/r/{subreddit}` will be "
-                f"posted in {channel.mention} at set interval."
+                f"✅ Done. Random posts from `/{result['display_name_prefixed']}` will be "
+                f"posted in {channel.mention} at already specified interval.\n"
+                f"Use `{ctx.clean_prefix}randomfeedset interval` cmd to change delay timer."
             )
         await ctx.tick()
 
