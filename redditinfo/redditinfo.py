@@ -424,7 +424,7 @@ class RedditInfo(commands.Cog):
 
         await self.config.channel(channel).subreddit.set(subreddit)
         await ctx.send(
-            f"✅ Done. Random posts from `/{result['display_name_prefixed']}` will be "
+            f"✅ Done. Random posts from `/{data['display_name_prefixed']}` will be "
             f"posted in {channel.mention} at already specified interval.\n"
             f"Use `{ctx.clean_prefix}randomfeedset interval` cmd to change delay timer."
         )
