@@ -12,43 +12,11 @@ class ASN:
     asn: str
     name: str
     route: str
-    type: str
-    domain: Optional[str]
+    type: str = ""
+    domain: str = ""
 
     def __str__(self) -> str:
-        return f"{self.name}\n(Type: {self.type.upper()})\n"
-
-
-@dataclass
-class Carrier:
-    name: str
-    mcc: str
-    mnc: str
-
-    def __str__(self) -> str:
-        return self.name
-
-
-@dataclass
-class Currency:
-    code: str
-    name: str
-    symbol: str
-    native: str
-    plural: str
-
-    def __str__(self) -> str:
-        return f"{self.name} ({self.code})"
-
-
-@dataclass
-class Language:
-    name: str
-    code: str
-    native: str
-
-    def __str__(self) -> str:
-        return f"{self.name} ({self.code.upper()})"
+        return f"{self.name}\n(Type: `{self.type.upper()}`)\n"
 
 
 @dataclass
@@ -131,13 +99,10 @@ class IPData:
     emoji_flag: str
     emoji_unicode: str
     asn: Optional[ASN]
-    carrier: Optional[Carrier]
-    currency: Optional[Currency]
     time_zone: Optional[TimeZone]
     threat: Optional[Threat]
     count: str
     message: Optional[ErrorMessage] = None
-    languages: List[Language] = field(default_factory=list)
 
     @property
     def country(self):
@@ -150,16 +115,13 @@ class IPData:
     @classmethod
     def from_json(cls, json: dict) -> IPData:
         asn = json.pop("asn", None)
-        carrier = json.pop("carrier", None)
-        currency = json.pop("currency", None)
-        languages = json.pop("languages", [])
+        _ = json.pop("carrier", None)
+        _ = json.pop("currency", None)
+        _ = json.pop("languages", [])
         timezone = json.pop("time_zone", None)
         threat = json.pop("threat", None)
         return cls(
             asn=ASN(**asn) if asn else None,
-            carrier=Carrier(**carrier) if carrier else None,
-            currency=Currency(**currency) if currency else None,
-            languages=[Language(**i) for i in languages],
             time_zone=TimeZone(**timezone) if timezone else None,
             threat=Threat.from_dict(threat) if threat else None,
             **json,

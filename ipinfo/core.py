@@ -1,18 +1,20 @@
 import asyncio
+from typing import cast
 
 import aiohttp
 import discord
 from redbot.core import commands
 from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
 
-from .api import IPData
+from .models import IPData, IPInfoIO
+from .utils import make_embed, query_ipinfo
 
 
-class IPInfo(commands.Cog):
+class IP(commands.Cog):
     """Get basic geolocation info on a public IP address."""
 
     __authors__ = ["ow0x"]
-    __version__ = "2.0.0"
+    __version__ = "3.0.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad."""
@@ -27,33 +29,6 @@ class IPInfo(commands.Cog):
     def cog_unload(self) -> None:
         if self.session:
             asyncio.create_task(self.session.close())
-
-    @staticmethod
-    def _make_embed(data: IPData, color: discord.Colour) -> discord.Embed:
-        embed = discord.Embed(color=color)
-        embed.description = f"__**Threat Info:**__\n\n{data.threat}" if data.threat else ""
-        embed.set_author(name=f"Info for IP: {data.ip}", icon_url=data.flag or "")
-        if data.asn:
-            embed.add_field(name="ASN Carrier", value=str(data.asn))
-            embed.add_field(name="ASN Route", value=f"{data.asn.route}\n{data.asn.domain or ''}")
-        if data.city:
-            embed.add_field(name="City / Region", value=f"{data.city}\n{data.region or ''}")
-        if data.country_name:
-            embed.add_field(name="Country / Continent", value=data.country)
-        if data.calling_code:
-            embed.add_field(name="Calling Code", value=f"+{data.calling_code}")
-        if (lat := data.latitude) and (lon := data.longitude):
-            maps_link = f"[{data.co_ordinates}](https://www.google.com/maps?q={lat},{lon})"
-            embed.add_field(name="Latitude & Longitude", value=maps_link)
-        if len(embed.fields) == 5:
-            embed.add_field(name='\u200b', value='\u200b')
-        if data.threat.blocklists:
-            embed.add_field(
-                name=f"In {len(data.threat.blocklists)} Blocklists",
-                value=", ".join(str(b) for b in data.threat.blocklists),
-                inline=False,
-            )
-        return embed
 
     @commands.is_owner()
     @commands.command(name="ip")
@@ -76,14 +51,16 @@ class IPInfo(commands.Cog):
             ip_addrs = ip_address.split(" ")
             if len(ip_addrs) == 1:
                 data = await IPData.request(self.session, ip_address, api_key)
+                ipinfo_result = await query_ipinfo(self.session, ip_address)
+                ipinfo_data = (
+                    IPInfoIO.from_data(ipinfo_result["data"])
+                    if "data" in ipinfo_result else None
+                )
                 if data.message:
-                    return await ctx.send(str(data.message))
-                assert isinstance(data, IPData)
-                embed = self._make_embed(data, await ctx.embed_colour())
-                if ctx.author.id == 306810730055729152:
-                    embed.add_field(
-                        name='API Quota', value=f"{data.count}/1500 used today", inline=False
-                    )
+                    await ctx.send(str(data.message))
+                    return
+                data = cast(IPData, data)
+                embed = make_embed(await ctx.embed_colour(), data, ipinfo_data)
                 await ctx.send(embed=embed)
                 return
 
@@ -95,15 +72,18 @@ class IPInfo(commands.Cog):
                     if str(error_msg).startswith("http"):
                         embed.set_image(url=error_msg)
                 else:
-                    embed = self._make_embed(data, await ctx.embed_colour())
+                    embed = make_embed(await ctx.embed_colour(), data)
                     embed.set_footer(text=f"Page {i} of {len(ip_addrs)}")
                 if ctx.author.id == 306810730055729152:
                     embed.add_field(
-                        name='API Quota', value=f"{data.count}/1500 used today", inline=False
+                        name='API Quota',
+                        value=f"{data.count}/1500 used today",
+                        inline=False
                     )
                 embeds.append(embed)
 
             if not embeds:
-                return await ctx.send("Sad trombone. No results. 😔")
+                await ctx.send("Sad trombone. No results. 😔")
+                return
 
         await menu(ctx, embeds, DEFAULT_CONTROLS, timeout=90.0)
