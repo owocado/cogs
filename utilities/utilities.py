@@ -47,6 +47,7 @@ class Utilities(commands.Cog):
     def cog_unload(self):
         asyncio.create_task(self.session.close())
 
+    @commands.bot_has_permissions(embed_links=True)
     @commands.command()
     async def snowflake(self, ctx: Context, snowflake: int, snowflake2: int = None):
         """Convert Discord snowflake ID to human readable time difference.
@@ -71,7 +72,7 @@ class Utilities(commands.Cog):
                 f"Created at {format_dt(dt_1, 'f')} ({format_dt(dt_1, 'R')})\n"
                 f"That is... **{time_diff(now, dt_1, 5)}** {when}"
             )
-            return await ctx.send(embeds=[em])
+            return await ctx.send(embed=em)
 
         try:
             dt_2 = discord.utils.snowflake_time(snowflake2)
@@ -294,11 +295,10 @@ class Utilities(commands.Cog):
                 _result = await resp.json()
         except aiohttp.ContentTypeError:
             return await ctx.send(
-                "ContentTypeError: given URL is in invalid encoding. \U0001f978",
-                ephemeral=True
+                "ContentTypeError: given URL is in invalid encoding. \U0001f978"
             )
         except (aiohttp.ClientError, asyncio.TimeoutError):
-            return await ctx.send("Operation timed out.", ephemeral=True)
+            return await ctx.send("Operation timed out.")
 
         first_resp = _result['data'][0].get("response", {}).get("info", {})
         if not first_resp:
@@ -332,7 +332,7 @@ class Utilities(commands.Cog):
                     inline=False
                 )
 
-        await ctx.send(embeds=[emb], ephemeral=True)
+        await ctx.send(embed=emb)
 
     @commands.command()
     @commands.guild_only()
