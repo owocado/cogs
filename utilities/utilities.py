@@ -15,9 +15,9 @@ from redbot.core.utils import AsyncIter
 from redbot.core.utils.chat_formatting import box, humanize_number, inline, pagify
 from redbot.core.utils.menus import DEFAULT_CONTROLS, close_menu, menu
 
-INVITE_URL_REGEX: Pattern = re.compile(
-    r"((https:\/\/)?(discord|discordapp)\.(com|gg)\/(invite)?\/?[\w-]+)"
-)
+from .models import RedirectChecker
+
+EMOJI_CDN = "https://cdn.discordapp.com/emojis"
 
 
 class Utilities(commands.Cog):
@@ -27,13 +27,16 @@ class Utilities(commands.Cog):
         """Nothing to delete"""
         return
 
-    __author__ = "ow0x"
-    __version__ = "0.1.1"
+    __authors__ = ["ow0x (<@306810730055729152>)"]
+    __version__ = "0.2.0"
 
     def format_help_for_context(self, ctx: Context) -> str:
         """Thanks Sinbad!"""
-        pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\n\nAuthor: {self.__author__}\nCog Version: {self.__version__}"
+        return (
+            f"{super().format_help_for_context(ctx)}\n\n"
+            f"**Authors:**  {', '.join(self.__authors__)}\n"
+            f"**Cog version:**  v{self.__version__}"
+        )
 
     def __init__(self, bot):
         self.bot = bot
@@ -54,12 +57,19 @@ class Utilities(commands.Cog):
         except (ValueError, OverflowError):
             return await ctx.send(f"`{snowflake}` value is invalid or out of range.")
 
+        when = "ago" if now > dt_1 else "in future"
         if snowflake2 is None:
-            return await ctx.send(
-                f"Given snowflake ID converts to: <t:{int(dt_1.timestamp())}:F>\n"
-                f"That is {time_diff(now, dt_1, 5)} {'ago' if now > dt_1 else 'in future'}"
-                f" (or roughly <t:{int(dt_1.timestamp())}:R>)"
+            em = discord.Embed(colour=0x2f3136)
+            em.set_author(
+                name="Snowflake",
+                icon_url="https://twemoji.maxcdn.com/2/72x72/2744.png"
             )
+            em.description = (
+                f"**{snowflake}** ({int(dt_1.timestamp())})\n"
+                f"Created at {format_dt(dt_1, 'f')} ({format_dt(dt_1, 'R')})\n"
+                f"That is... **{time_diff(now, dt_1, 5)}** {when}"
+            )
+            return await ctx.send(embeds=[em])
 
         try:
             dt_2 = discord.utils.snowflake_time(snowflake2)
@@ -161,84 +171,13 @@ class Utilities(commands.Cog):
         await ctx.send(file=discord.File(data, "screenshot.png"))
 
     @commands.command()
-    @commands.is_owner()
-    @commands.bot_has_permissions(attach_files=True)
-    async def screenshot(
-        self,
-        ctx: Context,
-        web_url: str,
-        full_page: bool = False,
-        retina: bool = False,
-        width: int = 1680,
-        height: int = 876,
-        fresh: str = "true",
-        block_ads: bool = False,
-        no_cookie_banners: str = "false",
-        dark_mode: bool = True,
-        destroy_screenshot: bool = False,
-    ):
-        """Get a screenshot of a publicly accessible webpage.
-
-        This command requires an API token. You can get a free token
-        by registering a free account on <https://screenshotapi.net>
-
-        Once you have the API token, set it with:
-        ```
-        [p]set api screenshotapi api_key <api_token>
-        ```
-        Please note: free API token quota is limited to 100 screenshots per month.
-        """
-        api_key = (await ctx.bot.get_shared_api_tokens("screenshotapi")).get("api_key")
-        if api_key is None:
-            return await ctx.send_help()
-
-        web_url = web_url.lstrip("<").rstrip(">")
-        width = 1920 if (width < 100 or width > 7680) else width
-        height = 1080 if (width < 100 or height > 4320) else height
-        fresh = "true" if fresh not in ["true", "false"] else fresh
-        no_cookie_banners = (
-            "false" if no_cookie_banners not in ["true", "false"] else no_cookie_banners
-        )
-
-        base_url = "https://shot.screenshotapi.net/screenshot"
-        params = {
-            "token": api_key,
-            "url": web_url,
-            "width": width,
-            "height": height,
-            "full_page": full_page,
-            "retina": retina,
-            "fresh": fresh,
-            "output": "image",
-            "file_type": "png",
-            "block_ads": block_ads,
-            "no_cookie_banners": no_cookie_banners,
-            "destroy_screenshot": destroy_screenshot,
-            "dark_mode": dark_mode,
-        }
-
-        async with ctx.typing():
-            try:
-                async with self.session.post(base_url, json=params) as response:
-                    if response.status != 200:
-                        return await ctx.send(f"https://http.cat/{response.status}")
-                    data = BytesIO(await response.read())
-                    data.seek(0)
-            except asyncio.TimeoutError:
-                return await ctx.send("Operation timed out.")
-
-        await ctx.send(ctx.author.mention, file=discord.File(data, "screenshot.png"))
-
-    @commands.command()
     @commands.cooldown(1, 10, commands.BucketType.member)
     @commands.bot_has_permissions(embed_links=True)
-    async def inviteinfo(self, ctx: Context, invite_link_or_code: str):
+    async def inviteinfo(self, ctx: Context, invite_code: str):
         """Get some basic info about a Discord invite and it's parent guild."""
-        match = INVITE_URL_REGEX.match(invite_link_or_code)
-        invite_link_or_code = match.group(1).split("/")[-1] if match else invite_link_or_code
-
+        match = discord.utils.resolve_invite(invite_code)
         try:
-            invite = await self.bot.fetch_invite(invite_link_or_code)
+            invite = await self.bot.fetch_invite(match.code)
         except (discord.NotFound, discord.HTTPException):
             return await ctx.send("The invite is either invalid or has expired.")
 
@@ -257,9 +196,9 @@ class Utilities(commands.Cog):
         # attribution : https://github.com/Cog-Creators/Red-DiscordBot/blob/V3/develop/redbot/cogs/general/general.py#L412
         embed.set_author(
             name="Invite Info for: " + str(invite.guild.name),
-            icon_url="https://cdn.discordapp.com/emojis/457879292152381443.png"
+            icon_url=f"{EMOJI_CDN}/457879292152381443.png"
             if "VERIFIED" in invite.guild.features
-            else "https://cdn.discordapp.com/emojis/508929941610430464.png"
+            else f"{EMOJI_CDN}/508929941610430464.png"
             if "PARTNERED" in invite.guild.features
             else discord.Embed.Empty,
         )
@@ -338,26 +277,60 @@ class Utilities(commands.Cog):
 
     @commands.command(name="unredirect")
     async def unredirect_url(self, ctx: Context, url: str):
-        """Find out where those pesky shady redirect URLs leads you to.
-
-        Doesn't quite work against temporary redirects. :(
-        """
-        url = url.lstrip("<").rstrip(">")
-
+        """Find where those short URL links redirect you to."""
         await ctx.trigger_typing()
-        try:
-            async with self.session.get(url, allow_redirects=False) as response:
-                if not response.status in [300, 301, 302, 303, 304, 305, 306, 307, 308]:
-                    return await ctx.send("Provided URL is not a permanent redirect URL. 🤔")
-                # Code attribution and credits to original author : https://stackoverflow.com/a/49091337
-                url_meta = str(response).split("Location': '")[1].split("'")[0]
-        except aiohttp.InvalidURL:
-            return await ctx.send("You provided an invalid URL. Trying to make me error huh? 😏")
-        except (asyncio.TimeoutError, IndexError):
-            return await ctx.send("Operation timed out.")
+        url = url.lstrip("<").rstrip(">")
+        if not url.startswith(("http", "https")):
+            return await ctx.send("URL must start with HTTP(S) scheme. \U0001f978")
 
-        to_send = f"**Given URL redirects to:**\n\n{url_meta}"
-        await ctx.maybe_send_embed(to_send)
+        url_ = f"https://api.redirect-checker.net/?url={quote_plus(url)}"
+        params = "&timeout=5&maxhops=10&meta-refresh=1&format=json&more=1"
+        try:
+            async with self.session.get(f"{url_}{params}") as resp:
+                if resp.status != 200:
+                    return await ctx.send(f"https://http.cat/{resp.status}")
+                _result = await resp.json()
+        except aiohttp.ContentTypeError:
+            return await ctx.send(
+                "ContentTypeError: given URL is in invalid encoding. \U0001f978",
+                ephemeral=True
+            )
+        except (aiohttp.ClientError, asyncio.TimeoutError):
+            return await ctx.send("Operation timed out.", ephemeral=True)
+
+        first_resp = _result['data'][0].get("response", {}).get("info", {})
+        if not first_resp:
+            await ctx.send("This URL does not seem to redirect anywhere! \U0001f978")
+            return
+
+        emb = discord.Embed(colour=0x2f3136)
+        emb.set_author(name="Redirect Detective", icon_url=f"{EMOJI_CDN}/737254285645054042.gif")
+        try:
+            result = RedirectChecker.from_data(_result)
+        except Exception as exc:
+            await ctx.send(str(exc))
+            return
+
+        first_redirect: str = result.data[0].redirect_url
+        if not first_redirect:
+            await ctx.send("This URL does not seem to redirect anywhere!!! \U0001f978")
+            return
+
+        emb.add_field(
+            name="This URL redirects to ...",
+            value=shorten(first_redirect, 1020, placeholder="…")
+        )
+        for ret in result.data[1:]:
+            if not ret:
+                continue
+            if ret.redirect_url:
+                emb.add_field(
+                    name="which then goes to ...",
+                    value=f"{ret.redirect_url}\n",
+                    inline=False
+                )
+
+        await ctx.send(embeds=[emb], ephemeral=True)
 
     @commands.command()
     @commands.guild_only()
@@ -402,8 +375,7 @@ class Utilities(commands.Cog):
 
         if len(pages) == 1:
             return await ctx.send(pages[0])
-        else:
-            await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
+        await menu(ctx, pages, DEFAULT_CONTROLS, timeout=60.0)
 
     @staticmethod
     def _time_diff(value1, value2, index: int):
