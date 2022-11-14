@@ -3,7 +3,9 @@ import re
 from collections import Counter, OrderedDict
 from datetime import datetime, timezone
 from io import BytesIO
+from textwrap import shorten
 from typing import Pattern
+from urllib.parse import quote_plus
 
 import aiohttp
 import discord
@@ -28,7 +30,7 @@ class Utilities(commands.Cog):
         return
 
     __authors__ = ["ow0x (<@306810730055729152>)"]
-    __version__ = "0.2.0"
+    __version__ = "0.2.1"
 
     def format_help_for_context(self, ctx: Context) -> str:
         """Thanks Sinbad!"""
