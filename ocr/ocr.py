@@ -3,7 +3,7 @@ import logging
 from typing import Optional
 
 import aiohttp
-from redbot.core import commands
+from redbot.core import commands, __version__ as red_version
 from redbot.core.utils.chat_formatting import box, pagify
 
 from .converter import ImageFinder
@@ -15,7 +15,7 @@ class OCR(commands.Cog):
     """Detect text in images using ocr.space or Google Cloud Vision API."""
 
     __authors__ = ["TrustyJAID", "ow0x"]
-    __version__ = "1.1.0"
+    __version__ = "1.1.1"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad."""
@@ -47,7 +47,8 @@ class OCR(commands.Cog):
         }
 
         async def query_kaogurai(url: str):
-            async with self.session.get(url, params={"url": image}) as resp:
+            h = {"User-Agent": f"Red-DiscordBot {red_version}"}
+            async with self.session.get(url, params={"url": image}, headers=h) as resp:
                 if resp.status != 200:
                     log.debug(
                         f"[OCR] {url} sent {resp.status} HTTP response code."
@@ -55,7 +56,7 @@ class OCR(commands.Cog):
                     return None
                 return await resp.json()
 
-        result = await query_kaogurai("https://api.kaogurai.xyz/v1/ocr/image")
+        result = await query_kaogurai("https://api.flowery.pw/v1/ocr/image")
         if not result:
             async with self.session.post(
                 "https://api.ocr.space/parse/image", data=data
