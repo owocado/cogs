@@ -85,7 +85,9 @@ class RedditInfo(commands.Cog):
                 continue
             try:
                 random_post: dict = random_feeds[0]["data"]["children"][0]["data"]
-                await channel.send(f"https://www.rxyddit.com{random_post['permalink']}")
+                interval: int = await self.config.interval()
+                next_when = f"next post <t:{int(discord.utils.utcnow().timestamp()) + interval*60}:R>"
+                await channel.send(f"https://www.rxyddit.com{random_post['permalink']} | {next_when}")
             except Exception as exc:
                 logger.exception("Error sending random auto post", exc_info=exc)
                 continue
