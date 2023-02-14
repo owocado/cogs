@@ -85,7 +85,7 @@ class RedditInfo(commands.Cog):
                 continue
             try:
                 random_post: dict = random_feeds[0]["data"]["children"][0]["data"]
-                await channel.send(f"https://embedreddit.com{random_post['permalink']}")
+                await channel.send(f"https://www.rxyddit.com{random_post['permalink']}")
             except Exception as exc:
                 logger.exception("Error sending random auto post", exc_info=exc)
                 continue
@@ -470,7 +470,7 @@ class RedditInfo(commands.Cog):
         pass
 
     @automemeset.command()
-    async def channel(self, ctx: Context, channel: discord.TextChannel = None):
+    async def channel(self, ctx: Context, channel: Union[discord.TextChannel, discord.Thread] = None):
         """Set a channel where random memes will be posted."""
         if channel is None:
             await self.config.guild(ctx.guild).channel_id.set(None)
