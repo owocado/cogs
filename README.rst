@@ -24,7 +24,7 @@ Then to add repo and install my cogs, do:
 
 .. code-block:: ini
 
-    [p]repo add owo https://github.com/ow0x/owo-cogs
+    [p]repo add owo https://github.com/owocado/owo-cogs
 
 
 To view the list of my cogs, do:

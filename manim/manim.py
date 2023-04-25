@@ -1,5 +1,4 @@
 import asyncio
-import docker
 import functools
 import os
 import tempfile
@@ -11,6 +10,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 import discord
+import docker
 from redbot.core import commands
 
 
@@ -28,8 +28,8 @@ dockerclient = docker.from_env()
 class Manim(commands.Cog):
     """A cog for interacting with Manim python animation engine."""
 
-    __authors__ = ["Manim Community Developers", "ow0x"]
-    __version__ = "0.16.0"
+    __authors__ = ["Manim Community Developers", "owocado"]
+    __version__ = "0.17.3"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad."""
@@ -43,16 +43,13 @@ class Manim(commands.Cog):
     @commands.command(aliases=["manimate"])
     @commands.bot_has_permissions(attach_files=True)
     @commands.max_concurrency(1, commands.BucketType.default)
-    async def manim(self, ctx: commands.Context, *, snippet: str):
+    async def manim(self, ctx: commands.Context, *, snippet: str) -> None:
         """Evaluate short Manim code snippets to render mathematical animations.
 
         Code **must** be properly formatted and indented in a markdown code block.
 
         **Supported (CLI) flags:**
-        `-i` or `--save_as_gif`
-        `-s` or `--save_last_frame`
-        `-t` or `--transparent`
-        `--renderer=opengl`
+            see <https://docs.manim.community/en/stable/guides/configuration.html?highlight=cli%20flags#a-list-of-all-cli-flags>
 
         **Example:**
         ```py
@@ -63,24 +60,25 @@ class Manim(commands.Cog):
         """
         async with ctx.typing():
             fake_task = functools.partial(self.construct_reply, snippet)
-            task = ctx.bot.loop.run_in_executor(None, fake_task)
+            loop = asyncio.get_running_loop()
+            task = loop.run_in_executor(None, fake_task)
             try:
                 reply_args = await asyncio.wait_for(task, timeout=120)
             except asyncio.TimeoutError:
-                return await ctx.send(
-                    "Operation timed out. No output received within 2 minutes."
-                )
+                await ctx.send("Operation timed out after 2 minutes. No output received from Docker process.")
+                return
 
-        reply_args["reference"] = ctx.message.to_reference(fail_if_not_exists=False)
-        reply_args["mention_author"] = False
-        await ctx.send(**reply_args)
+            reply_args["reference"] = ctx.message.to_reference(fail_if_not_exists=False)
+            # reply_args["mention_author"] = False
+            await ctx.send(**reply_args)
+            return
 
 
     def construct_reply(self, script: str) -> Dict[str, Any]:
         if script.count("```") != 2:
             reply_args = {
                 "content": "Your message has to be properly formatted "
-                " and code must be written in a code block, like so:\n"
+                " and code should be written in a code block, like so:\n"
                 "\\`\\`\\`py\nyour code here\n\\`\\`\\`"
             }
             return reply_args
@@ -89,23 +87,6 @@ class Manim(commands.Cog):
         header, *code = arg.split("\n")
 
         cli_flags = header.split()
-        allowed_flags = [
-            "-i",
-            "--save_as_gif",
-            "-s",
-            "--save_last_frame",
-            "-t",
-            "--transparent",
-            "--renderer=opengl",
-        ]
-        if not all([flag in allowed_flags for flag in cli_flags]):
-            reply_args = {
-                "content": "You can only pass following CLI flags:\n"
-                "`-i` (`--save_as_gif`)\n`-s` (`--save_last_frame`)\n"
-                "`-t` (`--transparent`)\n`--renderer=opengl`"
-            }
-            return reply_args
-
         if "--renderer=opengl" in cli_flags:
             cli_flags.append("--write_to_movie")
         joined_flags = " ".join(cli_flags)
@@ -121,33 +102,30 @@ class Manim(commands.Cog):
         code_snippet = "from manim import *\n\n" + code_snippet
 
         # write code to temporary file (ideally in temporary directory)
-        pre_flags = "-qm --disable_caching --progress_bar=none -o scriptoutput"
+        base_flags = "-qm --disable_caching --progress_bar=none -o scriptoutput"
         with tempfile.TemporaryDirectory() as tmpdirname:
-            scriptfile = Path(tmpdirname) / "script.py"
-            reply_args = None
-            with open(scriptfile, "w", encoding="utf-8") as f:
+            with open(Path(tmpdirname) / "script.py", "w", encoding="utf-8") as f:
                 f.write(code_snippet)
+
+            reply_args = None
             try:
                 dockerclient.containers.run(
                     image="manimcommunity/manim:stable",
                     volumes={tmpdirname: {"bind": "/manim/", "mode": "rw"}},
-                    command=f"timeout 120 manim {pre_flags} {joined_flags} /manim/script.py",
+                    command=f"timeout 120 manim {base_flags} {joined_flags} /manim/script.py",
                     user=os.getuid(),
                     stderr=True,
                     stdout=False,
                     remove=True,
                 )
-            except Exception as e:
-                if isinstance(e, docker.errors.ContainerError):
-                    tb = e.stderr
+            except Exception as exc:
+                if isinstance(exc, docker.errors.ContainerError):
+                    tb = exc.stderr
                 else:
                     tb = str.encode(traceback.format_exc())
                 reply_args = {
                     "content": "Something went wrong, the error log is attached.",
-                    "file": discord.File(
-                        fp=io.BytesIO(tb),
-                        filename="error.log",
-                    ),
+                    "file": discord.File(fp=io.BytesIO(tb), filename="error.log"),
                 }
             finally:
                 if reply_args:
@@ -155,9 +133,11 @@ class Manim(commands.Cog):
 
             try:
                 [outfilepath] = Path(tmpdirname).rglob("scriptoutput.*")
-            except Exception as e:
+            except Exception as exc:
+                tb = str.encode(traceback.format_exc())
                 reply_args = {
-                    "content": "Something went wrong: no (unique) output file was produced. :("
+                    "content": "Something went wrong; the error.log is attached."
+                    "file": discord.File(fp=io.BytesIO(tb), filename="error.log"),
                 }
                 return reply_args
             else:
