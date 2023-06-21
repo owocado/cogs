@@ -136,7 +136,7 @@ class Manim(commands.Cog):
             except Exception as exc:
                 tb = str.encode(traceback.format_exc())
                 reply_args = {
-                    "content": "Something went wrong; the error.log is attached."
+                    "content": "Something went wrong; the error.log is attached.",
                     "file": discord.File(fp=io.BytesIO(tb), filename="error.log"),
                 }
                 return reply_args
