@@ -7,10 +7,11 @@ from typing import Any, Dict, Sequence
 import aiohttp
 from redbot.core.utils.chat_formatting import humanize_number
 
-from .base import API_BASE, MediaNotFound
+from .base import MediaNotFound
+from ..constants import API_BASE
 
 
-@dataclass
+@dataclass(slots=True)
 class BaseSuggestions:
     id: int
     adult: bool
@@ -23,7 +24,7 @@ class BaseSuggestions:
     genre_ids: Sequence[int]
 
 
-@dataclass
+@dataclass(slots=True)
 class MovieSuggestions(BaseSuggestions):
     title: str
     original_title: str
@@ -66,7 +67,7 @@ class MovieSuggestions(BaseSuggestions):
         return [cls.from_json(obj) for obj in data['results']]
 
 
-@dataclass
+@dataclass(slots=True)
 class TVShowSuggestions(BaseSuggestions):
     name: str
     original_name: str

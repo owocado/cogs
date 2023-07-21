@@ -1,33 +1,34 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Optional, List
+from dataclasses import dataclass
+from operator import itemgetter
+from typing import Optional, List, Union
 
 import aiohttp
+import dacite
+from redbot.core.utils.chat_formatting import humanize_list
 
 from .base import BaseSearch, MediaNotFound, multi_search
 
 
-@dataclass
+@dataclass(slots=True)
 class PersonSearch:
-    id: int
     adult: bool
+    id: int
     name: str
     gender: int
     media_type: str
     popularity: float
     known_for_department: str
-    profile_path: Optional[str] = None
-    known_for: List[dict] = field(default_factory=list)
+    original_name: Optional[str]
+    profile_path: Optional[str]
+    known_for: List[Union[MovieSearch, TVShowSearch]]
 
     @property
-    def notable_roles(self) -> str:
+    def famous_for(self) -> str:
         if not self.known_for:
             return ""
-        first = self.known_for[0].get('title') or self.known_for[0].get('name')
-        if len(self.known_for) > 1:
-            first += f" & {len(self.known_for) - 1} more!"
-        return f"(known for {first})"
+        return f"(known for {humanize_list([x.title for x in self.known_for])})"
 
     @classmethod
     async def request(
@@ -37,24 +38,26 @@ class PersonSearch:
         query: str
     ) -> MediaNotFound | List[PersonSearch]:
         all_data = await multi_search(session, api_key, query)
+        if not all_data:
+            return MediaNotFound("No celebrity persons found from your query!")
         if isinstance(all_data, MediaNotFound):
             return all_data
         filtered_data = [media for media in all_data if media.get("media_type") == "person"]
         if not filtered_data:
-            return MediaNotFound("❌ No results.", 404)
+            return MediaNotFound("❌ No celebrities found!", 404)
 
-        # filtered_data.sort(key=lambda x: x.get('name'))
-        return [cls(**person) for person in filtered_data]
+        # filtered_data.sort(key=itemgetter("name"))
+        return [dacite.from_dict(data_class=cls, data=p) for p in filtered_data]
 
 
-@dataclass
+@dataclass(slots=True)
 class MovieSearch(BaseSearch):
-    title: str = ''
-    original_title: str = ''
-    release_date: str = ''
-    original_language: str = ''
-    video: Optional[bool] = None
-    adult: Optional[bool] = None
+    title: str
+    original_title: str
+    release_date: Optional[str]
+    original_language: str
+    video: Optional[bool]
+    adult: Optional[bool]
 
     @classmethod
     async def request(
@@ -64,23 +67,28 @@ class MovieSearch(BaseSearch):
         query: str
     ) -> MediaNotFound | List[MovieSearch]:
         all_data = await multi_search(session, api_key, query)
+        if not all_data:
+            return MediaNotFound("No movies found from given query!")
         if isinstance(all_data, MediaNotFound):
             return all_data
         filtered_data = [media for media in all_data if media.get("media_type") == "movie"]
         if not filtered_data:
-            return MediaNotFound("❌ No results.", 404)
+            return MediaNotFound("❌ No movies found!", 404)
 
-        filtered_data.sort(key=lambda x: x.get('release_date'), reverse=True)
-        return [cls(**movie) for movie in filtered_data]
+        # filtered_data.sort(key=itemgetter("release_date"), reverse=True)
+        return [dacite.from_dict(data_class=cls, data=movie) for movie in filtered_data]
 
 
-@dataclass
+@dataclass(slots=True)
 class TVShowSearch(BaseSearch):
-    name: str = ''
-    original_name: str = ''
-    first_air_date: str = ''
-    original_language: str = ''
-    origin_country: List[str] = field(default_factory=list)
+    name: str
+    original_name: str
+    first_air_date: Optional[str]
+    original_language: str
+
+    @property
+    def title(self) -> str:
+        return self.name or self.original_name
 
     @classmethod
     async def request(
@@ -90,11 +98,13 @@ class TVShowSearch(BaseSearch):
         query: str
     ) -> MediaNotFound | List[TVShowSearch]:
         all_data = await multi_search(session, api_key, query)
+        if not all_data:
+            return MediaNotFound("No TV shows found from given query!")
         if isinstance(all_data, MediaNotFound):
             return all_data
-        filtered_data = [media for media in all_data if media.get("media_type") == "tv"]
+        filtered_data = [media for media in all_data if "first_air_date" in media]
         if not filtered_data:
-            return MediaNotFound("❌ No results.", 404)
+            return MediaNotFound("❌ No TV shows found!", 404)
 
-        filtered_data.sort(key=lambda x: x.get('first_air_date'), reverse=True)
-        return [cls(**tvshow) for tvshow in filtered_data]
+        filtered_data.sort(key=itemgetter("first_air_date"), reverse=True)
+        return [dacite.from_dict(data_class=cls, data=tv) for tv in filtered_data]

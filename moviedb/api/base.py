@@ -1,33 +1,46 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Literal, Optional, Sequence
+from dataclasses import dataclass
+from typing import List, Literal, Optional, Sequence, Union
 
 import aiohttp
 
+from ..types import Celebrity, MultiResult
 
 API_BASE = "https://api.themoviedb.org/3"
 CDN_BASE = "https://image.tmdb.org/t/p/original"
 
+__all__ = (
+    "BaseSearch",
+    "CelebrityCast",
+    "Genre",
+    "Language",
+    "MediaNotFound",
+    "ProductionCompany",
+    "ProductionCountry",
+    "multi_search",
+)
 
-@dataclass
+
+@dataclass(slots=True)
 class BaseSearch:
+    adult: bool
+    backdrop_path: Optional[str]
     id: int
+    overview: Optional[str]
+    poster_path: Optional[str]
     media_type: str
-    overview: str = ''
-    popularity: float = 0.0
-    vote_count: int = 0
-    vote_average: float = 0.0
-    backdrop_path: str = ''
-    poster_path: str = ''
-    genre_ids: Sequence[int] = field(default_factory=list)
+    genre_ids: Sequence[int]
+    popularity: float
+    vote_count: int
+    vote_average: float
 
 
-@dataclass
+@dataclass(slots=True)
 class MediaNotFound:
     status_message: str
-    http_code: int
+    http_code: Optional[int] = None
     status_code: Optional[int] = None
     success: bool = False
 
@@ -38,7 +51,7 @@ class MediaNotFound:
         return self.status_message or f'https://http.cat/{self.http_code}.jpg'
 
 
-@dataclass
+@dataclass(slots=True)
 class CelebrityCast:
     id: int
     order: int
@@ -48,37 +61,40 @@ class CelebrityCast:
     credit_id: str
     character: str
     known_for_department: str
+    profile_path: Optional[str]
     gender: int = 0
     cast_id: int = 0
     popularity: float = 0.0
-    profile_path: str = ""
 
 
-@dataclass
+@dataclass(slots=True)
 class Genre:
     id: int
     name: str
 
 
-@dataclass
+@dataclass(slots=True)
 class ProductionCompany:
     id: int
     name: str
-    logo_path: str = ""
-    origin_country: str = ""
+    logo_path: Optional[str]
+    origin_country: Optional[str]
 
 
-@dataclass
+@dataclass(slots=True)
 class ProductionCountry:
     iso_3166_1: str
     name: str
 
 
-@dataclass
-class SpokenLanguage:
+@dataclass(slots=True)
+class Language:
     name: str
     iso_639_1: str
-    english_name: str = ""
+    english_name: Optional[str]
+
+    def __str__(self) -> str:
+        return self.english_name or self.name
 
 
 async def multi_search(
@@ -86,7 +102,7 @@ async def multi_search(
     api_key: str,
     query: str,
     include_adult: Literal["true", "false"] = "false",
-) -> List[Dict[str, Any]] | MediaNotFound:
+) -> List[Union[Celebrity, MultiResult]] | MediaNotFound:
     try:
         async with session.get(
             f"{API_BASE}/search/multi",
@@ -103,4 +119,5 @@ async def multi_search(
 
     if not all_data.get("results"):
         return MediaNotFound("No results found.", resp.status)
-    return all_data["results"]
+    return all_data.get("results", [])
+
