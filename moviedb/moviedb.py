@@ -1,11 +1,13 @@
 from operator import attrgetter
 from typing import Any, List, cast
 
+import aiohttp
 import discord
 from discord.app_commands import describe
 from redbot.core import commands
+from redbot.core.bot import Red
 from redbot.core.commands import Context
-from redbot.core.utils.views import BaseMenu, ListPages
+from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
 
 from .api.base import CDN_BASE, MediaNotFound
 from .api.details import MovieDetails, TVShowDetails
@@ -30,6 +32,13 @@ class MovieDB(commands.GroupCog, group_name="imdb"):
 
     __authors__ = "<@306810730055729152>"
     __version__ = "4.2.0"
+
+    def __init__(self, bot: Red) -> None:
+        self.bot = bot
+        self.session = aiohttp.ClientSession()
+
+    async def cog_unload(self) -> None:
+        await self.session.close()
 
     def format_help_for_context(self, ctx: Context) -> str:  # Thanks Sinbad!
         return (
@@ -85,7 +94,7 @@ class MovieDB(commands.GroupCog, group_name="imdb"):
                 )
             embeds.append(emb3)
         embeds.insert(0, emb1)
-        await BaseMenu(ListPages(embeds), timeout=120, ctx=ctx).start(ctx, ephemeral=True)
+        await menu(ctx, embeds, DEFAULT_CONTROLS, timeout=90)
         return
 
     @commands.bot_has_permissions(embed_links=True)
@@ -122,9 +131,7 @@ class MovieDB(commands.GroupCog, group_name="imdb"):
                 tmdb_id=f"movie/{data.id}",
                 title=data.title,
             )
-        await BaseMenu(
-            ListPages([emb1, emb2] + celebrities), timeout=120, ctx=ctx
-        ).start(ctx, ephemeral=True)
+        await menu(ctx, [emb1, emb2] + celebrities, DEFAULT_CONTROLS, timeout=90)
         return
 
     @commands.bot_has_permissions(embed_links=True)
@@ -164,9 +171,7 @@ class MovieDB(commands.GroupCog, group_name="imdb"):
                 tmdb_id=f"tv/{data.id}",
                 title=data.name,
             )
-        await BaseMenu(
-            ListPages([emb1, emb2] + celebrities), timeout=120, ctx=ctx
-        ).start(ctx, ephemeral=True)
+        await menu(ctx, [emb1, emb2] + celebrities, DEFAULT_CONTROLS, timeout=90)
         return
 
     @commands.bot_has_permissions(embed_links=True)
@@ -178,13 +183,13 @@ class MovieDB(commands.GroupCog, group_name="imdb"):
         if isinstance(movie, MediaNotFound):
             return await ctx.send(str(movie))
 
-        pages: List[discord.Embed] = []
+        embeds: List[discord.Embed] = []
         output = cast(List[MovieSuggestions], movie)
         for i, data in enumerate(output, start=1):
             colour = COLOR
             footer = f"Page {i} of {len(output)}"
-            pages.append(make_suggestmovies_embed(data, colour, footer))
-        await BaseMenu(ListPages(pages), timeout=120, ctx=ctx).start(ctx, ephemeral=True)
+            embeds.append(make_suggestmovies_embed(data, colour, footer))
+        await menu(ctx, embeds, DEFAULT_CONTROLS, timeout=90)
         return
 
     @commands.bot_has_permissions(embed_links=True)
@@ -196,11 +201,11 @@ class MovieDB(commands.GroupCog, group_name="imdb"):
         if isinstance(tv_show, MediaNotFound):
             return await ctx.send(str(tv_show))
 
-        pages: List[discord.Embed] = []
+        embeds: List[discord.Embed] = []
         output = cast(List[TVShowSuggestions], tv_show)
         for i, data in enumerate(output, start=1):
             colour = COLOR
             footer = f"Page {i} of {len(output)}"
-            pages.append(make_suggestshows_embed(data, colour, footer))
-        await BaseMenu(ListPages(pages), timeout=120, ctx=ctx).start(ctx, ephemeral=True)
+            embeds.append(make_suggestshows_embed(data, colour, footer))
+        await menu(ctx, embeds, DEFAULT_CONTROLS, timeout=90)
         return

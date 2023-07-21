@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Any, List, Optional
 
 import aiohttp
 import dacite
@@ -68,26 +68,6 @@ class MovieDetails:
         if not self.vote_count:
             return ''
         return f'**{self.vote_average:.1f}** ⭐ ({humanize_number(self.vote_count)} votes)'
-
-    @classmethod
-    def from_json(cls, data: Dict[str, Any]) -> MovieDetails:
-        genres = [Genre(**g) for g in data.pop('genres', [])]
-        credits = [CelebrityCast(**c) for c in data.pop('credits', {}).get('cast', [])]
-        spoken_languages = [Language(**sl) for sl in data.pop('spoken_languages', [])]
-        production_companies = [
-            ProductionCompany(**p) for p in data.pop('production_companies', [])
-        ]
-        production_countries = [
-            ProductionCountry(**pc) for pc in data.pop('production_countries', [])
-        ]
-        return cls(
-            genres=genres,
-            credits=credits,
-            spoken_languages=spoken_languages,
-            production_companies=production_companies,
-            production_countries=production_countries,
-            **data
-        )
 
     @classmethod
     async def request(
@@ -253,36 +233,6 @@ class TVShowDetails:
     @property
     def title(self) -> str:
         return self.name or self.original_name
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> TVShowDetails:
-        n_eta = data.pop('next_episode_to_air', {})
-        l_eta = data.pop('last_episode_to_air', {})
-        created_by = [Creator(**c) for c in data.pop('created_by', [])]
-        credits = [CelebrityCast(**ccs) for ccs in data.pop('credits', {}).get('cast', [])]
-        genres = [Genre(**g) for g in data.pop('genres', [])]
-        seasons = [Season(**s) for s in data.pop('seasons', [])]
-        networks = [Network(**n) for n in data.pop('networks', [])]
-        production_companies = [
-            ProductionCompany(**pcom) for pcom in data.pop('production_companies', [])
-        ]
-        production_countries = [
-            ProductionCountry(**pctr) for pctr in data.pop('production_countries', [])
-        ]
-        spoken_languages = [Language(**sl) for sl in data.pop('spoken_languages', [])]
-        return cls(
-            next_episode_to_air=EpisodeInfo(**n_eta) if n_eta else None,
-            last_episode_to_air=EpisodeInfo(**l_eta) if l_eta else None,
-            created_by=created_by,
-            credits=credits,
-            genres=genres,
-            seasons=seasons,
-            networks=networks,
-            production_companies=production_companies,
-            production_countries=production_countries,
-            spoken_languages=spoken_languages,
-            **data
-        )
 
     @classmethod
     async def request(

@@ -22,13 +22,13 @@ class PersonFinder(discord.app_commands.Transformer):
 
     async def convert(self, ctx: Context, argument: str):
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key", "")
-        results = await PersonSearch.request(ctx.bot.session, api_key, argument.lower())
+        results = await PersonSearch.request(ctx.cog.session, api_key, argument.lower())
         if isinstance(results, MediaNotFound):
             raise BadArgument(str(results))
         if not results:
             raise BadArgument("⛔ No celebrity or media persons found from given query.")
         if len(results) == 1:
-            return await PersonDetails.request(ctx.bot.session, api_key, str(results[0].id))
+            return await PersonDetails.request(ctx.cog.session, api_key, str(results[0].id))
 
         items = [
             f"**{i}.**  {obj.name} {obj.famous_for}" for i, obj in enumerate(results, 1)
@@ -59,7 +59,7 @@ class PersonFinder(discord.app_commands.Transformer):
         with contextlib.suppress(discord.NotFound, discord.HTTPException):
             await prompt.delete()
         person_id = results[int(choice.content.strip()) - 1].id
-        return await PersonDetails.request(ctx.bot.session, api_key, person_id)
+        return await PersonDetails.request(ctx.cog.session, api_key, person_id)
 
     async def transform(self, i: discord.Interaction, value: str):
         key = (await i.client.get_shared_api_tokens('tmdb')).get('api_key', '')
@@ -84,13 +84,13 @@ class MovieFinder(discord.app_commands.Transformer):
 
     async def convert(self, ctx: Context, argument: str):
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key", "")
-        results = await MovieSearch.request(ctx.bot.session, api_key, argument.lower())
+        results = await MovieSearch.request(ctx.cog.session, api_key, argument.lower())
         if isinstance(results, MediaNotFound):
             raise BadArgument(str(results))
         if not results:
             raise BadArgument("⛔ No such movie found from given query.")
         if len(results) == 1:
-            return await MovieDetails.request(ctx.bot.session, api_key, results[0].id)
+            return await MovieDetails.request(ctx.cog.session, api_key, results[0].id)
 
         # https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
         items = [
@@ -123,7 +123,7 @@ class MovieFinder(discord.app_commands.Transformer):
         with contextlib.suppress(discord.NotFound, discord.HTTPException):
             await prompt.delete()
         movie_id = results[int(choice.content.strip()) - 1].id
-        return await MovieDetails.request(ctx.bot.session, api_key, movie_id)
+        return await MovieDetails.request(ctx.cog.session, api_key, movie_id)
 
     async def transform(self, i: discord.Interaction, value: str):
         key = (await i.client.get_shared_api_tokens('tmdb')).get('api_key', '')
@@ -159,13 +159,13 @@ class TVShowFinder(discord.app_commands.Transformer):
 
     async def convert(self, ctx: Context, argument: str):
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key", "")
-        results = await TVShowSearch.request(ctx.bot.session, api_key, argument.lower())
+        results = await TVShowSearch.request(ctx.cog.session, api_key, argument.lower())
         if isinstance(results, MediaNotFound):
             raise BadArgument(str(results))
         if not results:
             raise BadArgument("⛔ No such TV show found from given query.")
         if len(results) == 1:
-            return await TVShowDetails.request(ctx.bot.session, api_key, results[0].id)
+            return await TVShowDetails.request(ctx.cog.session, api_key, results[0].id)
 
         # https://github.com/Sitryk/sitcogsv3/blob/master/lyrics/lyrics.py#L142
         items = [
@@ -199,7 +199,7 @@ class TVShowFinder(discord.app_commands.Transformer):
         with contextlib.suppress(discord.NotFound, discord.HTTPException):
             await prompt.delete()
         tv_id = results[int(choice.content.strip()) - 1].id
-        return await TVShowDetails.request(ctx.bot.session, api_key, tv_id)
+        return await TVShowDetails.request(ctx.cog.session, api_key, tv_id)
 
     async def transform(self, i: discord.Interaction, value: str):
         key = (await i.client.get_shared_api_tokens('tmdb')).get('api_key', '')
