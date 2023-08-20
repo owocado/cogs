@@ -14,8 +14,8 @@ log = logging.getLogger("red.owo-cogs.ocr")
 class OCR(commands.Cog):
     """Detect text in images using ocr.space or Google Cloud Vision API."""
 
-    __authors__ = ["TrustyJAID", "ow0x"]
-    __version__ = "1.1.1"
+    __authors__ = ["TrustyJAID", "<@306810730055729152>"]
+    __version__ = "1.2.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad."""
@@ -46,17 +46,19 @@ class OCR(commands.Cog):
             "filetype": file_type
         }
 
-        async def query_kaogurai(url: str):
-            h = {"User-Agent": f"Red-DiscordBot {red_version}"}
-            async with self.session.get(url, params={"url": image}, headers=h) as resp:
+        async def query_kaogurai(url: str) -> dict[str, Any] | None:
+            headers = {
+                "Accept": "application/json",
+                "User-Agent": f"Red-DiscordBot, OCR/2.0.0 (https://github.com/kaogurai/cogs)"
+            }
+            prms = {"url": image_url}
+            async with session.get(url, headers=headers, params=prms) as resp:
                 if resp.status != 200:
-                    log.debug(
-                        f"[OCR] {url} sent {resp.status} HTTP response code."
-                    )
+                    log.info(f"[OCR] {url} sent {resp.status} HTTP response code.")
                     return None
                 return await resp.json()
 
-        result = await query_kaogurai("https://api.flowery.pw/v1/ocr/image")
+        result = await query_kaogurai("https://api.flowery.pw/v1/ocr")
         if not result:
             async with self.session.post(
                 "https://api.ocr.space/parse/image", data=data
