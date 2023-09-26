@@ -67,3 +67,4 @@ async def search_for_images(ctx: Context) -> list[str]:
         if match := IMAGE_LINKS.search(message.content):
             urls.append(match.group(1))
     return urls
+

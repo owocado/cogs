@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from redbot.core import commands
 from redbot.core.utils.chat_formatting import pagify
@@ -11,7 +11,7 @@ class OCR(commands.Cog):
     """Detect text in images using ocr.space or Google Cloud Vision API."""
 
     __authors__ = ["<@306810730055729152>", "TrustyJAID"]
-    __version__ = "2.0.0"
+    __version__ = "2.1.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad."""
@@ -32,7 +32,7 @@ class OCR(commands.Cog):
     async def ocr(
         self,
         ctx: commands.Context,
-        detect_handwriting: Optional[bool] = False,
+        detect_handwriting: bool | None = False,
         image: ImageFinder = None,
     ) -> None:
         """Detect text in an image through Google OCR API.
@@ -60,7 +60,9 @@ class OCR(commands.Cog):
             resp = await do_vision_ocr(ctx, detect_handwriting, image=image[0])
             if not resp:
                 return
-            await ctx.send_interactive(pagify(resp.text_value), box_lang="")
+            await ctx.send_interactive(
+                pagify(resp.text_value, page_length=1984), box_lang="", timeout=120,
+            )
             return
 
     @commands.cooldown(1, 5, commands.BucketType.user)
@@ -69,10 +71,9 @@ class OCR(commands.Cog):
     async def ocrtr(
         self,
         ctx: commands.Context,
-        detect_handwriting: Optional[bool] = False,
+        detect_handwriting: bool | None = False,
         image: ImageFinder = None,
     ) -> None:
-        """Run OCR on an image and translate output to English."""
         if not image:
             if ctx.message.reference and (message := ctx.message.reference.resolved):
                 image = await find_images_in_replies(message)  # type: ignore
@@ -87,17 +88,32 @@ class OCR(commands.Cog):
             if not resp:
                 return
 
+            from translate.models import DetectedLanguage
             from translate.translate import Translate
             cog = ctx.bot.get_cog('Translate')
             if not cog:
                 await ctx.send('Translate function failed :pensive:')
                 return
             assert isinstance(cog, Translate)
-            from_lang = resp.fullTextAnnotation.language_code
-            text = resp.text_value
+
+            text = resp.text_value or ""
+            try:
+                detected_lang = await cog._tr.detect_language(text, guild=ctx.guild)
+            except Exception:
+                # await ctx.send(str(exc))
+                detected_lang = DetectedLanguage("auto", False, 0.0)
+                from_lang = resp.fullTextAnnotation.language_code
+            else:
+                from_lang = detected_lang.language
             translated_text = await cog.run_translate(ctx, from_lang, "en", text)
             if not translated_text:
-                await ctx.send("<a:_:947438639728689162> idk but i failed (no output)")
+                await ctx.send_interactive(pagify(text, page_length=1984), box_lang="", timeout=120)
+                await ctx.send("<a:_:947438639728689162> failed to translate funny")
                 return
-            await ctx.send_interactive(pagify(str(translated_text)), box_lang="")
+            content, embed = translated_text.embed(
+                ctx.author, from_lang, "en", ctx.author, detected_lang.confidence
+            )
+            ref = ctx.message.to_reference(fail_if_not_exists=False)
+            await ctx.send(embed=embed, reference=ref, mention_author=False)
             return
+

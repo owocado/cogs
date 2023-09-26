@@ -12,3 +12,4 @@ async def setup(bot: Red):
     if not getattr(bot, "session", None):
         raise CogLoadError("This cog requires bot.session attr to be set.")
     await bot.add_cog(OCR())
+

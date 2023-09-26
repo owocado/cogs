@@ -47,14 +47,22 @@ class FullTextAnnotation:
 class VisionError:
     code: int
     message: str
+    status: str | None
+
+    def __str__(self) -> str:
+        return f"Error code: {self.code} ({self.message})"
 
 
 @dataclass(slots=True)
 class VisionPayload:
-    fullTextAnnotation: FullTextAnnotation
+    fullTextAnnotation: FullTextAnnotation | None
+    error: VisionError | None
     textAnnotations: List[TextAnnotation] = field(default_factory=list)
-    error: VisionError | None = None
 
     @property
-    def text_value(self) -> str:
+    def text_value(self) -> str | None:
+        if not self.fullTextAnnotation:
+            if self.error:
+                return self.error.message
+            return None
         return self.fullTextAnnotation.text or self.textAnnotations[0].description
