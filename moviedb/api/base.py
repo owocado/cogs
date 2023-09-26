@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from typing import List, Literal, Optional, Sequence, Union
+from typing import Literal
 
 import aiohttp
 
@@ -26,12 +26,12 @@ __all__ = (
 @dataclass(slots=True)
 class BaseSearch:
     adult: bool
-    backdrop_path: Optional[str]
+    backdrop_path: str | None
     id: int
-    overview: Optional[str]
-    poster_path: Optional[str]
+    overview: str | None
+    poster_path: str | None
     media_type: str
-    genre_ids: Sequence[int]
+    genre_ids: list[int]
     popularity: float
     vote_count: int
     vote_average: float
@@ -40,8 +40,8 @@ class BaseSearch:
 @dataclass(slots=True)
 class MediaNotFound:
     status_message: str
-    http_code: Optional[int] = None
-    status_code: Optional[int] = None
+    http_code: int | None = None
+    status_code: int | None = None
     success: bool = False
 
     def __len__(self) -> int:
@@ -61,7 +61,7 @@ class CelebrityCast:
     credit_id: str
     character: str
     known_for_department: str
-    profile_path: Optional[str]
+    profile_path: str | None
     gender: int = 0
     cast_id: int = 0
     popularity: float = 0.0
@@ -77,8 +77,8 @@ class Genre:
 class ProductionCompany:
     id: int
     name: str
-    logo_path: Optional[str]
-    origin_country: Optional[str]
+    logo_path: str | None
+    origin_country: str | None
 
 
 @dataclass(slots=True)
@@ -91,7 +91,7 @@ class ProductionCountry:
 class Language:
     name: str
     iso_639_1: str
-    english_name: Optional[str]
+    english_name: str | None
 
     def __str__(self) -> str:
         return self.english_name or self.name
@@ -102,7 +102,7 @@ async def multi_search(
     api_key: str,
     query: str,
     include_adult: Literal["true", "false"] = "false",
-) -> List[Union[Celebrity, MultiResult]] | MediaNotFound:
+) -> list[Celebrity | MultiResult] | MediaNotFound:
     try:
         async with session.get(
             f"{API_BASE}/search/multi",

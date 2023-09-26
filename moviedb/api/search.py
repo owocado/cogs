@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from operator import itemgetter
-from typing import Optional, List, Union
 
 import aiohttp
 import dacite
@@ -20,9 +19,9 @@ class PersonSearch:
     media_type: str
     popularity: float
     known_for_department: str
-    original_name: Optional[str]
-    profile_path: Optional[str]
-    known_for: List[Union[MovieSearch, TVShowSearch]]
+    original_name: str | None
+    profile_path: str | None
+    known_for: list[MovieSearch | TVShowSearch]
 
     @property
     def famous_for(self) -> str:
@@ -36,7 +35,7 @@ class PersonSearch:
         session: aiohttp.ClientSession,
         api_key: str,
         query: str
-    ) -> MediaNotFound | List[PersonSearch]:
+    ) -> MediaNotFound | list[PersonSearch]:
         all_data = await multi_search(session, api_key, query)
         if not all_data:
             return MediaNotFound("No celebrity persons found from your query!")
@@ -54,10 +53,10 @@ class PersonSearch:
 class MovieSearch(BaseSearch):
     title: str
     original_title: str
-    release_date: Optional[str]
+    release_date: str | None
     original_language: str
-    video: Optional[bool]
-    adult: Optional[bool]
+    video: bool | None
+    adult: bool | None
 
     @classmethod
     async def request(
@@ -65,7 +64,7 @@ class MovieSearch(BaseSearch):
         session: aiohttp.ClientSession,
         api_key: str,
         query: str
-    ) -> MediaNotFound | List[MovieSearch]:
+    ) -> MediaNotFound | list[MovieSearch]:
         all_data = await multi_search(session, api_key, query)
         if not all_data:
             return MediaNotFound("No movies found from given query!")
@@ -83,7 +82,7 @@ class MovieSearch(BaseSearch):
 class TVShowSearch(BaseSearch):
     name: str
     original_name: str
-    first_air_date: Optional[str]
+    first_air_date: str | None
     original_language: str
 
     @property
@@ -96,7 +95,7 @@ class TVShowSearch(BaseSearch):
         session: aiohttp.ClientSession,
         api_key: str,
         query: str
-    ) -> MediaNotFound | List[TVShowSearch]:
+    ) -> MediaNotFound | list[TVShowSearch]:
         all_data = await multi_search(session, api_key, query)
         if not all_data:
             return MediaNotFound("No TV shows found from given query!")

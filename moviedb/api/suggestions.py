@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import Any
 
 import aiohttp
 import dacite
@@ -22,7 +22,7 @@ class BaseSuggestions:
     popularity: float
     vote_count: int
     vote_average: float
-    genre_ids: List[int]
+    genre_ids: list[int]
 
 
 @dataclass(slots=True)
@@ -31,12 +31,12 @@ class MovieSuggestions(BaseSuggestions):
     original_title: str
     release_date: str
     video: bool
-    backdrop_path: Optional[str]
-    poster_path: Optional[str]
+    backdrop_path: str | None
+    poster_path: str | None
 
     @property
     def humanize_votes(self) -> str:
-        return f'**{self.vote_average:.1f}** ⭐  ({humanize_number(self.vote_count)} votes)'
+        return f'**{self.vote_average:.1f}** ⭐ ({humanize_number(self.vote_count)} votes)'
 
     @classmethod
     async def request(
@@ -44,7 +44,7 @@ class MovieSuggestions(BaseSuggestions):
         session: aiohttp.ClientSession,
         api_key: str,
         movie_id: Any
-    ) -> MediaNotFound | List[MovieSuggestions]:
+    ) -> MediaNotFound | list[MovieSuggestions]:
         url = f"{API_BASE}/movie/{movie_id}/recommendations"
         try:
             async with session.get(url, params={"api_key": api_key}) as resp:
@@ -68,13 +68,13 @@ class TVShowSuggestions(BaseSuggestions):
     name: str
     original_name: str
     first_air_date: str
-    origin_country: List[str]
-    backdrop_path: Optional[str]
-    poster_path: Optional[str]
+    origin_country: list[str]
+    backdrop_path: str | None
+    poster_path: str | None
 
     @property
     def humanize_votes(self) -> str:
-        return f'**{self.vote_average:.1f}** ⭐  ({humanize_number(self.vote_count)} votes)'
+        return f'**{self.vote_average:.1f}** ⭐ ({humanize_number(self.vote_count)} votes)'
 
     @classmethod
     async def request(
@@ -82,7 +82,7 @@ class TVShowSuggestions(BaseSuggestions):
         session: aiohttp.ClientSession,
         api_key: str,
         tmdb_id: Any
-    ) -> MediaNotFound | List[TVShowSuggestions]:
+    ) -> MediaNotFound | list[TVShowSuggestions]:
         url = f"{API_BASE}/tv/{tmdb_id}/recommendations"
         try:
             async with session.get(url, params={"api_key": api_key}) as resp:

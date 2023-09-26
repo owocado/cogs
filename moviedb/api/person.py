@@ -1,8 +1,8 @@
 from __future__ import annotations
-import asyncio
 
-from dataclasses import dataclass
-from typing import Any, List, Mapping, Optional
+import asyncio
+from dataclasses import dataclass, field
+from typing import Any
 
 import aiohttp
 import dacite
@@ -11,21 +11,21 @@ from discord.utils import escape_markdown
 from .base import MediaNotFound as NotFound
 from ..constants import API_BASE, CDN_BASE
 
-_MAP: Mapping[str, str] = {"tv": "TV", "movie": "Movie"}
+_MAP: dict[str, str] = {"tv": "TV", "movie": "Movie"}
 
 
 @dataclass(slots=True)
 class BaseCredits:
     adult: bool
     id: int
-    origin_country: Optional[List[str]]
-    name: Optional[str]
-    original_name: Optional[str]
-    title: Optional[str]
-    original_title: Optional[str]
-    episode_count: Optional[int]
-    first_air_date: Optional[str]
-    release_date: Optional[str]
+    origin_country: list[str] | None
+    name: str | None
+    original_name: str | None
+    title: str | None
+    original_title: str | None
+    episode_count: int | None
+    first_air_date: str | None
+    release_date: str | None
     media_type: str
 
     @property
@@ -44,7 +44,7 @@ class BaseCredits:
 
 @dataclass(slots=True)
 class CastCredits(BaseCredits):
-    character: Optional[str]
+    character: str | None
 
     @property
     def portray_as(self) -> str:
@@ -59,8 +59,8 @@ class CastCredits(BaseCredits):
 
 @dataclass(slots=True)
 class CrewCredits(BaseCredits):
-    department: Optional[str]
-    job: Optional[str]
+    department: str | None
+    job: str | None
 
     @property
     def portray_as(self) -> str:
@@ -75,8 +75,8 @@ class CrewCredits(BaseCredits):
 
 @dataclass(slots=True)
 class PersonCredits:
-    cast: Optional[List[CastCredits]]
-    crew: Optional[List[CrewCredits]]
+    cast: list[CastCredits] = field(default_factory=list)
+    crew: list[CrewCredits] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -85,17 +85,17 @@ class Person:
     name: str
     gender: int
     adult: bool
-    imdb_id: str
-    biography: str
-    known_for_department: str
+    imdb_id: str | None
+    biography: str | None
+    known_for_department: str | None
     popularity: float
-    birthday: Optional[str]
-    deathday: Optional[str]
-    place_of_birth: Optional[str]
-    profile_path: Optional[str]
-    homepage: Optional[str]
-    combined_credits: Optional[PersonCredits]
-    also_known_as: Optional[List[str]]
+    birthday: str | None
+    deathday: str | None
+    place_of_birth: str | None
+    profile_path: str | None
+    homepage: str | None
+    combined_credits: PersonCredits | None
+    also_known_as: list[str] = field(default_factory=list)
 
     @property
     def person_image(self) -> str:

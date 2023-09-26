@@ -1,13 +1,11 @@
 from operator import attrgetter
 from typing import Any, List, cast
 
-import aiohttp
 import discord
 from discord.app_commands import describe
 from redbot.core import commands
-from redbot.core.bot import Red
 from redbot.core.commands import Context
-from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
+from redbot.core.utils.views import BaseMenu, ListPages
 
 from .api.base import CDN_BASE, MediaNotFound
 from .api.details import MovieDetails, TVShowDetails
@@ -32,13 +30,6 @@ class MovieDB(commands.GroupCog, group_name="imdb"):
 
     __authors__ = "<@306810730055729152>"
     __version__ = "4.2.0"
-
-    def __init__(self, bot: Red) -> None:
-        self.bot = bot
-        self.session = aiohttp.ClientSession()
-
-    async def cog_unload(self) -> None:
-        await self.session.close()
 
     def format_help_for_context(self, ctx: Context) -> str:  # Thanks Sinbad!
         return (
@@ -94,7 +85,7 @@ class MovieDB(commands.GroupCog, group_name="imdb"):
                 )
             embeds.append(emb3)
         embeds.insert(0, emb1)
-        await menu(ctx, embeds, DEFAULT_CONTROLS, timeout=90)
+        await BaseMenu(ListPages(embeds), timeout=120, ctx=ctx).start(ctx, ephemeral=True)
         return
 
     @commands.bot_has_permissions(embed_links=True)
@@ -106,11 +97,13 @@ class MovieDB(commands.GroupCog, group_name="imdb"):
         if isinstance(movie, MediaNotFound):
             return await ctx.send(str(movie))
 
+        embeds: List[discord.Embed] = []
         data = cast(MovieDetails, movie)
-        emb1 = make_movie_embed(data, COLOR)
+        embeds.append(make_movie_embed(data, COLOR))
         emb2 = discord.Embed(colour=COLOR, title=data.title)
-        emb2.url = f"https://www.themoviedb.org/movie/{data.id}"
-        emb2.set_image(url=f"{CDN_BASE}{data.backdrop_path or '/'}")
+        emb2.url = f"https://themoviedb.org/movie/{data.id}"
+        if data.backdrop_path:
+            emb2.set_image(url=f"{CDN_BASE}{data.backdrop_path}")
         if data.production_companies:
             emb2.add_field(name="Production Companies:", value=data.all_production_companies)
         if data.production_countries:
@@ -121,17 +114,19 @@ class MovieDB(commands.GroupCog, group_name="imdb"):
             )
         if data.tagline:
             emb2.add_field(name="Tagline:", value=data.tagline, inline=False)
+        if bool(emb2.fields) or bool(emb2.image):
+            embeds.append(emb2)
 
-        celebrities = []
         if data.credits:
             emb2.set_footer(text="See next page to see the celebrity cast!", icon_url=TMDB_ICON)
-            celebrities = parse_credits(
+            celebrities_embed = parse_credits(
                 data.credits,
                 colour=COLOR,
                 tmdb_id=f"movie/{data.id}",
                 title=data.title,
             )
-        await menu(ctx, [emb1, emb2] + celebrities, DEFAULT_CONTROLS, timeout=90)
+            embeds.extend(celebrities_embed)
+        await BaseMenu(ListPages(embeds), timeout=120, ctx=ctx).start(ctx, ephemeral=True)
         return
 
     @commands.bot_has_permissions(embed_links=True)
@@ -143,15 +138,17 @@ class MovieDB(commands.GroupCog, group_name="imdb"):
         if isinstance(tv_show, MediaNotFound):
             return await ctx.send(str(tv_show))
 
+        embeds: List[discord.Embed] = []
         data = cast(TVShowDetails, tv_show)
-        emb1 = make_tvshow_embed(data, COLOR)
+        embeds.append(make_tvshow_embed(data, COLOR))
         emb2 = discord.Embed(colour=COLOR, title=data.name)
-        emb2.url = f"https://www.themoviedb.org/tv/{data.id}"
-        emb2.set_image(url=f"{CDN_BASE}{data.backdrop_path or '/'}")
+        emb2.url = f"https://themoviedb.org/tv/{data.id}"
+        if data.backdrop_path:
+            emb2.set_image(url=f"{CDN_BASE}{data.backdrop_path}")
         if production_countries := data.production_countries:
             emb2.add_field(
                 name="Production Countries:",
-                value=", ".join([m.name for m in production_countries]),
+                value="\n".join([m.name for m in production_countries]),
             )
         if production_companies := data.production_companies:
             emb2.add_field(
@@ -161,17 +158,19 @@ class MovieDB(commands.GroupCog, group_name="imdb"):
             )
         if data.tagline:
             emb2.add_field(name="Tagline:", value=data.tagline, inline=False)
+        if bool(emb2.fields) or bool(emb2.image):
+            embeds.append(emb2)
 
-        celebrities = []
         if data.credits:
             emb2.set_footer(text="See next page for series' celebrity cast!", icon_url=TMDB_ICON)
-            celebrities = parse_credits(
+            celebrities_embed = parse_credits(
                 data.credits,
                 colour=COLOR,
                 tmdb_id=f"tv/{data.id}",
                 title=data.name,
             )
-        await menu(ctx, [emb1, emb2] + celebrities, DEFAULT_CONTROLS, timeout=90)
+            embeds.extend(celebrities_embed)
+        await BaseMenu(ListPages(embeds), timeout=120, ctx=ctx).start(ctx, ephemeral=True)
         return
 
     @commands.bot_has_permissions(embed_links=True)
@@ -183,13 +182,13 @@ class MovieDB(commands.GroupCog, group_name="imdb"):
         if isinstance(movie, MediaNotFound):
             return await ctx.send(str(movie))
 
-        embeds: List[discord.Embed] = []
+        pages: List[discord.Embed] = []
         output = cast(List[MovieSuggestions], movie)
         for i, data in enumerate(output, start=1):
             colour = COLOR
             footer = f"Page {i} of {len(output)}"
-            embeds.append(make_suggestmovies_embed(data, colour, footer))
-        await menu(ctx, embeds, DEFAULT_CONTROLS, timeout=90)
+            pages.append(make_suggestmovies_embed(data, colour, footer))
+        await BaseMenu(ListPages(pages), timeout=120, ctx=ctx).start(ctx, ephemeral=True)
         return
 
     @commands.bot_has_permissions(embed_links=True)
@@ -201,11 +200,11 @@ class MovieDB(commands.GroupCog, group_name="imdb"):
         if isinstance(tv_show, MediaNotFound):
             return await ctx.send(str(tv_show))
 
-        embeds: List[discord.Embed] = []
+        pages: List[discord.Embed] = []
         output = cast(List[TVShowSuggestions], tv_show)
         for i, data in enumerate(output, start=1):
             colour = COLOR
             footer = f"Page {i} of {len(output)}"
-            embeds.append(make_suggestshows_embed(data, colour, footer))
-        await menu(ctx, embeds, DEFAULT_CONTROLS, timeout=90)
+            pages.append(make_suggestshows_embed(data, colour, footer))
+        await BaseMenu(ListPages(pages), timeout=120, ctx=ctx).start(ctx, ephemeral=True)
         return

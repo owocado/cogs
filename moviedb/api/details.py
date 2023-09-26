@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import Any
 
 import aiohttp
 import dacite
+from dateutil.parser import isoparse
+from discord.utils import utcnow
 from redbot.core.utils.chat_formatting import humanize_number
 
 from .base import CelebrityCast, Genre, MediaNotFound, ProductionCompany, ProductionCountry, Language
@@ -22,24 +25,24 @@ class MovieDetails:
     adult: bool
     video: bool
     status: str
-    tagline: Optional[str]
-    overview: Optional[str]
-    release_date: Optional[str]
-    budget: Optional[int]
-    revenue: Optional[int]
-    runtime: Optional[int]
-    vote_count: Optional[int]
-    vote_average: Optional[float]
-    popularity: Optional[float]
-    homepage: Optional[str]
-    imdb_id: Optional[str]
-    poster_path: Optional[str]
-    backdrop_path: Optional[str]
-    genres: List[Genre]
-    credits: List[CelebrityCast]
-    spoken_languages: List[Language]
-    production_companies: List[ProductionCompany]
-    production_countries: List[ProductionCountry]
+    tagline: str | None
+    overview: str | None
+    release_date: str | None
+    budget: int | None
+    revenue: int | None
+    runtime: int | None
+    vote_count: int | None
+    vote_average: float | None
+    popularity: float | None
+    homepage: str | None
+    imdb_id: str | None
+    poster_path: str | None
+    backdrop_path: str | None
+    genres: list[Genre]
+    credits: list[CelebrityCast]
+    spoken_languages: list[Language]
+    production_companies: list[ProductionCompany]
+    production_countries: list[ProductionCountry]
 
     @property
     def all_genres(self) -> str:
@@ -47,27 +50,49 @@ class MovieDetails:
 
     @property
     def all_production_companies(self) -> str:
-        return ', '.join(g.name for g in self.production_companies)
+        return "\n".join(g.name for g in self.production_companies)
 
     @property
     def all_production_countries(self) -> str:
-        return ', '.join(g.name for g in self.production_countries)
+        return ", ".join(g.name for g in self.production_countries)
 
     @property
     def all_spoken_languages(self) -> str:
-        return ', '.join(str(g) for g in self.spoken_languages)
+        return ", ".join(str(g) for g in self.spoken_languages)
 
     @property
     def humanize_runtime(self) -> str:
         if not self.runtime:
             return ""
-        return f'{self.runtime // 60}h {self.runtime % 60}m'
+        h, m = self.runtime // 60, self.runtime % 60
+        hours, minutes = f"{h}h" if h else "", f"{m}m" if m else ""
+        return f"{hours} {minutes}"
 
     @property
     def humanize_votes(self) -> str:
         if not self.vote_count:
             return ''
         return f'**{self.vote_average:.1f}** ⭐ ({humanize_number(self.vote_count)} votes)'
+
+    @classmethod
+    def from_json(cls, data: dict[str, Any]) -> MovieDetails:
+        genres = [Genre(**g) for g in data.pop('genres', [])]
+        credits = [CelebrityCast(**c) for c in data.pop('credits', {}).get('cast', [])]
+        spoken_languages = [Language(**sl) for sl in data.pop('spoken_languages', [])]
+        production_companies = [
+            ProductionCompany(**p) for p in data.pop('production_companies', [])
+        ]
+        production_countries = [
+            ProductionCountry(**pc) for pc in data.pop('production_countries', [])
+        ]
+        return cls(
+            genres=genres,
+            credits=credits,
+            spoken_languages=spoken_languages,
+            production_companies=production_companies,
+            production_countries=production_countries,
+            **data
+        )
 
     @classmethod
     async def request(
@@ -95,7 +120,7 @@ class Creator:
     credit_id: str
     name: str
     gender: int
-    profile_path: Optional[str]
+    profile_path: str | None
 
 
 @dataclass(slots=True)
@@ -103,15 +128,15 @@ class EpisodeInfo:
     id: int
     name: str
     overview: str
-    vote_average: Optional[float]
-    vote_count: Optional[int]
-    air_date: Optional[str]
+    vote_average: float | None
+    vote_count: int | None
+    air_date: str | None
     episode_number: int
     production_code: str
-    runtime: Optional[int]
+    runtime: int | None
     season_number: int
-    still_path: Optional[str]
-    show_id: Optional[int]
+    still_path: str | None
+    show_id: int | None
 
 
 
@@ -119,8 +144,8 @@ class EpisodeInfo:
 class Network:
     id: int
     name: str
-    logo_path: Optional[str]
-    origin_country: Optional[str]
+    logo_path: str | None
+    origin_country: str | None
 
 
 @dataclass(slots=True)
@@ -130,9 +155,17 @@ class Season:
     air_date: str
     overview: str
     episode_count: int
-    poster_path: Optional[str]
+    poster_path: str | None
     season_number: int = 0
     vote_average: float = 0.0
+
+    @property
+    def release_date(self) -> datetime:
+        return isoparse(self.air_date)
+
+    @property
+    def prefix(self) -> str:
+        return "airing" if self.release_date.timestamp() > utcnow().timestamp() else "aired"
 
 
 @dataclass(slots=True)
@@ -141,35 +174,35 @@ class TVShowDetails:
     adult: bool
     name: str
     original_name: str
-    first_air_date: str
-    last_air_date: str
-    homepage: str
+    first_air_date: str | None
+    last_air_date: str | None
+    homepage: str | None
     overview: str
     in_production: bool
     status: str
-    type: Optional[str]
-    tagline: Optional[str]
-    number_of_episodes: Optional[int]
-    number_of_seasons: Optional[int]
-    popularity: Optional[float]
-    vote_average: Optional[float]
-    vote_count: Optional[int]
-    original_language: Optional[str]
-    backdrop_path: Optional[str]
-    poster_path: Optional[str]
-    next_episode_to_air: Optional[EpisodeInfo]
-    last_episode_to_air: Optional[EpisodeInfo]
-    created_by: List[Creator]
-    credits: List[CelebrityCast]
-    episode_run_time: List[int]
-    genres: List[Genre]
-    seasons: List[Season]
-    languages: List[str]
-    networks: List[Network]
-    origin_country: List[str]
-    production_companies: List[ProductionCompany]
-    production_countries: List[ProductionCountry]
-    spoken_languages: List[Language]
+    type: str | None
+    tagline: str | None
+    number_of_episodes: int | None
+    number_of_seasons: int | None
+    popularity: float | None
+    vote_average: float | None
+    vote_count: int | None
+    original_language: str | None
+    backdrop_path: str | None
+    poster_path: str | None
+    next_episode_to_air: EpisodeInfo | None
+    last_episode_to_air: EpisodeInfo | None
+    created_by: list[Creator]
+    credits: list[CelebrityCast]
+    episode_run_time: list[int]
+    genres: list[Genre]
+    seasons: list[Season]
+    languages: list[str]
+    networks: list[Network]
+    origin_country: list[str]
+    production_companies: list[ProductionCompany]
+    production_countries: list[ProductionCountry]
+    spoken_languages: list[Language]
 
     @property
     def all_genres(self) -> str:
@@ -197,7 +230,7 @@ class TVShowDetails:
     @property
     def all_seasons(self) -> str:
         return '\n'.join(
-            f'{i}. {tv.name}{format_date(tv.air_date, prefix=", aired ")}'
+            f'{i}. {tv.name}{format_date(tv.air_date, prefix=f", {tv.prefix} ")}'
             f'  ({tv.episode_count or 0} episodes)'
             for i, tv in enumerate(self.seasons, start=1)
         )
@@ -233,6 +266,36 @@ class TVShowDetails:
     @property
     def title(self) -> str:
         return self.name or self.original_name
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> TVShowDetails:
+        n_eta = data.pop('next_episode_to_air', {})
+        l_eta = data.pop('last_episode_to_air', {})
+        created_by = [Creator(**c) for c in data.pop('created_by', [])]
+        credits = [CelebrityCast(**ccs) for ccs in data.pop('credits', {}).get('cast', [])]
+        genres = [Genre(**g) for g in data.pop('genres', [])]
+        seasons = [Season(**s) for s in data.pop('seasons', [])]
+        networks = [Network(**n) for n in data.pop('networks', [])]
+        production_companies = [
+            ProductionCompany(**pcom) for pcom in data.pop('production_companies', [])
+        ]
+        production_countries = [
+            ProductionCountry(**pctr) for pctr in data.pop('production_countries', [])
+        ]
+        spoken_languages = [Language(**sl) for sl in data.pop('spoken_languages', [])]
+        return cls(
+            next_episode_to_air=EpisodeInfo(**n_eta) if n_eta else None,
+            last_episode_to_air=EpisodeInfo(**l_eta) if l_eta else None,
+            created_by=created_by,
+            credits=credits,
+            genres=genres,
+            seasons=seasons,
+            networks=networks,
+            production_companies=production_companies,
+            production_countries=production_countries,
+            spoken_languages=spoken_languages,
+            **data
+        )
 
     @classmethod
     async def request(

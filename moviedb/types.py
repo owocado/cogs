@@ -12,16 +12,16 @@ class CommonModel(TypedDict):
 
 
 class MultiResult(CommonModel):
-    backdrop_path: Optional[str]
-    name: Optional[str]
-    original_name: Optional[str]
-    title: Optional[str]
-    original_title: Optional[str]
+    backdrop_path: str | None
+    name: str | None
+    original_name: str | None
+    title: str | None
+    original_title: str | None
     original_language: str
-    poster_path: Optional[str]
+    poster_path: str | None
     genre_ids: List[int]
-    release_date: Optional[str]
-    first_air_date: Optional[str]
+    release_date: str | None
+    first_air_date: str | None
     video: bool
     vote_average: float
     vote_count: int
