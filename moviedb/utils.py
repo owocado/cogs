@@ -28,7 +28,7 @@ def format_date(
     date_string: str | None,
     style: Literal["f", "F", "d", "D", "t", "T", "R"] = "R",
     *,
-    prefix: str = ""
+    prefix: str = "",
 ) -> str:
     if not date_string:
         return ""
@@ -40,7 +40,7 @@ def natural_size(value: int) -> str:
     if value < 1000:
         return str(value)
 
-    units = ('', 'K', 'M', 'B')
+    units = ("", "K", "M", "B")
     power = int(math.log(max(abs(value), 1), 1000))
     return f"{value / (1000 ** power):.1f}{units[power]}"
 
@@ -103,10 +103,7 @@ def make_movie_embed(data: MovieDetails, colour: discord.Colour | int) -> discor
 
 
 def parse_credits(
-    cast_data: Sequence[CelebrityCast],
-    colour: discord.Colour | int,
-    title: str,
-    tmdb_id: str
+    cast_data: Sequence[CelebrityCast], colour: discord.Colour | int, title: str, tmdb_id: str
 ) -> List[discord.Embed]:
     pretty_cast = "\n".join(
         f"**`[{i:>2}]`**  {GENDERS[actor.gender]} [{actor.name}]"
@@ -171,7 +168,9 @@ def make_tvshow_embed(data: TVShowDetails, colour: discord.Colour | int) -> disc
 
 
 def make_suggestmovies_embed(
-    data: MovieSuggestions, colour: discord.Colour | int, footer: str,
+    data: MovieSuggestions,
+    colour: discord.Colour | int,
+    footer: str,
 ) -> discord.Embed:
     embed = discord.Embed(colour=colour, title=data.title)
     out = StringIO()
@@ -191,7 +190,9 @@ def make_suggestmovies_embed(
 
 
 def make_suggestshows_embed(
-    data: TVShowSuggestions, colour: discord.Colour | int, footer: str,
+    data: TVShowSuggestions,
+    colour: discord.Colour | int,
+    footer: str,
 ) -> discord.Embed:
     embed = discord.Embed(colour=colour, title=data.name)
     out = StringIO()

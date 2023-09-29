@@ -29,7 +29,7 @@ class MovieDB(commands.GroupCog, group_name="imdb"):
     """Get summarized info about a movie or TV show/series."""
 
     __authors__ = "<@306810730055729152>"
-    __version__ = "4.2.0"
+    __version__ = "4.2.1"
 
     def format_help_for_context(self, ctx: Context) -> str:  # Thanks Sinbad!
         return (
@@ -66,7 +66,7 @@ class MovieDB(commands.GroupCog, group_name="imdb"):
             if len(acting.cast) > 20:
                 emb2.set_footer(
                     text=f"and {len(acting.cast) - 20} more! • Sorted from recent to oldest!",
-                    icon_url=TMDB_ICON
+                    icon_url=TMDB_ICON,
                 )
             embeds.append(emb2)
         if (acting := data.combined_credits) and acting.crew:
@@ -81,7 +81,7 @@ class MovieDB(commands.GroupCog, group_name="imdb"):
             if len(acting.crew) > 20:
                 emb3.set_footer(
                     text=f"and {len(acting.crew) - 20} more! • Sorted from recent to oldest!",
-                    icon_url=TMDB_ICON
+                    icon_url=TMDB_ICON,
                 )
             embeds.append(emb3)
         embeds.insert(0, emb1)
@@ -130,7 +130,7 @@ class MovieDB(commands.GroupCog, group_name="imdb"):
         return
 
     @commands.bot_has_permissions(embed_links=True)
-    @commands.hybrid_command(aliases=["tv", "tvseries"], fallback='search')
+    @commands.hybrid_command(aliases=["tv", "tvseries"], fallback="search")
     @describe(tv_show="Provide name of TV show. Try to be specific for accurate results!")
     async def tvshow(self, ctx: Context, *, tv_show: TVShowFinder):
         """Show various info about a TV show/series."""
@@ -174,7 +174,7 @@ class MovieDB(commands.GroupCog, group_name="imdb"):
         return
 
     @commands.bot_has_permissions(embed_links=True)
-    @commands.hybrid_command(aliases=['suggestmovie'])
+    @commands.hybrid_command(aliases=["suggestmovie"])
     @describe(movie="Provide name of the movie. Try to be specific in your query!")
     async def suggestmovies(self, ctx: Context, *, movie: MovieFinder):
         """Get similar movies suggestions based on the given movie name."""
@@ -192,7 +192,7 @@ class MovieDB(commands.GroupCog, group_name="imdb"):
         return
 
     @commands.bot_has_permissions(embed_links=True)
-    @commands.hybrid_command(aliases=['suggestshow'])
+    @commands.hybrid_command(aliases=["suggestshow"])
     @describe(tv_show="Provide name of TV show. Try to be specific for accurate results!")
     async def suggestshows(self, ctx: Context, *, tv_show: TVShowFinder):
         """Get similar TV show suggestions from the given TV series name."""

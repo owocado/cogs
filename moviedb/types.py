@@ -35,4 +35,3 @@ class Celebrity(CommonModel):
     known_for_department: str
     profile_path: str
     known_for: List[MultiResult]
-

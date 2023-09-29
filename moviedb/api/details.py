@@ -11,7 +11,14 @@ from dateutil.parser import isoparse
 from discord.utils import utcnow
 from redbot.core.utils.chat_formatting import humanize_number
 
-from .base import CelebrityCast, Genre, MediaNotFound, ProductionCompany, ProductionCountry, Language
+from .base import (
+    CelebrityCast,
+    Genre,
+    MediaNotFound,
+    ProductionCompany,
+    ProductionCountry,
+    Language,
+)
 from ..constants import API_BASE
 from ..utils import format_date
 
@@ -46,7 +53,7 @@ class MovieDetails:
 
     @property
     def all_genres(self) -> str:
-        return ', '.join(g.name for g in self.genres)
+        return ", ".join(g.name for g in self.genres)
 
     @property
     def all_production_companies(self) -> str:
@@ -71,19 +78,19 @@ class MovieDetails:
     @property
     def humanize_votes(self) -> str:
         if not self.vote_count:
-            return ''
-        return f'**{self.vote_average:.1f}** ⭐ ({humanize_number(self.vote_count)} votes)'
+            return ""
+        return f"**{self.vote_average:.1f}** ⭐ ({humanize_number(self.vote_count)} votes)"
 
     @classmethod
     def from_json(cls, data: dict[str, Any]) -> MovieDetails:
-        genres = [Genre(**g) for g in data.pop('genres', [])]
-        credits = [CelebrityCast(**c) for c in data.pop('credits', {}).get('cast', [])]
-        spoken_languages = [Language(**sl) for sl in data.pop('spoken_languages', [])]
+        genres = [Genre(**g) for g in data.pop("genres", [])]
+        credits = [CelebrityCast(**c) for c in data.pop("credits", {}).get("cast", [])]
+        spoken_languages = [Language(**sl) for sl in data.pop("spoken_languages", [])]
         production_companies = [
-            ProductionCompany(**p) for p in data.pop('production_companies', [])
+            ProductionCompany(**p) for p in data.pop("production_companies", [])
         ]
         production_countries = [
-            ProductionCountry(**pc) for pc in data.pop('production_countries', [])
+            ProductionCountry(**pc) for pc in data.pop("production_countries", [])
         ]
         return cls(
             genres=genres,
@@ -91,7 +98,7 @@ class MovieDetails:
             spoken_languages=spoken_languages,
             production_companies=production_companies,
             production_countries=production_countries,
-            **data
+            **data,
         )
 
     @classmethod
@@ -99,18 +106,18 @@ class MovieDetails:
         cls, session: aiohttp.ClientSession, api_key: str, movie_id: Any
     ) -> MediaNotFound | MovieDetails:
         movie_data = {}
-        params = {'api_key': api_key, 'append_to_response': 'credits'}
+        params = {"api_key": api_key, "append_to_response": "credits"}
         try:
-            async with session.get(f'{API_BASE}/movie/{movie_id}', params=params) as resp:
+            async with session.get(f"{API_BASE}/movie/{movie_id}", params=params) as resp:
                 if resp.status in [401, 404]:
                     err_data = await resp.json()
-                    return MediaNotFound(err_data['status_message'], resp.status)
+                    return MediaNotFound(err_data["status_message"], resp.status)
                 if resp.status != 200:
-                    return MediaNotFound('', resp.status)
+                    return MediaNotFound("", resp.status)
                 movie_data: dict = await resp.json()
         except (asyncio.TimeoutError, aiohttp.ClientError):
-            return MediaNotFound('⚠️ Operation timed out.', 408)
-        movie_data['credits'] = movie_data.pop('credits', {}).get('cast', [])
+            return MediaNotFound("⚠️ Operation timed out.", 408)
+        movie_data["credits"] = movie_data.pop("credits", {}).get("cast", [])
         return dacite.from_dict(data_class=cls, data=movie_data)
 
 
@@ -137,7 +144,6 @@ class EpisodeInfo:
     season_number: int
     still_path: str | None
     show_id: int | None
-
 
 
 @dataclass(slots=True)
@@ -206,62 +212,62 @@ class TVShowDetails:
 
     @property
     def all_genres(self) -> str:
-        return ', '.join([g.name for g in self.genres])
+        return ", ".join([g.name for g in self.genres])
 
     @property
     def all_production_companies(self) -> str:
-        return ', '.join([g.name for g in self.production_companies])
+        return ", ".join([g.name for g in self.production_companies])
 
     @property
     def all_production_countries(self) -> str:
-        return ', '.join([g.name for g in self.production_countries])
+        return ", ".join([g.name for g in self.production_countries])
 
     @property
     def all_spoken_languages(self) -> str:
-        return ', '.join([g.name for g in self.spoken_languages])
+        return ", ".join([g.name for g in self.spoken_languages])
 
     @property
     def all_networks(self) -> str:
         if len(self.networks) > 3:
             left = len(self.networks) - 3
             return f"{', '.join(n.name for n in self.networks[:3])} & {left} more!"
-        return ', '.join([g.name for g in self.networks])
+        return ", ".join([g.name for g in self.networks])
 
     @property
     def all_seasons(self) -> str:
-        return '\n'.join(
+        return "\n".join(
             f'{i}. {tv.name}{format_date(tv.air_date, prefix=f", {tv.prefix} ")}'
-            f'  ({tv.episode_count or 0} episodes)'
+            f"  ({tv.episode_count or 0} episodes)"
             for i, tv in enumerate(self.seasons, start=1)
         )
 
     @property
     def creators(self) -> str:
-        return ', '.join([c.name for c in self.created_by])
+        return ", ".join([c.name for c in self.created_by])
 
     @property
     def humanize_votes(self) -> str:
         if not self.vote_count:
             return ""
-        return f'**{self.vote_average:.1f}** ⭐  ({humanize_number(self.vote_count)} votes)'
+        return f"**{self.vote_average:.1f}** ⭐  ({humanize_number(self.vote_count)} votes)"
 
     @property
     def next_episode_info(self) -> str:
         if not self.next_episode_to_air:
-            return ''
+            return ""
 
         next_ep = self.next_episode_to_air
-        next_airing = 'unsure when it will air guhh!'
+        next_airing = "unsure when it will air guhh!"
         if next_ep.air_date:
             next_airing = format_date(next_ep.air_date, prefix="likely airing ")
         return (
-            f'**S{next_ep.season_number or 0}E{next_ep.episode_number or 0}**'
-            f' : {next_airing}\n**Titled as:** {next_ep.name}'
+            f"**S{next_ep.season_number or 0}E{next_ep.episode_number or 0}**"
+            f" : {next_airing}\n**Titled as:** {next_ep.name}"
         )
 
     @property
     def seasons_count(self) -> str:
-        return f'{self.number_of_seasons} ({self.number_of_episodes} episodes)'
+        return f"{self.number_of_seasons} ({self.number_of_episodes} episodes)"
 
     @property
     def title(self) -> str:
@@ -269,20 +275,20 @@ class TVShowDetails:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> TVShowDetails:
-        n_eta = data.pop('next_episode_to_air', {})
-        l_eta = data.pop('last_episode_to_air', {})
-        created_by = [Creator(**c) for c in data.pop('created_by', [])]
-        credits = [CelebrityCast(**ccs) for ccs in data.pop('credits', {}).get('cast', [])]
-        genres = [Genre(**g) for g in data.pop('genres', [])]
-        seasons = [Season(**s) for s in data.pop('seasons', [])]
-        networks = [Network(**n) for n in data.pop('networks', [])]
+        n_eta = data.pop("next_episode_to_air", {})
+        l_eta = data.pop("last_episode_to_air", {})
+        created_by = [Creator(**c) for c in data.pop("created_by", [])]
+        credits = [CelebrityCast(**ccs) for ccs in data.pop("credits", {}).get("cast", [])]
+        genres = [Genre(**g) for g in data.pop("genres", [])]
+        seasons = [Season(**s) for s in data.pop("seasons", [])]
+        networks = [Network(**n) for n in data.pop("networks", [])]
         production_companies = [
-            ProductionCompany(**pcom) for pcom in data.pop('production_companies', [])
+            ProductionCompany(**pcom) for pcom in data.pop("production_companies", [])
         ]
         production_countries = [
-            ProductionCountry(**pctr) for pctr in data.pop('production_countries', [])
+            ProductionCountry(**pctr) for pctr in data.pop("production_countries", [])
         ]
-        spoken_languages = [Language(**sl) for sl in data.pop('spoken_languages', [])]
+        spoken_languages = [Language(**sl) for sl in data.pop("spoken_languages", [])]
         return cls(
             next_episode_to_air=EpisodeInfo(**n_eta) if n_eta else None,
             last_episode_to_air=EpisodeInfo(**l_eta) if l_eta else None,
@@ -294,27 +300,24 @@ class TVShowDetails:
             production_companies=production_companies,
             production_countries=production_countries,
             spoken_languages=spoken_languages,
-            **data
+            **data,
         )
 
     @classmethod
     async def request(
-        cls,
-        session: aiohttp.ClientSession,
-        api_key: str,
-        tvshow_id: Any
+        cls, session: aiohttp.ClientSession, api_key: str, tvshow_id: Any
     ) -> MediaNotFound | TVShowDetails:
         tvshow_data = {}
-        params = {'api_key': api_key, 'append_to_response': 'credits'}
+        params = {"api_key": api_key, "append_to_response": "credits"}
         try:
-            async with session.get(f'{API_BASE}/tv/{tvshow_id}', params=params) as resp:
+            async with session.get(f"{API_BASE}/tv/{tvshow_id}", params=params) as resp:
                 if resp.status in [401, 404]:
                     err_data = await resp.json()
-                    return MediaNotFound(err_data['status_message'], resp.status)
+                    return MediaNotFound(err_data["status_message"], resp.status)
                 if resp.status != 200:
-                    return MediaNotFound('', resp.status)
+                    return MediaNotFound("", resp.status)
                 tvshow_data: dict = await resp.json()
         except (asyncio.TimeoutError, aiohttp.ClientError):
-            return MediaNotFound('⚠️ Operation timed out.', 408)
-        tvshow_data['credits'] = tvshow_data.pop('credits', {}).get('cast', [])
+            return MediaNotFound("⚠️ Operation timed out.", 408)
+        tvshow_data["credits"] = tvshow_data.pop("credits", {}).get("cast", [])
         return dacite.from_dict(data_class=cls, data=tvshow_data)

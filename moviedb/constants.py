@@ -15,7 +15,7 @@ class MediaNotFound:
     success: bool = False
 
     def __str__(self) -> str:
-        return self.status_message or f'https://http.cat/{self.http_code}.jpg'
+        return self.status_message or f"https://http.cat/{self.http_code}.jpg"
 
 
 @dataclass(slots=True)

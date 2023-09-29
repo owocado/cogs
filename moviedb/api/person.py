@@ -103,15 +103,12 @@ class Person:
 
     @classmethod
     async def request(
-        cls,
-        session: aiohttp.ClientSession,
-        api_key: str,
-        person_id: Any
+        cls, session: aiohttp.ClientSession, api_key: str, person_id: Any
     ) -> Person | NotFound:
         try:
             async with session.get(
                 f"{API_BASE}/person/{person_id}",
-                params={"api_key": api_key, "append_to_response": "combined_credits"}
+                params={"api_key": api_key, "append_to_response": "combined_credits"},
             ) as resp:
                 if resp.status in [401, 404]:
                     data = await resp.json()

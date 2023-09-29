@@ -48,7 +48,7 @@ class MediaNotFound:
         return 0
 
     def __str__(self) -> str:
-        return self.status_message or f'https://http.cat/{self.http_code}.jpg'
+        return self.status_message or f"https://http.cat/{self.http_code}.jpg"
 
 
 @dataclass(slots=True)
@@ -106,7 +106,7 @@ async def multi_search(
     try:
         async with session.get(
             f"{API_BASE}/search/multi",
-            params={"api_key": api_key, "query": query, "include_adult": include_adult}
+            params={"api_key": api_key, "query": query, "include_adult": include_adult},
         ) as resp:
             if resp.status in [401, 404]:
                 data = await resp.json()
@@ -120,4 +120,3 @@ async def multi_search(
     if not all_data.get("results"):
         return MediaNotFound("No results found.", resp.status)
     return all_data.get("results", [])
-

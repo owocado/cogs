@@ -31,10 +31,7 @@ class PersonSearch:
 
     @classmethod
     async def request(
-        cls,
-        session: aiohttp.ClientSession,
-        api_key: str,
-        query: str
+        cls, session: aiohttp.ClientSession, api_key: str, query: str
     ) -> MediaNotFound | list[PersonSearch]:
         all_data = await multi_search(session, api_key, query)
         if not all_data:
@@ -60,10 +57,7 @@ class MovieSearch(BaseSearch):
 
     @classmethod
     async def request(
-        cls,
-        session: aiohttp.ClientSession,
-        api_key: str,
-        query: str
+        cls, session: aiohttp.ClientSession, api_key: str, query: str
     ) -> MediaNotFound | list[MovieSearch]:
         all_data = await multi_search(session, api_key, query)
         if not all_data:
@@ -91,10 +85,7 @@ class TVShowSearch(BaseSearch):
 
     @classmethod
     async def request(
-        cls,
-        session: aiohttp.ClientSession,
-        api_key: str,
-        query: str
+        cls, session: aiohttp.ClientSession, api_key: str, query: str
     ) -> MediaNotFound | list[TVShowSearch]:
         all_data = await multi_search(session, api_key, query)
         if not all_data:

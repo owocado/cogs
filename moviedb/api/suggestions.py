@@ -36,31 +36,28 @@ class MovieSuggestions(BaseSuggestions):
 
     @property
     def humanize_votes(self) -> str:
-        return f'**{self.vote_average:.1f}** ⭐ ({humanize_number(self.vote_count)} votes)'
+        return f"**{self.vote_average:.1f}** ⭐ ({humanize_number(self.vote_count)} votes)"
 
     @classmethod
     async def request(
-        cls,
-        session: aiohttp.ClientSession,
-        api_key: str,
-        movie_id: Any
+        cls, session: aiohttp.ClientSession, api_key: str, movie_id: Any
     ) -> MediaNotFound | list[MovieSuggestions]:
         url = f"{API_BASE}/movie/{movie_id}/recommendations"
         try:
             async with session.get(url, params={"api_key": api_key}) as resp:
                 if resp.status in [401, 404]:
                     err_data = await resp.json()
-                    return MediaNotFound(err_data['status_message'], resp.status)
+                    return MediaNotFound(err_data["status_message"], resp.status)
                 if resp.status != 200:
-                    return MediaNotFound('', resp.status)
+                    return MediaNotFound("", resp.status)
                 data: dict = await resp.json()
         except (aiohttp.ClientError, asyncio.TimeoutError):
-            return MediaNotFound('⚠️ Operation timed out.', 408)
+            return MediaNotFound("⚠️ Operation timed out.", 408)
 
-        if not data.get('results') or data['total_results'] < 1:
-            return MediaNotFound('❌ No recommendations found related to that movie.', 404)
+        if not data.get("results") or data["total_results"] < 1:
+            return MediaNotFound("❌ No recommendations found related to that movie.", 404)
 
-        return [dacite.from_dict(data_class=cls, data=obj) for obj in data['results']]
+        return [dacite.from_dict(data_class=cls, data=obj) for obj in data["results"]]
 
 
 @dataclass(slots=True)
@@ -74,28 +71,25 @@ class TVShowSuggestions(BaseSuggestions):
 
     @property
     def humanize_votes(self) -> str:
-        return f'**{self.vote_average:.1f}** ⭐ ({humanize_number(self.vote_count)} votes)'
+        return f"**{self.vote_average:.1f}** ⭐ ({humanize_number(self.vote_count)} votes)"
 
     @classmethod
     async def request(
-        cls,
-        session: aiohttp.ClientSession,
-        api_key: str,
-        tmdb_id: Any
+        cls, session: aiohttp.ClientSession, api_key: str, tmdb_id: Any
     ) -> MediaNotFound | list[TVShowSuggestions]:
         url = f"{API_BASE}/tv/{tmdb_id}/recommendations"
         try:
             async with session.get(url, params={"api_key": api_key}) as resp:
                 if resp.status in [401, 404]:
                     err_data = await resp.json()
-                    return MediaNotFound(err_data['status_message'], resp.status)
+                    return MediaNotFound(err_data["status_message"], resp.status)
                 if resp.status != 200:
-                    return MediaNotFound('', resp.status)
+                    return MediaNotFound("", resp.status)
                 data: dict = await resp.json()
         except (aiohttp.ClientError, asyncio.TimeoutError):
-            return MediaNotFound('⚠️ Operation timed out.', 408)
+            return MediaNotFound("⚠️ Operation timed out.", 408)
 
-        if not data.get('results') or data['total_results'] < 1:
-            return MediaNotFound('❌ No recommendations found related to that TV show.', 404)
+        if not data.get("results") or data["total_results"] < 1:
+            return MediaNotFound("❌ No recommendations found related to that TV show.", 404)
 
-        return [dacite.from_dict(data_class=cls, data=obj) for obj in data['results']]
+        return [dacite.from_dict(data_class=cls, data=obj) for obj in data["results"]]
