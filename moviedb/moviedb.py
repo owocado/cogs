@@ -1,5 +1,4 @@
-from operator import attrgetter
-from typing import Any, List, cast
+from typing import Annotated, Any, List, Tuple, cast
 
 import discord
 from discord.app_commands import describe
@@ -22,14 +21,15 @@ from .utils import (
     parse_credits,
 )
 
+
 COLOR = discord.Colour(0xC57FFF)
 
 
-class MovieDB(commands.GroupCog, group_name="imdb"):
+class MovieDB(commands.Cog):
     """Get summarized info about a movie or TV show/series."""
 
     __authors__ = "<@306810730055729152>"
-    __version__ = "4.2.1"
+    __version__ = "4.2.2"
 
     def format_help_for_context(self, ctx: Context) -> str:  # Thanks Sinbad!
         return (
@@ -43,49 +43,21 @@ class MovieDB(commands.GroupCog, group_name="imdb"):
         pass
 
     @commands.bot_has_permissions(embed_links=True)
-    @commands.hybrid_command(aliases=["actor", "director"])
+    @commands.hybrid_command(aliases=["actor", "director", "celeb"])
     @describe(name="Enter celebrity actor/director name. Be specific for accurate results!")
-    async def celebrity(self, ctx: Context, *, name: PersonFinder):
+    async def celebrity(
+        self, ctx: Context, *, name: Annotated[Tuple[discord.Message, Person], PersonFinder]
+    ) -> None:
         """Get info about a movie/tvshow celebrity or crew!"""
-        await ctx.typing()
-        if isinstance(name, MediaNotFound):
-            return await ctx.send(str(name))
-
-        data = cast(Person, name)
-        embeds: List[discord.Embed] = []
+        if ctx.interaction:
+            return
+        await ctx.defer(ephemeral=True)
+        message, data = name
         emb1 = make_person_embed(data, COLOR)
-        if (acting := data.combined_credits) and acting.cast:
-            emb2 = discord.Embed(colour=emb1.colour)
-            emb2.set_author(
-                name=f"{data.name}’s Acting Roles", icon_url=data.person_image, url=emb1.url
-            )
-            emb2.description = "\n".join(
-                z.pretty_format
-                for z in sorted(acting.cast[:20], key=attrgetter("year"), reverse=True)
-            )
-            if len(acting.cast) > 20:
-                emb2.set_footer(
-                    text=f"and {len(acting.cast) - 20} more! • Sorted from recent to oldest!",
-                    icon_url=TMDB_ICON,
-                )
-            embeds.append(emb2)
-        if (acting := data.combined_credits) and acting.crew:
-            emb3 = discord.Embed(colour=emb1.colour)
-            emb3.set_author(
-                name=f"{data.name}’s Production Roles", icon_url=data.person_image, url=emb1.url
-            )
-            emb3.description = "\n".join(
-                crew.pretty_format
-                for crew in sorted(acting.crew[:20], key=attrgetter("year"), reverse=True)
-            )
-            if len(acting.crew) > 20:
-                emb3.set_footer(
-                    text=f"and {len(acting.crew) - 20} more! • Sorted from recent to oldest!",
-                    icon_url=TMDB_ICON,
-                )
-            embeds.append(emb3)
-        embeds.insert(0, emb1)
-        await BaseMenu(ListPages(embeds), timeout=120, ctx=ctx).start(ctx, ephemeral=True)
+        try:
+            await message.edit(content=None, embed=emb1)
+        except Exception:
+            await ctx.send(embed=emb1)
         return
 
     @commands.bot_has_permissions(embed_links=True)

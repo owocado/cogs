@@ -158,7 +158,7 @@ class Network:
 class Season:
     id: int
     name: str
-    air_date: str
+    air_date: str | None
     overview: str
     episode_count: int
     poster_path: str | None
@@ -166,11 +166,13 @@ class Season:
     vote_average: float = 0.0
 
     @property
-    def release_date(self) -> datetime:
-        return isoparse(self.air_date)
+    def release_date(self) -> datetime | None:
+        return isoparse(self.air_date) if self.air_date else None
 
     @property
     def prefix(self) -> str:
+        if not self.release_date:
+            return ""
         return "airing" if self.release_date.timestamp() > utcnow().timestamp() else "aired"
 
 

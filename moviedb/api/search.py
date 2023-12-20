@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from operator import itemgetter
+from typing import TYPE_CHECKING
 
-import aiohttp
 import dacite
 from redbot.core.utils.chat_formatting import humanize_list
 
 from .base import BaseSearch, MediaNotFound, multi_search
+
+if TYPE_CHECKING:
+    from aiohttp import ClientSession
 
 
 @dataclass(slots=True)
@@ -18,7 +21,7 @@ class PersonSearch:
     gender: int
     media_type: str
     popularity: float
-    known_for_department: str
+    known_for_department: str | None
     original_name: str | None
     profile_path: str | None
     known_for: list[MovieSearch | TVShowSearch]
@@ -27,11 +30,11 @@ class PersonSearch:
     def famous_for(self) -> str:
         if not self.known_for:
             return ""
-        return f"(known for {humanize_list([x.title for x in self.known_for])})"
+        return f"known for {humanize_list([x.title for x in self.known_for])}"
 
     @classmethod
     async def request(
-        cls, session: aiohttp.ClientSession, api_key: str, query: str
+        cls, session: ClientSession, api_key: str, query: str
     ) -> MediaNotFound | list[PersonSearch]:
         all_data = await multi_search(session, api_key, query)
         if not all_data:
@@ -57,7 +60,7 @@ class MovieSearch(BaseSearch):
 
     @classmethod
     async def request(
-        cls, session: aiohttp.ClientSession, api_key: str, query: str
+        cls, session: ClientSession, api_key: str, query: str
     ) -> MediaNotFound | list[MovieSearch]:
         all_data = await multi_search(session, api_key, query)
         if not all_data:
@@ -85,7 +88,7 @@ class TVShowSearch(BaseSearch):
 
     @classmethod
     async def request(
-        cls, session: aiohttp.ClientSession, api_key: str, query: str
+        cls, session: ClientSession, api_key: str, query: str
     ) -> MediaNotFound | list[TVShowSearch]:
         all_data = await multi_search(session, api_key, query)
         if not all_data:

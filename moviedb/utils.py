@@ -83,7 +83,7 @@ def make_movie_embed(data: MovieDetails, colour: discord.Colour | int) -> discor
     embed.set_image(url=f"{CDN_BASE}{data.backdrop_path or '/'}")
     embed.set_thumbnail(url=f"{CDN_BASE}{data.poster_path or '/'}")
     if data.release_date:
-        out.write(f"- **Release Date:**  {format_date(data.release_date)}\n")
+        out.write(f"- **Released:**  {format_date(data.release_date)}\n")
     if data.budget:
         out.write(f"- **Budget:**  {natural_size(data.budget)} USD\n")
     if data.revenue:

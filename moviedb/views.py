@@ -1,86 +1,61 @@
+from __future__ import annotations
+
 from contextlib import suppress
-from typing import TYPE_CHECKING, Any, Dict, List
 
-import discord
-from redbot.core import commands
-from redbot.core.utils.views import BaseMenu, ListPages
-
-if TYPE_CHECKING:
-    from .moviedb import MovieDB
-
-GENDERS = {
-    "0": "",
-    "1": "\u2640 Female",
-    "2": "\u2642 Male",
-}
+from discord import Interaction, Message, SelectOption, ui
+from discord.utils import MISSING
+from redbot.core.commands import Context
+from redbot.core.bot import Red
 
 
-class MovieView(discord.ui.View):
+class OfferSelect(ui.Select):
+    view: ChoiceView
 
-    def __init__(self, timeout: int, **kwargs):
+    def __init__(self, *, options: list[SelectOption]) -> None:
+        super().__init__(options=options, placeholder="Pick a choice from this dropdown")
+
+    async def callback(self, i: Interaction[Red]) -> None:
+        value = self.values[0]
+        self.view.result = value
+        self.view.stop()
+        if not self.view.message:
+            return
+        with suppress(Exception):
+            await self.view.message.edit(view=None)
+
+
+class ChoiceView(ui.View):
+    """
+    This can be used in command converters where you offer a list of choices to the user
+    and user need to pick an entry.
+    """
+
+    def __init__(
+        self,
+        *,
+        options: list[SelectOption],
+        timeout: float = 180,
+    ) -> None:
         super().__init__(timeout=timeout)
-        self.banner: str = kwargs.get("banner")
-        self.cog: MovieDB = kwargs.get("cog")
-        self.ctx: commands.Context = kwargs.get("ctx")
-        self.colour: discord.Colour = kwargs.get("colour")
-        self.message: discord.Message = kwargs.get("message")
-        self.movie_id: int = kwargs.get("movie_id")
+        self.ctx: Context[Red] = MISSING
+        self.message: Message = MISSING
+        self.result: str | None = None
+        self.add_item(OfferSelect(options=options))
 
-    async def on_timeout(self):
+    async def start(self, ctx: Context[Red], *, content: str, **kwargs) -> Message:
+        self.ctx = ctx
+        self.message = await ctx.send(content, view=self, **kwargs)
+        return self.message
+
+    async def on_timeout(self) -> None:
         self.stop()
-        for item in self.children:
-            item.disabled = True
-        with suppress(discord.NotFound, discord.HTTPException):
-            await self.message.edit(view=self)
+        if not self.message:
+            return
+        with suppress(Exception):
+            await self.message.edit(view=None)
 
-    async def interaction_check(self, interaction: discord.Interaction):
-        await interaction.response.defer()
+    async def interaction_check(self, interaction: Interaction[Red]) -> bool:
+        if interaction.user.id not in (*self.ctx.bot.owner_ids, self.ctx.author.id):
+            await interaction.response.send_message("nuh uh", ephemeral=True)
+            return False
         return True
-
-    @discord.ui.button(label="Movie Banner", style=discord.ButtonStyle.gray)
-    async def banner_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        emb = discord.Embed(colour=self.colour)
-        emb.set_image(url=self.banner)
-        await interaction.followup.send(embeds=[emb], ephemeral=True)
-
-    @discord.ui.button(label="Cast", style=discord.ButtonStyle.blurple)
-    async def movie_cast(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.ctx.author.id:
-            return await interaction.followup.send(
-                f"Only {interaction.user} can control this button.",
-                ephemeral=True
-            )
-
-        base_url = f"https://api.themoviedb.org/3/movie/{self.movie_id}/credits"
-        key = (await self.ctx.bot.get_shared_api_tokens("tmdb")).get("api_key")
-        credits = await self.cog.get(base_url, {"api_key": key})
-        if not credits:
-            return await interaction.followup.send(
-                "Oh no! No data received from API.",
-                ephemeral=True
-            )
-
-        full_cast: List[Dict[str, Any]] = credits.get("cast")
-        chunked = list(discord.utils.as_chunks(full_cast, 3))
-        pages = []
-        for i, entries in enumerate(chunked, 1):
-            embeds = []
-            for obj in entries:
-                emb = discord.Embed(colour=discord.Colour.random())
-                emb.title = obj.get("original_name")
-                emb.url = f"https://www.themoviedb.org/person/{obj['id']}"
-                emb.description = f"as **{obj.get('character')}**\n{GENDERS[str(obj.get('gender', 0))]}"
-                if obj.get("profile_path"):
-                    emb.set_thumbnail(
-                        url=f"https://image.tmdb.org/t/p/original{obj['profile_path']}"
-                    )
-                emb.set_footer(text="\u3000\u200b"*25)
-                embeds.append(emb)
-
-            pages.append({"embeds": embeds})
-
-        button.disabled = True
-        with suppress(discord.NotFound):
-            await self.message.edit(view=self)
-        return await BaseMenu(ListPages(pages), timeout=99, ctx=self.ctx).start(self.ctx)
-
