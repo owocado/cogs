@@ -27,6 +27,8 @@ class ImageFinder(Converter):
                 for attachment in attachments
                 if (match := IMAGE_LINKS.match(attachment.url))
             )
+        if (e := ctx.message.embeds) and e[0].image:
+            urls.append(e[0].image.url)
         if not urls:
             if ctx.message.reference and (message := ctx.message.reference.resolved):
                 urls = await find_images_in_replies(message)

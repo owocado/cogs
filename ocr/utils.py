@@ -10,7 +10,7 @@ from redbot.core.utils.chat_formatting import box
 
 from .models import VisionPayload
 
-log = logging.getLogger("red.owo.ocr.utils")
+log = logging.getLogger("ocr.utils")
 
 
 async def _get_bytes(session: aiohttp.ClientSession, url: str):
