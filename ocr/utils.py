@@ -55,7 +55,7 @@ async def free_ocr(session: aiohttp.ClientSession, image_url: str) -> str:
 
 
 async def vision_ocr(
-    ctx: Context, detect_handwriting: bool | None, image: str
+    ctx: Context, detect_handwriting: bool | None, image: str | bytes
 ) -> VisionPayload | None:
     api_key = (await ctx.bot.get_shared_api_tokens("google_vision")).get("api_key")
     if not api_key:
@@ -84,7 +84,9 @@ async def vision_ocr(
             }
         ]
     }
-    if buf := await _get_bytes(ctx.bot.session, url=image):
+    if isinstance(image, bytes):
+        payload["requests"][0]["image"]["content"] = base64.b64encode(image).decode()
+    elif buf := await _get_bytes(ctx.bot.session, url=image):
         payload["requests"][0]["image"]["content"] = buf
     else:
         payload["requests"][0]["image"]["source"]["imageUri"] = image
@@ -95,24 +97,29 @@ async def vision_ocr(
                 try:
                     data: dict = await resp.json()
                 except Exception:
-                    await ctx.send(f"https://http.cat/{resp.status}")
+                    if not ctx.interaction:
+                        await ctx.send(f"https://http.cat/{resp.status}")
                     return None
                 else:
                     p = dacite.from_dict(data_class=VisionPayload, data=data)
-                    await ctx.send(str(p.error))
+                    if not ctx.interaction:
+                        await ctx.send(str(p.error))
                     return None
             data: dict = await resp.json()
     except (asyncio.TimeoutError, aiohttp.ClientError):
-        await ctx.send("Operation timed out.")
+        if not ctx.interaction:
+            await ctx.send("Operation timed out.")
         return None
 
     output: list[dict[str, Any]] = data.get("responses", [])
     if not output or not output[0]:
-        await ctx.send("No text detected.")
+        if not ctx.interaction:
+            await ctx.send("No text detected.")
         return None
     obj = dacite.from_dict(data_class=VisionPayload, data=data['responses'][0])
     if obj.error and obj.error.message:
-        await ctx.send(str(obj.error))
+        if not ctx.interaction:
+            await ctx.send(str(obj.error))
         return None
 
     return obj

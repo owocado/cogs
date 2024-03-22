@@ -1,4 +1,3 @@
-from redbot.core.bot import Red
 from redbot.core.errors import CogLoadError
 
 from .ocr import OCR
@@ -8,8 +7,8 @@ __red_end_user_data_statement__ = (
 )
 
 
-async def setup(bot: Red):
+async def setup(bot):
     if not getattr(bot, "session", None):
         raise CogLoadError("This cog requires bot.session attr to be set.")
-    await bot.add_cog(OCR())
+    await bot.add_cog(OCR(bot))
 
