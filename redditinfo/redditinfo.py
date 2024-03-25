@@ -1,24 +1,28 @@
 import asyncio
+import logging
 import random
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Union
 
 import aiohttp
 import discord
 from discord.ext import tasks
 from redbot.core import Config, commands
+from redbot.core.commands.context import Context
 from redbot.core.bot import Red
 
 from .handles import INTERESTING_SUBS, MEME_REDDITS
+
+logger = logging.getLogger("red.owo.redditinfo")
 
 
 class RedditInfo(commands.Cog):
     """Fetch hot memes or info about Reddit account or subreddit."""
 
     __authors__ = ["ow0x"]
-    __version__ = "1.4.0"
+    __version__ = "2.0.0"
 
-    def format_help_for_context(self, ctx: commands.Context) -> str:
+    def format_help_for_context(self, ctx: Context) -> str:
         """Thanks Sinbad."""
         return (
             f"{super().format_help_for_context(ctx)}\n\n"
@@ -30,23 +34,67 @@ class RedditInfo(commands.Cog):
         self.bot = bot
         self.session = aiohttp.ClientSession()
         self.config = Config.get_conf(self, 357059159021060097, force_registration=True)
-        default_guild = {"channel_id": None}
+        default_guild = {"channel_id": None, "feed_channels": {}}
+        self.config.register_channel(subreddit="")
         self.config.register_global(interval=5)
         self.config.register_guild(**default_guild)
         self._autopost_meme.start()
+        self._fetch_random_post_task.start()
 
-    async def initialize(self) -> None:
-        delay = await self.config.interval()
+    async def cog_load(self) -> None:
+        delay: int = await self.config.interval()
         if delay != 5:
             self._autopost_meme.change_interval(minutes=delay)
+            self._fetch_random_post_task.change_interval(minutes=delay)
 
-    def cog_unload(self) -> None:
-        asyncio.create_task(self.session.close())
+    async def cog_unload(self) -> None:
+        await self.session.close()
         self._autopost_meme.cancel()
+        self._fetch_random_post_task.cancel()
 
     async def red_delete_data_for_user(self, **kwargs) -> None:
         """Nothing to delete"""
         pass
+
+    @tasks.loop(minutes=5)
+    async def _fetch_random_post_task(self) -> None:
+        all_data: dict = await self.config.all_channels()
+        for channel_id, data in all_data.items():
+            if not data["subreddit"]:
+                continue
+            channel = self.bot.get_channel(int(channel_id))
+            if not channel:
+                logger.info(f"Channel or thread by ID: {channel_id} could not be found!")
+                continue
+            bot_perms = channel.permissions_for(channel.guild.me)
+            if not bot_perms.send_messages:
+                logger.info(
+                    f"Missing send messages permission in {channel} (ID: {channel.id})"
+                )
+                continue
+            try:
+                async with self.session.get(
+                    f"https://old.reddit.com/r/{data['subreddit']}/random.json"
+                ) as resp:
+                    if resp.status != 200:
+                        logger.info(f"Reddit sent non 2xx response code: {resp.status}")
+                        continue
+                    random_feeds = await resp.json()
+            except (aiohttp.ClientError, asyncio.TimeoutError):
+                logger.exception(f"Error while fetching hot meme from Reddit!", exc_info=True)
+                continue
+            try:
+                random_post: dict = random_feeds[0]["data"]["children"][0]["data"]
+                interval: int = await self.config.interval()
+                next_when = f"next post <t:{int(discord.utils.utcnow().timestamp()) + interval*60}:R>"
+                await channel.send(f"https://www.rxyddit.com{random_post['permalink']} | {next_when}")
+            except Exception as exc:
+                logger.exception("Error sending random auto post", exc_info=exc)
+                continue
+
+    @_fetch_random_post_task.before_loop
+    async def _before_fetch_random_post_task(self) -> None:
+        await self.bot.wait_until_ready()
 
     @tasks.loop(minutes=5)
     async def _autopost_meme(self) -> None:
@@ -58,10 +106,19 @@ class RedditInfo(commands.Cog):
 
             guild = self.bot.get_guild(int(guild_id))
             if not guild:
+                logger.info(f"Guild by ID: {guild_id} could not be found!")
                 continue
-            channel = guild.get_channel(guild_data["channel_id"])
+            channel = guild.get_channel_or_thread(guild_data["channel_id"])
+            if not channel:
+                logger.info(
+                    f"Channel or thread by ID: {guild_data['channel_id']} could not be found!"
+                )
+                continue
             bot_perms = channel.permissions_for(guild.me)
-            if not (channel or bot_perms.send_messages or bot_perms.embed_links):
+            if not bot_perms.send_messages or not bot_perms.embed_links:
+                logger.info(
+                    f"Missing send messages or embed links perms in {channel} (ID: {channel.id})"
+                )
                 continue
             random_sub = random.choice(MEME_REDDITS)
             try:
@@ -69,24 +126,27 @@ class RedditInfo(commands.Cog):
                     f"https://reddit.com/r/{random_sub}/hot.json?limit=10"
                 ) as resp:
                     if resp.status != 200:
+                        logger.info(f"Reddit sent non 2xx response code: {resp.status}")
                         continue
                     data = await resp.json()
             except (aiohttp.ClientError, asyncio.TimeoutError):
+                logger.exception(f"Error while fetching hot meme from Reddit!", exc_info=True)
                 continue
 
             embed = await self._fetch_random_post(data, channel)
             if not embed:
+                logger.info("Could not generate embed for autopost meme feed!")
                 continue
             await channel.send(embed=embed)
 
     @_autopost_meme.before_loop
     async def _before_autopost_meme(self) -> None:
-        await self.bot.wait_until_red_ready()
+        await self.bot.wait_until_ready()
 
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 3, commands.BucketType.user)
-    async def reddituser(self, ctx: commands.Context, username: str):
+    async def reddituser(self, ctx: Context, username: str):
         """Fetch basic info about a Reddit user account."""
         async with ctx.typing():
             try:
@@ -131,7 +191,7 @@ class RedditInfo(commands.Cog):
     @commands.command(aliases=("subinfo", "subrinfo"))
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def subredditinfo(self, ctx: commands.Context, subreddit: str, more_info: bool = False):
+    async def subredditinfo(self, ctx: Context, subreddit: str, more_info: bool = False):
         """Fetch basic info about a subreddit.
 
         `more_info`: Shows some more info available for the subreddit. Defaults to False.
@@ -195,7 +255,7 @@ class RedditInfo(commands.Cog):
     @commands.command(name="meme")
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def random_hot_meme(self, ctx: commands.Context):
+    async def random_hot_meme(self, ctx: Context):
         """Fetch a random hot meme, or a boring cringe one!"""
         async with ctx.typing():
             random_sub = random.choice(MEME_REDDITS)
@@ -217,7 +277,7 @@ class RedditInfo(commands.Cog):
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def interesting(self, ctx: commands.Context):
+    async def interesting(self, ctx: Context):
         """Responds with random interesting reddit post."""
         random_sub = random.choice(INTERESTING_SUBS)
         async with ctx.typing():
@@ -239,7 +299,7 @@ class RedditInfo(commands.Cog):
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def subreddit(self, ctx: commands.Context, subreddit_name: str):
+    async def subreddit(self, ctx: Context, subreddit_name: str):
         """Fetch a random hot post entry from the given subreddit."""
         async with ctx.typing():
             params = {
@@ -324,13 +384,95 @@ class RedditInfo(commands.Cog):
         return emb
 
     @commands.group()
+    @commands.guild_only()
+    @commands.bot_has_permissions(manage_channels=True)
     @commands.mod_or_permissions(manage_channels=True)
-    async def automemeset(self, ctx: commands.Context):
+    async def randomfeedset(self, ctx: Context):
+        """Command group to autopost random post from a subreddit."""
+        pass
+
+    @randomfeedset.command()
+    async def add(
+        self,
+        ctx: Context,
+        subreddit: str,
+        channel: Union[discord.TextChannel, discord.Thread] = commands.CurrentChannel,
+    ):
+        """Set up a channel where random post from given subreddit will be posted on given interval in minutes.
+
+        Provide the valid subreddit name without `/r/` prefix or any formatting.
+        """
+        await ctx.typing()
+        try:
+            async with self.session.get(f"https://reddit.com/r/{subreddit}/about.json") as resp:
+                if resp.status != 200:
+                    return await ctx.send(f"https://http.cat/{resp.status}")
+                result = await resp.json()
+        except (aiohttp.ClientError, asyncio.TimeoutError):
+            return await ctx.send(
+                "Timeout while trying to query subreddit by given name. Try again later."
+            )
+
+        data = result.get("data")
+        if data and data.get("dist") == 0:
+            return await ctx.send("No subreddits were found from given name.")
+        if data.get("over18") and not ctx.channel.is_nsfw():
+            await ctx.send("That subreddit is marked as NSFW. Try again in NSFW channel.")
+            return
+        current_feed = await self.config.channel(channel).subreddit()
+        if current_feed and current_feed == subreddit:
+            await ctx.send("There is already a feed setup for that subreddit in this channel.")
+            return
+
+        await self.config.channel(channel).subreddit.set(subreddit)
+        await ctx.send(
+            f"✅ Done. Random posts from `/{data['display_name_prefixed']}` will be "
+            f"posted in {channel.mention} at already specified interval.\n"
+            f"Use `{ctx.clean_prefix}randomfeedset interval` cmd to change delay timer."
+        )
+        await ctx.tick()
+
+    @randomfeedset.command(aliases=["delay", "timer"])
+    async def interval(self, ctx: Context, minutes: int):
+        """Specify the interval in minutes after for random auto post.
+
+        Allowed interval is from 1 to 1440 minutes (1 day). Default is 5 minutes.
+        """
+        delay = max(min(minutes, 1440), 1)
+        self._autopost_meme.change_interval(minutes=delay)
+        self._fetch_random_post_task.change_interval(minutes=delay)
+        await self.config.interval.set(delay)
+        await ctx.send(f"✅ Done. Changed interval for auto post feed to {delay} minutes!")
+        await ctx.tick()
+
+    @randomfeedset.command()
+    async def remove(
+        self,
+        ctx: Context,
+        channel: Union[discord.TextChannel, discord.Thread] = commands.CurrentChannel
+    ):
+        """Removes any existing feed setup for a channel or thread."""
+        current_feed = await self.config.channel(channel).subreddit()
+        if not current_feed:
+            await ctx.send(f"There is no random post feed setup for {channel.mention}!")
+            return
+
+        await self.config.channel(channel).subreddit.set(None)
+        await ctx.send(
+            f"Done. Feed `/r/{current_feed}` has been removed from {channel.mention}!\n"
+            "Hence, random posts from that subreddit will no longer be posted."
+        )
+        await ctx.tick()
+
+    @commands.group()
+    @commands.guild_only()
+    @commands.mod_or_permissions(manage_channels=True)
+    async def automemeset(self, ctx: Context):
         """Commands for auto meme posting in a channel."""
         pass
 
     @automemeset.command()
-    async def channel(self, ctx: commands.Context, channel: discord.TextChannel = None):
+    async def channel(self, ctx: Context, channel: Union[discord.TextChannel, discord.Thread] = None):
         """Set a channel where random memes will be posted."""
         if channel is None:
             await self.config.guild(ctx.guild).channel_id.set(None)
@@ -345,21 +487,21 @@ class RedditInfo(commands.Cog):
         await ctx.tick()
 
     @automemeset.command(hidden=True)
-    async def force(self, ctx: commands.Context):
+    async def force(self, ctx: Context):
         """Force post the auto meme, to check if it's working or not."""
-
         await self._autopost_meme.coro(self)
         await ctx.tick()
 
     @commands.is_owner()
     @automemeset.command()
-    async def delay(self, ctx: commands.Context, minutes: int):
-        """Specify the time delay in minutes after when meme will be posted in set channel.
+    async def delay(self, ctx: Context, minutes: int):
+        """Specify the interval in minutes after when meme will be posted in set channel.
 
-        Minimum allowed value is 1 minute and max. is 1440 minutes (1 day). Default is 5 minutes.
+        Allowed interval is from 1 to 1440 minutes (1 day). Default is 5 minutes.
         """
         delay = max(min(minutes, 1440), 1)
         self._autopost_meme.change_interval(minutes=delay)
+        self._fetch_random_post_task.change_interval(minutes=delay)
         await self.config.interval.set(delay)
-        await ctx.send(f"Memes will be auto posted every {delay} minutes from now!")
+        await ctx.send(f"✅ Done. Changed interval for auto post feed to {delay} minutes!")
         await ctx.tick()

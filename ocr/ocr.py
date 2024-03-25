@@ -3,7 +3,7 @@ import logging
 from typing import Optional
 
 import aiohttp
-from redbot.core import commands
+from redbot.core import commands, __version__ as red_version
 from redbot.core.utils.chat_formatting import box, pagify
 
 from .converter import ImageFinder
@@ -14,8 +14,8 @@ log = logging.getLogger("red.owo-cogs.ocr")
 class OCR(commands.Cog):
     """Detect text in images using ocr.space or Google Cloud Vision API."""
 
-    __authors__ = ["TrustyJAID", "ow0x"]
-    __version__ = "1.1.0"
+    __authors__ = ["TrustyJAID", "<@306810730055729152>"]
+    __version__ = "1.3.0"
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad."""
@@ -28,9 +28,9 @@ class OCR(commands.Cog):
     sussy_string = "7d3306461d88957"
     session = aiohttp.ClientSession()
 
-    def cog_unload(self) -> None:
+    async def cog_unload(self) -> None:
         if self.session:
-            asyncio.create_task(self.session.close())
+            await self.session.close()
 
     async def red_delete_data_for_user(self, **kwargs) -> None:
         """Nothing to delete"""
@@ -46,16 +46,7 @@ class OCR(commands.Cog):
             "filetype": file_type
         }
 
-        async def query_kaogurai(url: str):
-            async with self.session.get(url, params={"url": image}) as resp:
-                if resp.status != 200:
-                    log.debug(
-                        f"[OCR] {url} sent {resp.status} HTTP response code."
-                    )
-                    return None
-                return await resp.json()
-
-        result = await query_kaogurai("https://api.kaogurai.xyz/v1/ocr/image")
+        result = {}
         if not result:
             async with self.session.post(
                 "https://api.ocr.space/parse/image", data=data
@@ -99,10 +90,9 @@ class OCR(commands.Cog):
         Pass `detect_handwriting` as True or `1` with command to more accurately detect handwriting from target image.
 
         **Example:**
-        ```py
-        [p]ocr image/attachment/URL
-        # To better detect handwriting in target image
-        [p]ocr 1 image/attachment/URL
+        - `[p]ocr image/attachment/URL`
+        # To better detect handwriting in target image, do:
+        - `[p]ocr 1 image/attachment/URL`
         ```
         """
         api_key = (await ctx.bot.get_shared_api_tokens("google_vision")).get("api_key")
@@ -133,12 +123,14 @@ class OCR(commands.Cog):
             }
 
             try:
-                async with self.session.post(base_url, json=payload, headers=headers) as response:
-                    if response.status != 200:
-                        return await ctx.send(f"https://http.cat/{response.status}")
-                    data = await response.json()
-            except asyncio.TimeoutError:
-                return await ctx.send("Operation timed out.")
+                async with self.session.post(base_url, json=payload, headers=headers) as resp:
+                    if resp.status != 200:
+                        log.info("Vision OCR returned response code: %s", resp.status)
+                        return await ctx.send(f"https://http.cat/{resp.status}")
+                    data = await resp.json()
+            except Exception as exc:
+                log.error("Error in querying Vision OCR API:", exc_info=exc)
+                return await ctx.send(f"Operation timed out: {exc}")
 
         output = data.get("responses")
         if not output or output[0] == {}:

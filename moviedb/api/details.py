@@ -7,97 +7,8 @@ from typing import Any, Dict, Optional, Sequence
 import aiohttp
 from redbot.core.utils.chat_formatting import humanize_number
 
-from .constants import (
-    API_BASE,
-    CelebrityCast,
-    Genre,
-    MediaNotFound,
-    ProductionCompany,
-    ProductionCountry,
-    SpokenLanguage
-)
-from .utils import format_date
-
-
-@dataclass
-class BaseSearch:
-    id: int
-    overview: str = ''
-    popularity: float = 0.0
-    vote_count: int = 0
-    vote_average: float = 0.0
-    backdrop_path: str = ''
-    poster_path: str = ''
-    genre_ids: Sequence[int] = field(default_factory=list)
-
-
-@dataclass
-class MovieSearchData(BaseSearch):
-    title: str = ''
-    original_title: str = ''
-    release_date: str = ''
-    original_language: str = ''
-    video: Optional[bool] = None
-    adult: Optional[bool] = None
-
-    @classmethod
-    async def request(
-        cls,
-        api_key: str,
-        query: str
-    ) -> MediaNotFound | Sequence[MovieSearchData]:
-        params = {'api_key': api_key, 'query': query.replace(' ', '+')}
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(f'{API_BASE}/search/movie', params=params) as resp:
-                    if resp.status in [401, 404]:
-                        err_data = await resp.json()
-                        return MediaNotFound(err_data['status_message'], resp.status)
-                    if resp.status != 200:
-                        return MediaNotFound('', resp.status)
-                    data: Dict[str, Any] = await resp.json()
-        except (asyncio.TimeoutError, aiohttp.ClientError):
-            return MediaNotFound('⚠️ Operation timed out.', 408)
-
-        if not data.get('results') or data['total_results'] < 1:
-            return MediaNotFound('❌ No results.', 404)
-
-        # data['results'].sort(key=lambda x: x.get('release_date'), reverse=True)
-        return [cls(**q) for q in data['results']]
-
-
-@dataclass
-class TVShowSearchData(BaseSearch):
-    name: str = ''
-    original_name: str = ''
-    first_air_date: str = ''
-    original_language: str = ''
-    origin_country: Sequence[str] = field(default_factory=list)
-
-    @classmethod
-    async def request(
-        cls,
-        api_key: str,
-        query: str
-    ) -> MediaNotFound | Sequence[TVShowSearchData]:
-        params = {'api_key': api_key, 'query': query.replace(' ', '+')}
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(f'{API_BASE}/search/tv', params=params) as resp:
-                    if resp.status in [401, 404]:
-                        err_data = await resp.json()
-                        return MediaNotFound(err_data['status_message'], resp.status)
-                    if resp.status != 200:
-                        return MediaNotFound('', resp.status)
-                    data: Dict[str, Any] = await resp.json()
-        except (asyncio.TimeoutError, aiohttp.ClientError):
-            return MediaNotFound('⚠️ Operation timed out.', 408)
-
-        if not data.get('results') or data['total_results'] < 1:
-            return MediaNotFound('❌ No results.', 404)
-
-        # data['results'].sort(key=lambda x: x.get('first_air_date'), reverse=True)
-        return [cls(**q) for q in data['results']]
+from .base import API_BASE, CelebrityCast, Genre, MediaNotFound, ProductionCompany, ProductionCountry, SpokenLanguage
+from ..utils import format_date
 
 
 @dataclass
@@ -183,7 +94,7 @@ class MovieDetails:
 
     @classmethod
     async def request(
-        cls, session: aiohttp.ClientSession, api_key: str, movie_id: int
+        cls, session: aiohttp.ClientSession, api_key: str, movie_id: Any
     ) -> MediaNotFound | MovieDetails:
         movie_data = {}
         params = {'api_key': api_key, 'append_to_response': 'credits'}
@@ -199,15 +110,6 @@ class MovieDetails:
             return MediaNotFound('⚠️ Operation timed out.', 408)
 
         return cls.from_json(movie_data)
-
-
-@dataclass
-class TVShowNotFound:
-    status_message: str
-    status_code: int
-
-    def __str__(self) -> str:
-        return self.status_message or f'https://http.cat/{self.status_code}.jpg'
 
 
 @dataclass
@@ -382,7 +284,7 @@ class TVShowDetails:
         cls,
         session: aiohttp.ClientSession,
         api_key: str,
-        tvshow_id: int
+        tvshow_id: Any
     ) -> MediaNotFound | TVShowDetails:
         tvshow_data = {}
         params = {'api_key': api_key, 'append_to_response': 'credits'}
@@ -398,103 +300,3 @@ class TVShowDetails:
             return MediaNotFound('⚠️ Operation timed out.', 408)
 
         return cls.from_dict(tvshow_data)
-
-
-@dataclass
-class BaseSuggestions:
-    id: int
-    adult: bool
-    overview: str
-    original_language: str
-    media_type: str
-    popularity: float
-    vote_count: int
-    vote_average: float
-    genre_ids: Sequence[int]
-
-
-@dataclass
-class MovieSuggestions(BaseSuggestions):
-    title: str
-    original_title: str
-    release_date: str
-    video: bool
-    backdrop_path: str = ''
-    poster_path: str = ''
-
-    @property
-    def humanize_votes(self) -> str:
-        return f'**{self.vote_average:.1f}** ⭐ / 10\n({humanize_number(self.vote_count)} votes)'
-
-    @classmethod
-    def from_json(cls, data: Dict[str, Any]) -> MovieSuggestions:
-        genre_ids = data.pop('genre_ids', [])
-        return cls(genre_ids=genre_ids, **data)
-
-    @classmethod
-    async def request(
-        cls,
-        session: aiohttp.ClientSession,
-        api_key: str,
-        movie_id: str
-    ) -> MediaNotFound | Sequence[MovieSuggestions]:
-        url = f"{API_BASE}/movie/{movie_id}/recommendations"
-        try:
-            async with session.get(url, params={"api_key": api_key}) as resp:
-                if resp.status in [401, 404]:
-                    err_data = await resp.json()
-                    return MediaNotFound(err_data['status_message'], resp.status)
-                if resp.status != 200:
-                    return MediaNotFound('', resp.status)
-                data = await resp.json()
-        except (aiohttp.ClientError, asyncio.TimeoutError):
-            return MediaNotFound('⚠️ Operation timed out.', 408)
-
-        if not data.get('results') or data['total_results'] < 1:
-            return MediaNotFound('❌ No recommendations found related to that movie.', 404)
-
-        return [cls.from_json(obj) for obj in data['results']]
-
-
-@dataclass
-class TVShowSuggestions(BaseSuggestions):
-    name: str
-    original_name: str
-    first_air_date: str
-    origin_country: Sequence[str]
-    backdrop_path: str = ''
-    poster_path: str = ''
-
-    @property
-    def humanize_votes(self) -> str:
-        return f'**{self.vote_average:.1f}** ⭐ / 10\n({humanize_number(self.vote_count)} votes)'
-
-    @classmethod
-    def from_json(cls, data: Dict[str, Any]) -> TVShowSuggestions:
-        genre_ids = data.pop('genre_ids', [])
-        origin_country = data.pop('origin_country', [])
-        return cls(origin_country=origin_country, genre_ids=genre_ids, **data)
-
-    @classmethod
-    async def request(
-        cls,
-        session: aiohttp.ClientSession,
-        api_key: str,
-        query: str
-    ) -> MediaNotFound | Sequence[TVShowSuggestions]:
-        url = f"{API_BASE}/tv/{query}/recommendations"
-        try:
-            async with session.get(url, params={"api_key": api_key}) as resp:
-                if resp.status in [401, 404]:
-                    err_data = await resp.json()
-                    return MediaNotFound(err_data['status_message'], resp.status)
-                if resp.status != 200:
-                    return MediaNotFound('', resp.status)
-                data = await resp.json()
-        except (aiohttp.ClientError, asyncio.TimeoutError):
-            return MediaNotFound('⚠️ Operation timed out.', 408)
-
-        if not data.get('results') or data['total_results'] < 1:
-            return MediaNotFound('❌ No recommendations found related to that TV show.', 404)
-
-        return [cls.from_json(obj) for obj in data['results']]

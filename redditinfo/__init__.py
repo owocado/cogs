@@ -6,6 +6,4 @@ __red_end_user_data_statement__ = "This cog does not persistently store any PII 
 
 
 async def setup(bot):
-    cog = RedditInfo(bot)
-    await maybe_coroutine(bot.add_cog, cog)
-    await cog.initialize()
+    await maybe_coroutine(bot.add_cog, RedditInfo(bot))
