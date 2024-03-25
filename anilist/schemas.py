@@ -1,31 +1,45 @@
 CHARACTER_SCHEMA = """
-query ($page: Int, $perPage: Int, $search: String, $sort: [CharacterSort]) {
+query ($page: Int, $perPage: Int, $search: String, $sort: [MediaSort], $onList: Boolean, $withRoles: Boolean = false) {
   Page(page: $page, perPage: $perPage) {
-    characters(search: $search, sort: $sort) {
-      name {
-        full
-        native
-        alternative
-      }
-      image {
-        large
+    characters(search: $search, sort: FAVOURITES_DESC) {
+      age
+      dateOfBirth {
+        day
+        month
+        year
       }
       description(asHtml: false)
       gender
-      dateOfBirth {
-        year
-        month
-        day
+      image {
+        large
       }
-      age
+      name {
+        full
+        native
+        userPreferred
+        alternative
+      }
       siteUrl
-      media(perPage: 10) {
-        nodes {
-          siteUrl
-          type
-          title {
-            english
-            romaji
+      media(page: $page, sort: $sort, onList: $onList) @include(if: $withRoles) {
+        pageInfo {
+          total
+          perPage
+          currentPage
+          lastPage
+          hasNextPage
+        }
+        edges {
+          characterRole
+          node {
+            type
+            isAdult
+            siteUrl
+            title {
+              userPreferred
+            }
+            startDate {
+              year
+            }
           }
         }
       }
@@ -49,8 +63,9 @@ query ($page: Int, $perPage: Int, $genre: String, $type: MediaType, $format_in: 
       id
       idMal
       title {
-        romaji
         english
+        native
+        romaji
       }
       coverImage {
         large
@@ -63,14 +78,14 @@ query ($page: Int, $perPage: Int, $genre: String, $type: MediaType, $format_in: 
       type
       meanScore
       startDate {
-        year
-        month
         day
+        month
+        year
       }
       endDate {
-        year
-        month
         day
+        month
+        year
       }
       duration
       source
@@ -126,14 +141,14 @@ query ($page: Int, $perPage: Int, $search: String, $type: MediaType, $sort: [Med
       type
       meanScore
       startDate {
-        year
-        month
         day
+        month
+        year
       }
       endDate {
-        year
-        month
         day
+        month
+        year
       }
       duration
       source
@@ -208,47 +223,57 @@ query ($page: Int, $perPage: Int, $search: String) {
       name {
         full
         native
+        userPreferred
         alternative
-      }
-      age
-      description(asHtml: false)
-      gender
-      homeTown
-      primaryOccupations
-      siteUrl
-      yearsActive
-      dateOfBirth {
-        year
-        month
-        day
-      }
-      dateOfDeath {
-        year
-        month
-        day
       }
       image {
         large
       }
-      staffMedia(perPage: 40, sort: TRENDING_DESC) {
-        nodes {
-          format
-          siteUrl
-          status
-          title {
-            english
-            romaji
+      description(asHtml: false)
+      siteUrl
+      age
+      gender
+      yearsActive
+      homeTown
+      primaryOccupations
+      dateOfBirth {
+        day
+        month
+        year
+      }
+      dateOfDeath {
+        day
+        month
+        year
+      }
+      language: languageV2
+      characterMedia(page: 1, sort: POPULARITY_DESC) {
+        edges {
+          characterRole
+          node {
+            type
+            isAdult
+            title {
+              userPreferred
+            }
+            siteUrl
+            startDate {
+              year
+            }
+          }
+          characters {
+            name {
+              userPreferred
+            }
+            siteUrl
           }
         }
-      }
-      characters(perPage: 40, sort: FAVOURITES_DESC) {
-        nodes {
-          siteUrl
-          name {
-            full
-            native
-            alternative
-          }
+        pageInfo {
+          total
+          perPage
+          currentPage
+          lastPage
+          hasNextPage
         }
       }
     }
@@ -316,14 +341,14 @@ query ($page: Int, $perPage: Int, $tag: String, $type: MediaType, $format_in: [M
       type
       meanScore
       startDate {
-        year
-        month
         day
+        month
+        year
       }
       endDate {
-        year
-        month
         day
+        month
+        year
       }
       duration
       source
@@ -364,6 +389,9 @@ query ($page: Int, $perPage: Int, $search: String) {
       id
       name
       about(asHtml: false)
+      donatorTier
+      createdAt
+      updatedAt
       avatar {
         large
       }
