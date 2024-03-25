@@ -4,12 +4,11 @@ import asyncio
 import contextlib
 from datetime import datetime
 from textwrap import shorten
-from typing import List
+from typing import TYPE_CHECKING, List
 
 from discord import Colour, Interaction, Message, SelectOption, app_commands
 from discord.app_commands import Choice
-from redbot.core.bot import Red
-from redbot.core.commands import BadArgument, Context
+from redbot.core import commands
 
 from .api.base import MediaNotFound
 from .api.details import MovieDetails, TVShowDetails
@@ -19,6 +18,10 @@ from .api.suggestions import MovieSuggestions, TVShowSuggestions
 from .utils import format_date, make_person_embed
 from .views import ChoiceView
 
+if TYPE_CHECKING:
+    from redbot.core.bot import Red
+    from redbot.core.commands import Context
+
 
 class PersonFinder(app_commands.Transformer):
 
@@ -26,9 +29,9 @@ class PersonFinder(app_commands.Transformer):
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key", "")
         results = await PersonSearch.request(ctx.bot.session, api_key, argument.lower())
         if isinstance(results, MediaNotFound):
-            raise BadArgument(str(results))
+            raise commands.BadArgument(str(results))
         if not results:
-            raise BadArgument("⛔ No celebrities could be found from given input.")
+            raise commands.BadArgument("⛔ No celebrities could be found from given input.")
         if len(results) == 1:
             message = None
             person = await PersonDetails.request(ctx.bot.session, api_key, str(results[0].id))
@@ -46,11 +49,11 @@ class PersonFinder(app_commands.Transformer):
             )
             await view.wait()
             if not view.result:
-                raise BadArgument(f"Aborted. No response from {ctx.author.mention}")
+                raise commands.BadArgument(f"Aborted. No response from {ctx.author.mention}")
             person_id = view.result
             person = await PersonDetails.request(ctx.bot.session, api_key, person_id)
         if isinstance(person, MediaNotFound):
-            raise BadArgument(str(person))
+            raise commands.BadArgument(str(person))
         return message, person
 
     async def transform(self, i: Interaction[Red], value: str):
@@ -82,9 +85,9 @@ class MovieFinder(app_commands.Transformer):
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key", "")
         results = await MovieSearch.request(ctx.bot.session, api_key, argument.lower())
         if isinstance(results, MediaNotFound):
-            raise BadArgument(str(results))
+            raise commands.BadArgument(str(results))
         if not results:
-            raise BadArgument("⛔ No such movie found from given query.")
+            raise commands.BadArgument("⛔ No such movie found from given query.")
         if len(results) == 1:
             return await MovieDetails.request(ctx.bot.session, api_key, results[0].id)
 
@@ -115,7 +118,7 @@ class MovieFinder(app_commands.Transformer):
         if choice is None or (choice.content and choice.content.strip() == "0"):
             with contextlib.suppress(Exception):
                 await prompt.delete()
-            raise BadArgument("‼ You didn't pick a valid choice. Operation cancelled.")
+            raise commands.BadArgument("‼ You didn't pick a valid choice. Operation cancelled.")
 
         with contextlib.suppress(Exception):
             await prompt.delete()
@@ -154,9 +157,9 @@ class TVShowFinder(app_commands.Transformer):
         api_key = (await ctx.bot.get_shared_api_tokens("tmdb")).get("api_key", "")
         results = await TVShowSearch.request(ctx.bot.session, api_key, argument.lower())
         if isinstance(results, MediaNotFound):
-            raise BadArgument(str(results))
+            raise commands.BadArgument(str(results))
         if not results:
-            raise BadArgument("⛔ No such TV show found from given query.")
+            raise commands.BadArgument("⛔ No such TV show found from given query.")
         if len(results) == 1:
             return await TVShowDetails.request(ctx.bot.session, api_key, results[0].id)
 
@@ -188,7 +191,7 @@ class TVShowFinder(app_commands.Transformer):
         if choice is None or (choice.content and choice.content.strip() == "0"):
             with contextlib.suppress(Exception):
                 await prompt.delete()
-            raise BadArgument("‼ You didn't pick a valid choice. Operation cancelled.")
+            raise commands.BadArgument("‼ You didn't pick a valid choice. Operation cancelled.")
 
         with contextlib.suppress(Exception):
             await prompt.delete()

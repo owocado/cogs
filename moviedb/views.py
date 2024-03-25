@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 from contextlib import suppress
+from typing import TYPE_CHECKING, Any
 
-from discord import Interaction, Message, SelectOption, ui
+import discord
 from discord.utils import MISSING
-from redbot.core.commands import Context
-from redbot.core.bot import Red
+
+if TYPE_CHECKING:
+    from discord import Interaction, Message, SelectOption
+    from redbot.core.bot import Red
+    from redbot.core.commands import Context
 
 
-class OfferSelect(ui.Select):
+class OfferSelect(discord.ui.Select):
     view: ChoiceView
 
     def __init__(self, *, options: list[SelectOption]) -> None:
@@ -24,7 +28,7 @@ class OfferSelect(ui.Select):
             await self.view.message.edit(view=None)
 
 
-class ChoiceView(ui.View):
+class ChoiceView(discord.ui.View):
     """
     This can be used in command converters where you offer a list of choices to the user
     and user need to pick an entry.
@@ -42,7 +46,7 @@ class ChoiceView(ui.View):
         self.result: str | None = None
         self.add_item(OfferSelect(options=options))
 
-    async def start(self, ctx: Context[Red], *, content: str, **kwargs) -> Message:
+    async def start(self, ctx: Context[Red], *, content: str, **kwargs: Any) -> Message:
         self.ctx = ctx
         self.message = await ctx.send(content, view=self, **kwargs)
         return self.message

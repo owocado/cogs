@@ -113,12 +113,11 @@ def parse_credits(
     )
 
     pages = []
-    all_pages = list(pagify(pretty_cast, page_length=1500))
-    for i, page in enumerate(all_pages, start=1):
+    for i, page in enumerate(pagify(pretty_cast, page_length=1500), start=1):
         emb = discord.Embed(colour=colour, description=page, title=title)
         emb.url = f"https://themoviedb.org/{tmdb_id}/cast"
         emb.set_footer(
-            text=f"Celebrities Cast • Page {i} of {len(all_pages)}",
+            text=f"Celebrities Cast • Page {i}",
             icon_url=TMDB_ICON,
         )
         pages.append(emb)

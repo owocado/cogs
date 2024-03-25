@@ -36,7 +36,7 @@ class MovieSuggestions(BaseSuggestions):
 
     @property
     def humanize_votes(self) -> str:
-        return f"**{self.vote_average:.1f}** ⭐ ({humanize_number(self.vote_count)} votes)"
+        return f"**{self.vote_average:.1f}** ★ ({humanize_number(self.vote_count)} votes)"
 
     @classmethod
     async def request(
@@ -71,7 +71,7 @@ class TVShowSuggestions(BaseSuggestions):
 
     @property
     def humanize_votes(self) -> str:
-        return f"**{self.vote_average:.1f}** ⭐ ({humanize_number(self.vote_count)} votes)"
+        return f"**{self.vote_average:.1f}** ★ ({humanize_number(self.vote_count)} votes)"
 
     @classmethod
     async def request(

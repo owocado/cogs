@@ -29,7 +29,7 @@ class MovieDB(commands.Cog):
     """Get summarized info about a movie or TV show/series."""
 
     __authors__ = "<@306810730055729152>"
-    __version__ = "4.2.2"
+    __version__ = "4.3.0"
 
     def format_help_for_context(self, ctx: Context) -> str:  # Thanks Sinbad!
         return (

@@ -79,7 +79,7 @@ class MovieDetails:
     def humanize_votes(self) -> str:
         if not self.vote_count:
             return ""
-        return f"**{self.vote_average:.1f}** ⭐ ({humanize_number(self.vote_count)} votes)"
+        return f"**{self.vote_average:.1f}** ★ ({humanize_number(self.vote_count)} votes)"
 
     @classmethod
     def from_json(cls, data: dict[str, Any]) -> MovieDetails:
@@ -251,7 +251,7 @@ class TVShowDetails:
     def humanize_votes(self) -> str:
         if not self.vote_count:
             return ""
-        return f"**{self.vote_average:.1f}** ⭐  ({humanize_number(self.vote_count)} votes)"
+        return f"**{self.vote_average:.1f}** ★  ({humanize_number(self.vote_count)} votes)"
 
     @property
     def next_episode_info(self) -> str:
